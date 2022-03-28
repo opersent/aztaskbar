@@ -3,7 +3,7 @@
   "name": "App Icons Taskbar",
   "gettext-domain": "aztaskbar",
   "shell-version": ["42"],
-  "url": "https://gitlab.com/andrew.zaech/aztaskbar",
+  "url": "https://gitlab.com/AndrewZaech/aztaskbar",
   "uuid": "aztaskbar@aztaskbar.gitlab.com",
   "settings-schema": "org.gnome.shell.extensions.aztaskbar",
   "version": 1
