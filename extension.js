@@ -7,9 +7,6 @@ const { AppMenu } = imports.ui.appMenu;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-const Gettext = imports.gettext.domain('gnome-shell-extensions');
-const _ = Gettext.gettext;
-
 let settings, appDisplayBar;
 
 var AppDisplayBar = GObject.registerClass(
@@ -26,17 +23,21 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
         this.oldAppIcons = new Map();
 
-        this.isolateWorkspacesID = this._settings.connect('changed::isolate-workspaces', () => this._redisplay());
-        this.isolateMonitorsID = this._settings.connect('changed::isolate-monitors', () => this._redisplay());
-        this.favoritesID = this._settings.connect('changed::favorites', () => this._redisplay());
+        this._connections = new Map();
 
-		this.appFavoritesChangedID = AppFavorites.getAppFavorites().connect('changed', this._redisplay.bind(this));
-		this.appSystemChangedID = this._appSystem.connect('app-state-changed', this._redisplay.bind(this));
-		this.restackedID = global.display.connect('restacked', this._redisplay.bind(this));
-		this.markedUrgentID = global.display.connect('window-marked-urgent', this._redisplay.bind(this));
-		this.demandsAttentionID = global.display.connect('window-demands-attention', this._redisplay.bind(this));
-		this.switchWorkspaceID = global.window_manager.connect('switch-workspace', this._redisplay.bind(this));
-		this.windowEnteredMonitorID = global.display.connect('window-entered-monitor', this._redisplay.bind(this));
+        this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._redisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._redisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::favorites', () => this._redisplay()), this._settings);
+
+        this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
+        this._connections.set(this._appSystem.connect('app-state-changed', () => this._redisplay()), this._appSystem);
+
+        this._connections.set(global.window_manager.connect('switch-workspace', this._redisplay.bind(this)), global.window_manager);
+
+        this._connections.set(global.display.connect('window-entered-monitor', this._redisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('restacked', this._redisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-marked-urgent', this._redisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-demands-attention', this._redisplay.bind(this)), global.display);
 
 		this._redisplay();
 		this.connect("destroy", () => this._destroy());
@@ -173,7 +174,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
     }
 
 	_destroy() {
-        this.oldAppIcons.forEach((value,key,map) => {
+        this.oldAppIcons.forEach((value, key, map) => {
             if(!value.get_parent()){
                 value.destroy();
                 this.oldAppIcons.delete(key);
@@ -181,55 +182,12 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         });
         this.oldAppIcons = null;
 
-        if (this.isolateWorkspacesID) {
-			this._settings.disconnect(this.isolateWorkspacesID);
-			this.isolateWorkspacesID = null;
-		}
+        this._connections.forEach((object, id) => {
+            object.disconnect(id);
+            id = null;
+        });
 
-        if (this.isolateMonitorsID) {
-			this._settings.disconnect(this.isolateMonitorsID);
-			this.isolateMonitorsID = null;
-		}
-
-        if (this.favoritesID) {
-			this._settings.disconnect(this.favoritesID);
-			this.favoritesID= null;
-		}
-
-		if (this.appFavoritesChangedID) {
-			AppFavorites.getAppFavorites().disconnect(this.appFavoritesChangedID);
-			this.appFavoritesChangedID = null;
-		}
-
-		if (this.appSystemChangedID) {
-			this._appSystem.disconnect(this.appSystemChangedID);
-			this.appSystemChangedID = null;
-		}
-
-		if (this.restackedID) {
-			global.display.disconnect(this.restackedID);
-			this.appFavoritesChangedID = null;
-		}
-
-		if (this.markedUrgentID) {
-			global.display.disconnect(this.markedUrgentID);
-			this.markedUrgentID = null;
-		}
-
-		if (this.demandsAttentionID) {
-			global.display.disconnect(this.demandsAttentionID);
-			this.demandsAttentionID = null;
-		}
-
-		if (this.switchWorkspaceID) {
-			global.window_manager.disconnect(this.switchWorkspaceID);
-			this.switchWorkspaceID = null;
-		}
-
-		if (this.windowEnteredMonitorID) {
-			global.display.disconnect(this.windowEnteredMonitorID);
-			this.windowEnteredMonitorID = null;
-		}
+        this._connections = null;
 
         this.destroy_all_children();
 	}
@@ -280,8 +238,6 @@ class azTaskbar_AppIcon extends St.Button {
         box.add_child(this.appIcon);
 		this.set_child(box);
 
-        this.indicatorsID = this._settings.connect('changed::indicators', () => this.setActiveState());
-
         this.setActiveState();
 
         this.tooltipLabel = new St.Label({ 
@@ -295,26 +251,19 @@ class azTaskbar_AppIcon extends St.Button {
     
         this._previewMenu = new Me.imports.windowPreview.WindowPreviewMenu(this);
         this._menuManager.addMenu(this._previewMenu);
-        this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
-            if (!isPoppedUp){
-                this.setForcedHighlight(false);
-                this._onMenuPoppedDown();
-            }
-            else{
-                this.setForcedHighlight(true);
-            }
-        });
-
-		let id = Main.overview.connect('hiding', () => {
-			this._previewMenu.close();
-		});
 
         this._menuTimeoutId = 0;
 
 		this.connect('destroy', () => {
-			Main.overview.disconnect(id);
-			id = null;
-		
+            this._connections.forEach((object, id) => {
+                object.disconnect(id);
+                id = null;
+            });
+    
+            this._connections = null;
+
+            this._previewMenu.destroy();
+
             if (this.child !== null)
                 this.child.destroy();
 
@@ -325,19 +274,23 @@ class azTaskbar_AppIcon extends St.Button {
             this.tooltipLabel.remove_all_transitions();
             this.tooltipLabel.hide();
             this.tooltipLabel.destroy();
-
-            if (this.indicatorsID) {
-                this._settings.disconnect(this.indicatorsID);
-                this.indicatorsID = null;
-            }
-
-            if (this._focusWindowChangedId ) {
-                global.display.disconnect(this._focusWindowChangedId );
-                this._focusWindowChangedId  = null;
-            }
         });
 
-        this._focusWindowChangedId = global.display.connect('notify::focus-window', () => this.setActiveState());
+        this._connections = new Map();
+
+        this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
+        this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
+
+        this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
+            if (!isPoppedUp){
+                this.setForcedHighlight(false);
+                this._onMenuPoppedDown();
+            }
+            else{
+                this.setForcedHighlight(true);
+            }
+        }), this._previewMenu);
+
 
 		this.connect('notify::hover', () => {
             this._syncLabel();
@@ -445,7 +398,7 @@ class azTaskbar_AppIcon extends St.Button {
                 showSingleWindows: true,
             });
             this._menu.setApp(this.app);
-            this._menu.connect('open-state-changed', (menu, isPoppedUp) => {
+            this._connections.set(this._menu.connect('open-state-changed', (menu, isPoppedUp) => {
 				if (!isPoppedUp){
 					this.setForcedHighlight(false);
 					this._onMenuPoppedDown();
@@ -453,9 +406,7 @@ class azTaskbar_AppIcon extends St.Button {
 				else{
 					this.setForcedHighlight(true);
 				}
-            });
-            Main.overview.connectObject('hiding',
-                () => this._menu.close(), this);
+            }), this._menu);
 
             Main.uiGroup.add_actor(this._menu.actor);
             this._contextMenuManager.addMenu(this._menu);
