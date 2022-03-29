@@ -157,7 +157,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             releaseVersion = Me.metadata.version;
         else
             releaseVersion = 'unknown';
-        arcMenuVersionRow.add_suffix(new Gtk.Label({ 
+        arcMenuVersionRow.add_suffix(new Gtk.Label({
             label: releaseVersion + ''
         }));
         extensionInfoGroup.add(arcMenuVersionRow);
@@ -168,7 +168,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         let commitVersion;
         if(Me.metadata.commit)
             commitVersion = Me.metadata.commit;
-        commitRow.add_suffix(new Gtk.Label({ 
+        commitRow.add_suffix(new Gtk.Label({
             label: commitVersion ? commitVersion : '',
         }));
         if(commitVersion){
@@ -178,7 +178,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         let gnomeVersionRow = new Adw.ActionRow({
             title: _('GNOME Version'),
         });
-        gnomeVersionRow.add_suffix(new Gtk.Label({ 
+        gnomeVersionRow.add_suffix(new Gtk.Label({
             label: imports.misc.config.PACKAGE_VERSION + '',
         }));
         extensionInfoGroup.add(gnomeVersionRow);
@@ -199,7 +199,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         let buildID = GLib.get_os_info("BUILD_ID");
         if(buildID)
             osInfoText += "; " + "Build ID: " +buildID;
-        osRow.add_suffix(new Gtk.Label({ 
+        osRow.add_suffix(new Gtk.Label({
             label: osInfoText,
             single_line_mode: false,
             wrap: true,
@@ -254,7 +254,7 @@ function fillPreferencesWindow(window) {
         iconTheme.add_search_path(Me.path + "/media/icons/prefs_icons");
 
     window.set_search_enabled(true);
-   
+
     //window.set_title(_("ArcMenu Settings"));
 
     const generalPage = new GeneralPage();
@@ -267,5 +267,5 @@ function fillPreferencesWindow(window) {
 var GNU_SOFTWARE = '<span size="small">' +
     'This program comes with absolutely no warranty.\n' +
     'See the <a href="https://gnu.org/licenses/old-licenses/gpl-2.0.html">' +
-	'GNU General Public License, version 2 or later</a> for details.' +
-	'</span>';
+    'GNU General Public License, version 2 or later</a> for details.' +
+    '</span>';
