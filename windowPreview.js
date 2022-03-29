@@ -48,7 +48,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
             if (!this._source.mapped)
                 this.close();
         });
-        this._destroyId = this._source.connect('destroy', this.destroy.bind(this));
 
         Main.uiGroup.add_actor(this.actor);
 
@@ -80,9 +79,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     _onDestroy() {
         if (this._mappedId)
             this._source.disconnect(this._mappedId);
-
-        if (this._destroyId)
-            this._source.disconnect(this._destroyId);
     }
 };
 

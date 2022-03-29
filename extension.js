@@ -556,13 +556,14 @@ class azTaskbar_AppIcon extends St.Button {
         let [stageX, stageY] = this.get_transformed_position();
 
         const itemWidth = this.allocation.get_width();
+        const itemHeight = this.allocation.get_height();
 
         const labelWidth = this.tooltipLabel.get_width();
         const xOffset = Math.floor((itemWidth - labelWidth) / 2);
         const x = Math.clamp(stageX + xOffset, 0, global.stage.width - labelWidth);
 
-		const yOffset = 10;
-        const y = stageY + this.tooltipLabel.height + yOffset;
+		const yOffset = 6;
+        const y = stageY + itemHeight + yOffset;
 
         this.tooltipLabel.set_position(x, y);
         this.tooltipLabel.ease({
