@@ -642,11 +642,17 @@ function enable() {
     settings = ExtensionUtils.getSettings();
     appDisplayBar = new AppDisplayBar(settings);
     Main.panel._leftBox.add_child(appDisplayBar);
+
+    Main.panel.statusArea.appMenu.container.hide();
 }
 
 function disable() {
     if(Main.panel._leftBox.contains(appDisplayBar))
         Main.panel._leftBox.remove_child(appDisplayBar);
+
+    if (!Main.overview.visible && !Main.sessionMode.isLocked) {
+        Main.panel.statusArea.appMenu.container.show();
+    }
 
     appDisplayBar.destroy();
     appDisplayBar = null;
