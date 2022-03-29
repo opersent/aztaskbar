@@ -1,3 +1,6 @@
+![](https://gitlab.com/arcmenu/arcmenu-assets/raw/master/images/azTaskbar.png)
+
+-----
 ### Introduction
 
 App Icons Taskbar (azTaskbar) is a simple taskbar extension for GNOME Shell, designed to provide a more familiar user experience and workflow. This extension places app icons in the panel showing current running apps, and GNOME favorites.
