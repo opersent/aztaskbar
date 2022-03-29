@@ -181,8 +181,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         });
         this.oldAppIcons = null;
 
-		
-
         if (this.isolateWorkspacesID) {
 			this._settings.disconnect(this.isolateWorkspacesID);
 			this.isolateWorkspacesID = null;
@@ -250,8 +248,6 @@ class azTaskbar_AppIcon extends St.Button {
         this._menuManager = menuManager;
 		this.monitorIndex = monitorIndex;
         this._settings = settings;
-
-
 
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
 
@@ -322,7 +318,6 @@ class azTaskbar_AppIcon extends St.Button {
             if (this.child !== null)
                 this.child.destroy();
 
-            
             this._removeMenuTimeout();
             this._removePreviewMenuTimeout();
             this._clearCycleWindow();
@@ -335,7 +330,14 @@ class azTaskbar_AppIcon extends St.Button {
                 this._settings.disconnect(this.indicatorsID);
                 this.indicatorsID = null;
             }
+
+            if (this._focusWindowChangedId ) {
+                global.display.disconnect(this._focusWindowChangedId );
+                this._focusWindowChangedId  = null;
+            }
         });
+
+        this._focusWindowChangedId = global.display.connect('notify::focus-window', () => this.setActiveState());
 
 		this.connect('notify::hover', () => {
             this._syncLabel();
@@ -350,13 +352,14 @@ class azTaskbar_AppIcon extends St.Button {
         this.indicator.set_style_pseudo_class(null);
         this.appIcon.set_style_pseudo_class(null)
         let styleClass = 'inactive';
+
         let windows = this.getInterestingWindows();
 
         if(windows.length >= 1){
             styleClass = 'active';
             windows.forEach(window => {
                 if(window.has_focus()){
-                    this.appIcon.add_style_pseudo_class('active')
+                    this.appIcon.add_style_pseudo_class('active');
                     styleClass = 'focused';
                 }  
             });
@@ -404,8 +407,7 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('window-previews'))
             return;
 
-        if (this._previewMenuTimeoutId > 0)
-            return;
+        this._removePreviewMenuTimeout();
 
         this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 700, () => {
             this._previewMenuTimeoutId = 0;
@@ -459,8 +461,6 @@ class azTaskbar_AppIcon extends St.Button {
             this._contextMenuManager.addMenu(this._menu);
         }
 
-        //this.emit('menu-state-changed', true);
-
         this._menu.open();
         this._contextMenuManager.ignoreRelease();
 
@@ -502,6 +502,8 @@ class azTaskbar_AppIcon extends St.Button {
         let modifiers = event ? event.get_state() : 0;
         let windows = this.getInterestingWindows();
 
+        Main.overview.hide();
+
         // Only consider SHIFT and CONTROL as modifiers (exclude SUPER, CAPS-LOCK, etc.)
         modifiers = modifiers & (Clutter.ModifierType.SHIFT_MASK | Clutter.ModifierType.CONTROL_MASK);
     
@@ -514,7 +516,6 @@ class azTaskbar_AppIcon extends St.Button {
             return;
         }
 
-        
         //App has More than 1 active window, Cycle through windows. Minimize all when cycle complete.
         if(windows.length > 1){
             //start a timer that clears cycle state after x amount of time
@@ -550,15 +551,12 @@ class azTaskbar_AppIcon extends St.Button {
             return;
         }
 		
-        //if (this.app.state == Shell.AppState.STOPPED || openNewWindow)
-        //   this.animateLaunch();
         let openNewWindow = this.app.can_open_new_window();
         if (openNewWindow)
             this.app.open_new_window(-1);
         else
             this.app.activate();
 
-        Main.overview.hide();
     }
 
 	_syncLabel() {
@@ -578,15 +576,10 @@ class azTaskbar_AppIcon extends St.Button {
         return this.app.get_windows();
     }
 
-    // Filter out unnecessary windows, for instance
-    // nautilus desktop window.
     getInterestingWindows() {
         const interestingWindows = getInterestingWindows(this._settings, this.getWindows(), this.monitorIndex);
 
-        if (!this._urgentWindows)
-            return interestingWindows;
-
-        return [...new Set([...this._urgentWindows, ...interestingWindows])];
+        return interestingWindows;
     }
 
 	_windowPreviews() {
