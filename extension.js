@@ -5,6 +5,7 @@ const PopupMenu = imports.ui.popupMenu;
 const AppFavorites = imports.ui.appFavorites;
 const { AppMenu } = imports.ui.appMenu;
 const ExtensionUtils = imports.misc.extensionUtils;
+const IconGrid = imports.ui.iconGrid;
 const Me = ExtensionUtils.getCurrentExtension();
 
 let settings, appDisplayBar;
@@ -448,66 +449,65 @@ class azTaskbar_AppIcon extends St.Button {
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
     }
 
-	activate() {
+	activate(button) {
         let event = Clutter.get_current_event();
         let modifiers = event ? event.get_state() : 0;
         let windows = this.getInterestingWindows();
+        let isMiddleButton = button && button == Clutter.BUTTON_MIDDLE;
+        let isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) != 0;
+        let openNewWindow = this.app.can_open_new_window() &&
+                            this.app.state == Shell.AppState.RUNNING &&
+                            (isCtrlPressed || isMiddleButton);
 
         Main.overview.hide();
 
-        // Only consider SHIFT and CONTROL as modifiers (exclude SUPER, CAPS-LOCK, etc.)
-        modifiers = modifiers & (Clutter.ModifierType.SHIFT_MASK | Clutter.ModifierType.CONTROL_MASK);
+        if (this.app.state === Shell.AppState.STOPPED || openNewWindow)
+            IconGrid.zoomOutActor(this.appIcon);
+
+        if (openNewWindow) 
+            this.app.open_new_window(-1);
+        else{
+            if(windows.length > 1){
+                //start a timer that clears cycle state after x amount of time
+                this._setCylceWindowsTimeout();
     
-        if (modifiers & Clutter.ModifierType.CONTROL_MASK) {
-            let openNewWindow = this.app.can_open_new_window();
-            if (openNewWindow)
-                this.app.open_new_window(-1);
-            else
-                this.app.activate();
-            return;
-        }
-
-        //App has More than 1 active window, Cycle through windows. Minimize all when cycle complete.
-        if(windows.length > 1){
-            //start a timer that clears cycle state after x amount of time
-            this._setCylceWindowsTimeout();
-
-            let cycled = windows.filter(window => {
-                if(!window.cycled)
-                    return window;
-            });
-            if(cycled.length === 0){
-                windows.forEach(window => {
-                    window.minimize();
-                    window.cycled = false;
+                let cycled = windows.filter(window => {
+                    if(window.cycled)
+                        return window;
                 });
-                return;
-            }
-            for(let i = 0; i < windows.length; i++){
-                let window = windows[i];
-                if(!window.cycled){
-                    window.cycled = true;
-                    Main.activateWindow(window);
-                    break;
+                if(cycled.length === windows.length){
+                    windows.forEach(window => {
+                        window.minimize();
+                        window.cycled = false;
+                    });
+                    return;
+                }
+                for(let i = 0; i < windows.length; i++){
+                    let window = windows[i];
+                    if(window.has_focus() && !window.cycled){
+                        window.cycled = true;
+                    }
+                    if(!window.cycled){
+                        window.cycled = true;
+                        Main.activateWindow(window);
+                        break;
+                    }
                 }
             }
-            return;
-        }
-        else if(windows.length === 1){
-            const window = windows[0];
-            if(window.minimized || !window.has_focus())
-                Main.activateWindow(window);
+            else if(windows.length === 1){
+                const window = windows[0];
+                if(window.minimized || !window.has_focus())
+                    Main.activateWindow(window);
+                else
+                    window.minimize();
+            }
+            else if(this.app.state === Shell.AppState.RUNNING){
+                IconGrid.zoomOutActor(this.appIcon);
+                this.app.open_new_window(-1);
+            }
             else
-                window.minimize();
-            return;
+                this.app.activate();
         }
-		
-        let openNewWindow = this.app.can_open_new_window();
-        if (openNewWindow)
-            this.app.open_new_window(-1);
-        else
-            this.app.activate();
-
     }
 
 	_syncLabel() {
