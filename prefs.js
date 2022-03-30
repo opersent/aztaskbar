@@ -105,7 +105,7 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
         });
         let isolateMonitorsRow = new FrameBoxRow();
         isolateMonitorsRow.add(new Gtk.Label({
-            label: _("Isolate Workspaces"),
+            label: _("Isolate Monitors"),
             use_markup: true,
             xalign: 0
         }))

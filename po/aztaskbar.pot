@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-29 09:01-0400\n"
+"POT-Creation-Date: 2022-03-30 18:08-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,62 +17,70 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: prefs.js:17
+#: adwPrefs.js:17 prefs.js:417
 msgid "Settings"
 msgstr ""
 
-#: prefs.js:25
+#: adwPrefs.js:25 prefs.js:32
 msgid "General Settings"
 msgstr ""
 
-#: prefs.js:33
+#: adwPrefs.js:33 prefs.js:46
 msgid "Favorites"
 msgstr ""
 
-#: prefs.js:47
+#: adwPrefs.js:47 prefs.js:64
 msgid "Tool-Tips"
 msgstr ""
 
-#: prefs.js:58
+#: adwPrefs.js:58 prefs.js:77
 msgid "Running Apps Settings"
 msgstr ""
 
-#: prefs.js:66
+#: adwPrefs.js:66 prefs.js:90
 msgid "Isolate Workspaces"
 msgstr ""
 
-#: prefs.js:81
+#: adwPrefs.js:80 prefs.js:108
 msgid "Isolate Monitors"
 msgstr ""
 
-#: prefs.js:95
+#: adwPrefs.js:94 prefs.js:126
 msgid "Window Previews"
 msgstr ""
 
-#: prefs.js:109
+#: adwPrefs.js:108 prefs.js:144
 msgid "Indicators"
 msgstr ""
 
-#: prefs.js:125
+#: adwPrefs.js:124 prefs.js:423
 msgid "About"
 msgstr ""
 
-#: prefs.js:139
+#: adwPrefs.js:143 prefs.js:206
 msgid "App Icons Taskbar"
 msgstr ""
 
-#: prefs.js:153
+#: adwPrefs.js:149 prefs.js:213
+msgid "Show running apps and favorites on the main panel"
+msgstr ""
+
+#: adwPrefs.js:163 prefs.js:226
 msgid "App Icons Taskbar Version"
 msgstr ""
 
-#: prefs.js:166
+#: adwPrefs.js:176 prefs.js:240
 msgid "Git Commit"
 msgstr ""
 
-#: prefs.js:179
+#: adwPrefs.js:189 prefs.js:260
 msgid "GNOME Version"
 msgstr ""
 
-#: prefs.js:187
+#: adwPrefs.js:197 prefs.js:278
 msgid "OS"
+msgstr ""
+
+#: adwPrefs.js:220 prefs.js:310
+msgid "Session Type"
 msgstr ""
