@@ -31,9 +31,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     constructor(source) {
         super(source, 0.5, St.Side.TOP);
 
-        // We want to keep the item hovered while the menu is up
-        this.blockSourceEvents = true;
-
         this._source = source;
         this._app = this._source.app;
         let monitorIndex = this._source.monitorIndex;
