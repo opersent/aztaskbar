@@ -288,6 +288,7 @@ class azTaskbar_AppIcon extends St.Button {
                 this._onMenuPoppedDown();
             }
             else{
+                this.hideLabel();
                 this.setForcedHighlight(true);
             }
         }), this._previewMenu);
