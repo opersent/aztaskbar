@@ -367,6 +367,10 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
     _getWindowPreviewSize() {
         let mutterWindow = this._window.get_compositor_private();
+
+        if(!mutterWindow)
+            return [1, 1, 1];
+
         let [width, height] = mutterWindow.get_size();
 
         let scale;
