@@ -1,18 +1,13 @@
 const { Clutter, GLib, GObject, Shell, St } = imports.gi;
 
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
+const { AppMenu } = imports.ui.appMenu;
 const AppFavorites = imports.ui.appFavorites;
-
 const ExtensionUtils = imports.misc.extensionUtils;
 const IconGrid = imports.ui.iconGrid;
+const Main = imports.ui.main;
 const Me = ExtensionUtils.getCurrentExtension();
+const PopupMenu = imports.ui.popupMenu;
 const { WindowPreviewMenu } = Me.imports.windowPreview;
-
-const Config = imports.misc.config;
-const ShellVersion = parseFloat(Config.PACKAGE_VERSION);
-
-const { AppMenu } = ShellVersion <= 41 ? imports.ui.panel : imports.ui.appMenu;
 
 let settings, appDisplayBar;
 
