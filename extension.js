@@ -7,6 +7,7 @@ const { AppMenu } = imports.ui.appMenu;
 const ExtensionUtils = imports.misc.extensionUtils;
 const IconGrid = imports.ui.iconGrid;
 const Me = ExtensionUtils.getCurrentExtension();
+const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 let settings, appDisplayBar;
 
@@ -250,7 +251,7 @@ class azTaskbar_AppIcon extends St.Button {
 
         this._menu = null;
 
-        this._previewMenu = new Me.imports.windowPreview.WindowPreviewMenu(this);
+        this._previewMenu = new WindowPreviewMenu(this);
         this._menuManager.addMenu(this._previewMenu);
 
         this._menuTimeoutId = 0;
@@ -381,13 +382,20 @@ class azTaskbar_AppIcon extends St.Button {
         if (buttonEvent.button == 1) {
             this._setPopupTimeout();
         } else if (buttonEvent.button == 3) {
+            this.hideLabel();
             this.popupMenu();
         }
         return ret;
     }
 
     vfunc_clicked(button) {
+        this._removePreviewMenuTimeout();
         this._removeMenuTimeout();
+        this.hideLabel();
+
+        if(this._menu?.isOpen)
+            return;
+
         this.activate(button);
     }
 
@@ -399,6 +407,7 @@ class azTaskbar_AppIcon extends St.Button {
                 favoritesSection: true,
                 showSingleWindows: true,
             });
+            this._menu.blockSourceEvents = true;
             this._menu.setApp(this.app);
             this._connections.set(this._menu.connect('open-state-changed', (menu, isPoppedUp) => {
                 if (!isPoppedUp){
@@ -535,20 +544,20 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _windowPreviews() {
-        if (this._previewMenu.isOpen){
-            this._previewMenu.close();
-        }
+        if (this._previewMenu.isOpen)
+            return;
         else{
             this._removeMenuTimeout();
-            this.fake_release();
 
             this._previewMenu.popup();
-            this._menuManager.ignoreRelease();
         }
     }
 
     showLabel() {
         if(!this._settings.get_boolean('tool-tips'))
+            return;
+
+        if (this._previewMenu.isOpen)
             return;
 
         this.tooltipLabel.opacity = 0;
