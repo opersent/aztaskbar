@@ -211,14 +211,14 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         let linksBox = new Adw.ActionRow();
 
 
-        let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/icons/prefs_icons/donate-icon.svg', -1, 50, true);
+        let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/donate-icon.svg', -1, 50, true);
         let donateImage = Gtk.Picture.new_for_pixbuf(pixbuf);
         let donateLinkButton = new Gtk.LinkButton({
             child: donateImage,
             uri: 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Donate+to+support+my+work&currency_code=USD&source=url',
         });
 
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/icons/prefs_icons/gitlab-icon.svg', -1, 50, true);
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/gitlab-icon.svg', -1, 50, true);
         let gitlabImage = Gtk.Picture.new_for_pixbuf(pixbuf);
         let projectUrl = Me.metadata.url;
         let projectLinkButton = new Gtk.LinkButton({
@@ -250,8 +250,8 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
 
 function fillPreferencesWindow(window) {
     let iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
-    if(!iconTheme.get_search_path().includes(Me.path + "/media/icons/prefs_icons"))
-        iconTheme.add_search_path(Me.path + "/media/icons/prefs_icons");
+    if(!iconTheme.get_search_path().includes(Me.path + "/media"))
+        iconTheme.add_search_path(Me.path + "/media");
 
     window.set_search_enabled(true);
 
