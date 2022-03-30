@@ -3,7 +3,7 @@
  * This file is copied from the Dash to Dock extension.
  * Slight modifications were made.
  * See - https://github.com/micheleg/dash-to-dock/blob/master/windowPreview.js
- * 
+ *
  * This file is based on code from the Dash to Panel extension by Jason DeRose
  * and code from the Taskbar extension by Zorin OS
  * Some code was also adapted from the upstream Gnome Shell source code.
@@ -381,7 +381,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             // * 150/1050 = 0,1429
             // => scale is 0,1429
             scale = Math.min(1.0, PREVIEW_MAX_WIDTH/width, PREVIEW_MAX_HEIGHT/height)
-  
+
 
         // width and height that we wanna multiply by scale
         return [width, height, scale];

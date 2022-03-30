@@ -224,7 +224,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             windowingLabel = "Wayland";
         else
             windowingLabel = "X11";
-        sessionTypeRow.add_suffix(new Gtk.Label({ 
+        sessionTypeRow.add_suffix(new Gtk.Label({
             label: windowingLabel,
         }));
         extensionInfoGroup.add(sessionTypeRow);
