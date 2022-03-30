@@ -129,19 +129,30 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
 
         //ArcMenu Logo and project description-------------------------------------
         let arcMenuLogoGroup = new Adw.PreferencesGroup();
+        let arcMenuImage = new Gtk.Image({
+            margin_bottom: 5,
+            icon_name: 'arc-menu-logo',
+            pixel_size: 100,
+        });
         let arcMenuImageBox = new Gtk.Box( {
             orientation: Gtk.Orientation.VERTICAL,
             hexpand: false,
             vexpand: false
         });
-
+        arcMenuImageBox.append(arcMenuImage);
         let arcMenuLabel = new Gtk.Label({
             label: '<span size="larger"><b>' + _('App Icons Taskbar') + '</b></span>',
             use_markup: true,
             vexpand: true,
             valign: Gtk.Align.FILL
         });
+        let projectDescriptionLabel = new Gtk.Label({
+            label: _('Show running apps and favorites on the main panel'),
+            hexpand: false,
+            vexpand: false,
+        });
         arcMenuImageBox.append(arcMenuLabel);
+        arcMenuImageBox.append(projectDescriptionLabel);
         arcMenuLogoGroup.add(arcMenuImageBox);
 
         this.add(arcMenuLogoGroup);
@@ -205,11 +216,25 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             wrap: true,
         }));
         extensionInfoGroup.add(osRow);
+
+        let sessionTypeRow = new Adw.ActionRow({
+            title: _('Session Type'),
+        });
+        let windowingLabel;
+        if(Me.metadata.isWayland)
+            windowingLabel = "Wayland";
+        else
+            windowingLabel = "X11";
+        sessionTypeRow.add_suffix(new Gtk.Label({ 
+            label: windowingLabel,
+        }));
+        extensionInfoGroup.add(sessionTypeRow);
+
         this.add(extensionInfoGroup);
         //-----------------------------------------------------------------------
+
         let linksGroup = new Adw.PreferencesGroup();
         let linksBox = new Adw.ActionRow();
-
 
         let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/donate-icon.svg', -1, 50, true);
         let donateImage = Gtk.Picture.new_for_pixbuf(pixbuf);
@@ -232,19 +257,19 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         this.add(linksGroup);
 
         let gnuSoftwareGroup = new Adw.PreferencesGroup();
-            let gnuSofwareLabel = new Gtk.Label({
-                label: GNU_SOFTWARE,
-                use_markup: true,
-                justify: Gtk.Justification.CENTER
-            });
-            let gnuSofwareLabelBox = new Gtk.Box({
-                orientation: Gtk.Orientation.VERTICAL,
-                valign: Gtk.Align.END,
-                vexpand: true,
-            });
-            gnuSofwareLabelBox.append(gnuSofwareLabel);
-            gnuSoftwareGroup.add(gnuSofwareLabelBox);
-            this.add(gnuSoftwareGroup);
+        let gnuSofwareLabel = new Gtk.Label({
+            label: GNU_SOFTWARE,
+            use_markup: true,
+            justify: Gtk.Justification.CENTER
+        });
+        let gnuSofwareLabelBox = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            valign: Gtk.Align.END,
+            vexpand: true,
+        });
+        gnuSofwareLabelBox.append(gnuSofwareLabel);
+        gnuSoftwareGroup.add(gnuSofwareLabelBox);
+        this.add(gnuSoftwareGroup);
     }
 });
 
@@ -254,8 +279,6 @@ function fillPreferencesWindow(window) {
         iconTheme.add_search_path(Me.path + "/media");
 
     window.set_search_enabled(true);
-
-    //window.set_title(_("ArcMenu Settings"));
 
     const generalPage = new GeneralPage();
     window.add(generalPage);

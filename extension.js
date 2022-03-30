@@ -584,6 +584,10 @@ class azTaskbar_AppIcon extends St.Button {
 });
 
 function enable() {
+    if(imports.gi.Meta.is_wayland_compositor())
+        Me.metadata.isWayland = true;
+    else
+        Me.metadata.isWayland = false;
     settings = ExtensionUtils.getSettings();
     appDisplayBar = new AppDisplayBar(settings);
     Main.panel._leftBox.add_child(appDisplayBar);
