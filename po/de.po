@@ -1,86 +1,86 @@
-# SOME DESCRIPTIVE TITLE.
+# German translation for the aztaskbar GNOME Extension.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the aztaskbar package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Philipp Kiemle <philipp.kiemle@gmail.com>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: aztaskbar\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-03-31 11:44+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2022-03-31 11:55+0200\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Philipp Kiemle <philipp.kiemle@gmail.com>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 3.0\n"
 
 #: adwPrefs.js:17 prefs.js:417
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 #: adwPrefs.js:25 prefs.js:32
 msgid "General Settings"
-msgstr ""
+msgstr "Allgemeine Einstellungen"
 
 #: adwPrefs.js:33 prefs.js:46
 msgid "Favorites"
-msgstr ""
+msgstr "Favoriten"
 
 #: adwPrefs.js:47 prefs.js:64
 msgid "Tool-Tips"
-msgstr ""
+msgstr "Minihilfen"
 
 #: adwPrefs.js:58 prefs.js:77
 msgid "Running Apps Settings"
-msgstr ""
+msgstr "Einstellungen zu laufenden Anwendungen"
 
 #: adwPrefs.js:66 prefs.js:90
 msgid "Isolate Workspaces"
-msgstr ""
+msgstr "Arbeitsflächen isolieren"
 
 #: adwPrefs.js:80 prefs.js:108
 msgid "Isolate Monitors"
-msgstr ""
+msgstr "Bildschirme isolieren"
 
 #: adwPrefs.js:94 prefs.js:126
 msgid "Window Previews"
-msgstr ""
+msgstr "Fenster-Vorschauen"
 
 #: adwPrefs.js:108 prefs.js:144
 msgid "Indicators"
-msgstr ""
+msgstr "Indikatoren"
 
 #: adwPrefs.js:124 prefs.js:423
 msgid "About"
-msgstr ""
+msgstr "Info"
 
 #: adwPrefs.js:143 prefs.js:206
 msgid "App Icons Taskbar"
-msgstr ""
+msgstr "App Icons Taskbar"
 
 #: adwPrefs.js:149 prefs.js:213
 msgid "Show running apps and favorites on the main panel"
-msgstr ""
+msgstr "Laufende Anwendungen und Favoriten in der oberen Leiste anzeigen"
 
 #: adwPrefs.js:163 prefs.js:226
 msgid "App Icons Taskbar Version"
-msgstr ""
+msgstr "App Icons Taskbar-Version"
 
 #: adwPrefs.js:176 prefs.js:240
 msgid "Git Commit"
-msgstr ""
+msgstr "Git-Commit"
 
 #: adwPrefs.js:189 prefs.js:260
 msgid "GNOME Version"
-msgstr ""
+msgstr "GNOME-Version"
 
 #: adwPrefs.js:197 prefs.js:278
 msgid "OS"
-msgstr ""
+msgstr "OS"
 
 #: adwPrefs.js:220 prefs.js:310
 msgid "Session Type"
-msgstr ""
+msgstr "Sitzungstyp"
