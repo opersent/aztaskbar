@@ -49,7 +49,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
         Main.uiGroup.add_actor(this.actor);
 
         this.connect('destroy', this._onDestroy.bind(this));
-        this.redisplay();
     }
 
     redisplay() {

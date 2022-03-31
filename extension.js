@@ -431,7 +431,6 @@ class azTaskbar_AppIcon extends St.Button {
 
     _onMenuPoppedDown() {
         this._removePreviewMenuTimeout();
-        //this.emit('menu-state-changed', false);
     }
 
     _removeCylceWindowsTimeout() {
