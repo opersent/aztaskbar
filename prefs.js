@@ -72,6 +72,30 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
         toolTipsRow.add(toolTipsSwitch);
         generalGroup.add(toolTipsRow);
 
+        let iconSizeSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+            halign: Gtk.Align.END,
+            hexpand: true
+        });
+        iconSizeSpinButton.set_value(this._settings.get_int('icon-size'));
+        iconSizeSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('icon-size', widget.get_value());
+        });
+        let iconSizeRow = new FrameBoxRow();
+        iconSizeRow.add(new Gtk.Label({
+            label: _("Icon Size"),
+            use_markup: true,
+            xalign: 0
+        }))
+        iconSizeRow.add(iconSizeSpinButton);
+        generalGroup.add(iconSizeRow);
+    
         let runningAppsGroup = new FrameBox();
         this.mainBox.append(new Gtk.Label({
             label: "<b>" + _("Running Apps Settings") + "</b>",

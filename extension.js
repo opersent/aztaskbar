@@ -17,7 +17,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         super._init();
 
         this._settings = settings;
-
+        this.clip_to_allocation = true,
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
         this._menuManager = new PopupMenu.PopupMenuManager(this);
 
@@ -30,6 +30,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._redisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::icon-size', () => this._redisplay()), this._settings);
 
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._redisplay()), this._appSystem);
@@ -51,6 +52,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
         if(item){
             item.setActiveState();
+            item.setIconSize(this._settings.get_int('icon-size'));
             return item;
         }
 
@@ -226,6 +228,7 @@ class azTaskbar_AppIcon extends St.Button {
         });
         box.add_child(this.indicator);
 
+        let iconSize = this._settings.get_int('icon-size');
         this.appIcon = new St.Bin({
             reactive: true,
             can_focus: true,
@@ -234,7 +237,7 @@ class azTaskbar_AppIcon extends St.Button {
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
-            child: app.create_icon_texture(20)
+            child: app.create_icon_texture(iconSize)
         });
         this.bind_property('hover', this.appIcon, 'hover', GObject.BindingFlags.SYNC_CREATE);
 
@@ -303,6 +306,10 @@ class azTaskbar_AppIcon extends St.Button {
         this.connect('clicked', () => {
             this.hideLabel();
         });
+    }
+
+    setIconSize(size){
+        this.appIcon.child = this.app.create_icon_texture(size);
     }
 
     setActiveState(){

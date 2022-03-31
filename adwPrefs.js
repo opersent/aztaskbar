@@ -54,6 +54,26 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         toolTipsRow.add_suffix(toolTipsSwitch);
         generalGroup.add(toolTipsRow);
 
+        let iconSizeSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        iconSizeSpinButton.set_value(this._settings.get_int('icon-size'));
+        iconSizeSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('icon-size', widget.get_value());
+        });
+        let iconSizeRow = new Adw.ActionRow({
+            title: _("Icon Size"),
+            activatable_widget: iconSizeSpinButton
+        });
+        iconSizeRow.add_suffix(iconSizeSpinButton);
+        generalGroup.add(iconSizeRow);
+
         let runningAppsGroup = new Adw.PreferencesGroup({
             title: _("Running Apps Settings")
         });
