@@ -7,6 +7,19 @@ App Icons Taskbar (azTaskbar) is a simple taskbar extension for GNOME Shell, des
 
 -----
 
+### Installation
+
+#### To install the most recent official release: Visit App Icons Taskbar on the [Official GNOME Extensions](https://extensions.gnome.org/extension/4944/app-icons-taskbar/) website.
+
+- **To install App Icons Taskbar from source**: Please see the: [Install From Source wiki Guide](https://gitlab.com/AndrewZaech/aztaskbar/-/wikis/Install-From-Source-Guide).
+
+<p align="left">
+       <a href="https://extensions.gnome.org/extension/4944/app-icons-taskbar" >
+    <img src="https://gitlab.com/arcmenu/arcmenu-assets/raw/master/images/get-it-ego.png" width="240" style="margin-left: 4px"/>
+    </a>
+
+-----
+
 ### Support App Icons Taskbar
 
 App Icons Taskbar is provided free of charge. If you enjoy using this extension and wish to help support the project, feel free to use the link below!
