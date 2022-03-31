@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-	<schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
-		<key type="b" name="isolate-workspaces">
-			<default>true</default>
-			<summary>Isolate running apps by current workspace</summary>
-			<description>Isolate running apps by current workspace.</description>
-		</key>
-		<key type="b" name="isolate-monitors">
-			<default>true</default>
-			<summary>Isolate running apps by current monitors</summary>
-			<description>Isolate running apps by current monitors.</description>
-		</key>
-		<key type="b" name="window-previews">
-			<default>true</default>
-			<summary>Show window previews for running apps</summary>
-			<description>Show window previews for running apps.</description>
-		</key>
-		<key type="b" name="indicators">
-			<default>true</default>
-			<summary>Show running app indicators</summary>
-			<description>Show running app indicators.</description>
-		</key>
-		<key type="b" name="favorites">
-			<default>true</default>
-			<summary>Show GNOME favorites as AppIcons</summary>
-			<description>Show GNOME favorites as AppIcons.</description>
-		</key>
-		<key type="b" name="tool-tips">
-			<default>true</default>
-			<summary>Show tool-tips for AppIcons</summary>
-			<description>Show tool-tips for AppIcons.</description>
-		</key>
-		<key type="i" name="icon-size">
-			<default>20</default>
-			<summary>Icon size for the AppIcons</summary>
-			<description>Icon size for the AppIcons.</description>
-		</key>
-	</schema>
+    <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
+        <key type="b" name="isolate-workspaces">
+            <default>true</default>
+            <summary>Isolate running apps by current workspace</summary>
+            <description>Isolate running apps by current workspace.</description>
+        </key>
+        <key type="b" name="isolate-monitors">
+            <default>true</default>
+            <summary>Isolate running apps by current monitors</summary>
+            <description>Isolate running apps by current monitors.</description>
+        </key>
+        <key type="b" name="window-previews">
+            <default>true</default>
+            <summary>Show window previews for running apps</summary>
+            <description>Show window previews for running apps.</description>
+        </key>
+        <key type="b" name="indicators">
+            <default>true</default>
+            <summary>Show running app indicators</summary>
+            <description>Show running app indicators.</description>
+        </key>
+        <key type="b" name="favorites">
+            <default>true</default>
+            <summary>Show GNOME favorites as AppIcons</summary>
+            <description>Show GNOME favorites as AppIcons.</description>
+        </key>
+        <key type="b" name="tool-tips">
+            <default>true</default>
+            <summary>Show tool-tips for AppIcons</summary>
+            <description>Show tool-tips for AppIcons.</description>
+        </key>
+        <key type="i" name="icon-size">
+            <default>20</default>
+            <summary>Icon size for the AppIcons</summary>
+            <description>Icon size for the AppIcons.</description>
+        </key>
+    </schema>
 </schemalist>
