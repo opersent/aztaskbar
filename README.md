@@ -46,3 +46,17 @@ Additional credits:
 * Large parts of the window preview feature copied from Dash to Dock extension and modified for this extensions needs.
 
 -----
+
+### Contributors:
+
+#### Thanks to the following people for contributing via merge requests:
+
+**@[wednesbunny](https://gitlab.com/wednesbunny)**
+
+
+#### Translators:
+
+**@[daPhipz](https://gitlab.com/daPhipz) - German** | **@[Vistaus](https://gitlab.com/Vistaus) - Dutch**
+
+
+-----
