@@ -59,6 +59,9 @@ install-local: _build
 	-rm -fR _build
 	echo done
 
+prefs enable disable reset info show:
+	gnome-extensions $@ $(INSTALLNAME)
+
 zip-file: _build
 	cd _build ; \
 	zip -qr "$(UUID)$(FILESUFFIX).zip" .
