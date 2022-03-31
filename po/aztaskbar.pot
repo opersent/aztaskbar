@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aztaskbar\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-31 11:44+0200\n"
+"POT-Creation-Date: 2022-03-31 15:07-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: adwPrefs.js:17 prefs.js:417
+#: adwPrefs.js:17 prefs.js:486
 msgid "Settings"
 msgstr ""
 
@@ -33,54 +33,66 @@ msgstr ""
 msgid "Tool-Tips"
 msgstr ""
 
-#: adwPrefs.js:58 prefs.js:77
+#: adwPrefs.js:71 prefs.js:92
+msgid "Icon Size"
+msgstr ""
+
+#: adwPrefs.js:78 prefs.js:101
 msgid "Running Apps Settings"
 msgstr ""
 
-#: adwPrefs.js:66 prefs.js:90
+#: adwPrefs.js:86 prefs.js:114
 msgid "Isolate Workspaces"
 msgstr ""
 
-#: adwPrefs.js:80 prefs.js:108
+#: adwPrefs.js:100 prefs.js:132
 msgid "Isolate Monitors"
 msgstr ""
 
-#: adwPrefs.js:94 prefs.js:126
+#: adwPrefs.js:114 prefs.js:150
 msgid "Window Previews"
 msgstr ""
 
-#: adwPrefs.js:108 prefs.js:144
+#: adwPrefs.js:128 prefs.js:168
 msgid "Indicators"
 msgstr ""
 
-#: adwPrefs.js:124 prefs.js:423
+#: adwPrefs.js:150 prefs.js:194
+msgid "Running Indicator Color"
+msgstr ""
+
+#: adwPrefs.js:169 prefs.js:217
+msgid "Focused Indicator Color"
+msgstr ""
+
+#: adwPrefs.js:181 prefs.js:492
 msgid "About"
 msgstr ""
 
-#: adwPrefs.js:143 prefs.js:206
+#: adwPrefs.js:200 prefs.js:275
 msgid "App Icons Taskbar"
 msgstr ""
 
-#: adwPrefs.js:149 prefs.js:213
+#: adwPrefs.js:206 prefs.js:282
 msgid "Show running apps and favorites on the main panel"
 msgstr ""
 
-#: adwPrefs.js:163 prefs.js:226
+#: adwPrefs.js:220 prefs.js:295
 msgid "App Icons Taskbar Version"
 msgstr ""
 
-#: adwPrefs.js:176 prefs.js:240
+#: adwPrefs.js:233 prefs.js:309
 msgid "Git Commit"
 msgstr ""
 
-#: adwPrefs.js:189 prefs.js:260
+#: adwPrefs.js:246 prefs.js:329
 msgid "GNOME Version"
 msgstr ""
 
-#: adwPrefs.js:197 prefs.js:278
+#: adwPrefs.js:254 prefs.js:347
 msgid "OS"
 msgstr ""
 
-#: adwPrefs.js:220 prefs.js:310
+#: adwPrefs.js:277 prefs.js:379
 msgid "Session Type"
 msgstr ""
