@@ -1,6 +1,6 @@
 {
   "name": "App Icons Taskbar",
-  "description": "A simple app icon taskbar. Add running apps and favorites to the main panel.",
+  "description": "A simple app icon taskbar. Show running apps and favorites on the main panel.",
   "uuid": "aztaskbar@aztaskbar.gitlab.com",
   "gettext-domain": "aztaskbar",
   "settings-schema": "org.gnome.shell.extensions.aztaskbar",
