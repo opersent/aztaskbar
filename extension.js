@@ -374,17 +374,21 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     vfunc_button_press_event(buttonEvent) {
-        this._removePreviewMenuTimeout();
-        if (this._previewMenu?.isOpen){
-            this._previewMenu.close();
-        }
         const ret = super.vfunc_button_press_event(buttonEvent);
-        if (buttonEvent.button == 1) {
+
+        this._removePreviewMenuTimeout();
+
+        if (this._previewMenu?.isOpen)
+            this._previewMenu.close();
+
+        if (buttonEvent.button === 1) 
             this._setPopupTimeout();
-        } else if (buttonEvent.button == 3) {
+        else if (buttonEvent.button === 3) {
             this.hideLabel();
             this.popupMenu();
+            return Clutter.EVENT_STOP;
         }
+
         return ret;
     }
 
