@@ -17,15 +17,6 @@
   width: 10px;
   border-radius: 99px;
 }
-.azTaskbar-indicator:inactive{
-  background-color: transparent;
-}
-.azTaskbar-indicator:active{
-  background-color: rgba(204, 204, 204, 1);
-}
-.azTaskbar-indicator:focused{
-  background-color: rgb(53, 132, 228);
-}
 
 .azTaskbar-AppButton{
   padding: 0px 8px;

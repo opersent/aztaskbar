@@ -175,6 +175,51 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
         });
         indicatorRow.add(indicatorSwitch);
         runningAppsGroup.add(indicatorRow);
+
+        let color = new Gdk.RGBA();
+        color.parse(this._settings.get_string('indicator-color-running'));
+        let indicatorRunningColorButton = new Gtk.ColorButton({
+            rgba: color,
+            use_alpha: true,
+            valign: Gtk.Align.CENTER,
+            hexpand: true,
+            halign: Gtk.Align.END
+        });
+        indicatorRunningColorButton.connect('color-set', (widget) => {
+            const color = widget.get_rgba().to_string();
+            this._settings.set_string('indicator-color-running', color);
+        });
+        let indicatorRunningRow = new FrameBoxRow();
+        indicatorRunningRow.add(new Gtk.Label({
+            label: _("Running Indicator Color"),
+            use_markup: true,
+            xalign: 0
+        }))
+        indicatorRunningRow.add(indicatorRunningColorButton);
+        runningAppsGroup.add(indicatorRunningRow);
+
+        color = new Gdk.RGBA();
+        color.parse(this._settings.get_string('indicator-color-focused'));
+        let indicatorFocusedColorButton = new Gtk.ColorButton({
+            rgba: color,
+            use_alpha: true,
+            valign: Gtk.Align.CENTER,
+            hexpand: true,
+            halign: Gtk.Align.END
+        });
+        indicatorFocusedColorButton.connect('color-set', (widget) => {
+            const color = widget.get_rgba().to_string();
+            this._settings.set_string('indicator-color-focused', color);
+        });
+
+        let indicatorFocusedRow = new FrameBoxRow();
+        indicatorFocusedRow.add(new Gtk.Label({
+            label: _("Focused Indicator Color"),
+            use_markup: true,
+            xalign: 0
+        }))
+        indicatorFocusedRow.add(indicatorFocusedColorButton);
+        runningAppsGroup.add(indicatorFocusedRow);
     }
 });
 

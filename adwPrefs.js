@@ -134,6 +134,43 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         indicatorRow.add_suffix(indicatorSwitch);
         runningAppsGroup.add(indicatorRow);
+
+        let color = new Gdk.RGBA();
+        color.parse(this._settings.get_string('indicator-color-running'));
+        let indicatorRunningColorButton = new Gtk.ColorButton({
+            rgba: color,
+            use_alpha: true,
+            valign: Gtk.Align.CENTER
+        });
+        indicatorRunningColorButton.connect('color-set', (widget) => {
+            const color = widget.get_rgba().to_string();
+            this._settings.set_string('indicator-color-running', color);
+        });
+        let indicatorRunningRow = new Adw.ActionRow({
+            title: _("Running Indicator Color"),
+            activatable_widget: indicatorRunningColorButton
+        });
+        indicatorRunningRow.add_suffix(indicatorRunningColorButton);
+        runningAppsGroup.add(indicatorRunningRow);
+
+        color = new Gdk.RGBA();
+        color.parse(this._settings.get_string('indicator-color-focused'));
+        let indicatorFocusedColorButton = new Gtk.ColorButton({
+            rgba: color,
+            use_alpha: true,
+            valign: Gtk.Align.CENTER
+        });
+        indicatorFocusedColorButton.connect('color-set', (widget) => {
+            const color = widget.get_rgba().to_string();
+            this._settings.set_string('indicator-color-focused', color);
+        });
+
+        let indicatorFocusedRow = new Adw.ActionRow({
+            title: _("Focused Indicator Color"),
+            activatable_widget: indicatorFocusedColorButton
+        });
+        indicatorFocusedRow.add_suffix(indicatorFocusedColorButton);
+        runningAppsGroup.add(indicatorFocusedRow);
     }
 });
 

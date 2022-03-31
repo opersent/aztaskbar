@@ -36,5 +36,15 @@
             <summary>Icon size for the AppIcons</summary>
             <description>Icon size for the AppIcons.</description>
         </key>
+        <key type="s" name="indicator-color-running">
+            <default>'rgb(204, 204, 204)'</default>
+            <summary>AppIcon running indicator color</summary>
+            <description>AppIcon running indicator color.</description>
+        </key>
+        <key type="s" name="indicator-color-focused">
+            <default>'rgb(53, 132, 228)'</default>
+            <summary>AppIcon focused indicator color</summary>
+            <description>AppIcon focused indicator color.</description>
+        </key>
     </schema>
 </schemalist>

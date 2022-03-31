@@ -31,6 +31,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-size', () => this._redisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this._redisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._redisplay()), this._settings);
 
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._redisplay()), this._appSystem);
@@ -313,26 +315,25 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     setActiveState(){
-        this.indicator.set_style_pseudo_class(null);
         this.appIcon.set_style_pseudo_class(null)
-        let styleClass = 'inactive';
+        let indicatorColor = 'transparent';
 
         let windows = this.getInterestingWindows();
 
         if(windows.length >= 1){
-            styleClass = 'active';
+            indicatorColor = this._settings.get_string('indicator-color-running');
             windows.forEach(window => {
                 if(window.has_focus()){
                     this.appIcon.add_style_pseudo_class('active');
-                    styleClass = 'focused';
+                    indicatorColor = this._settings.get_string('indicator-color-focused');
                 }
             });
         }
 
         if(!this._settings.get_boolean('indicators'))
-            styleClass = 'inactive';
+            indicatorColor = 'transparent';
 
-        this.indicator.add_style_pseudo_class(styleClass);
+        this.indicator.style = `background-color: ${indicatorColor};`;
     }
 
     setForcedHighlight(highlighted) {
