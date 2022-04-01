@@ -53,10 +53,19 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         let appID = app.get_id() + ", " + monitorIndex;
         let item = this.oldAppIcons.get(appID);
 
-        if(item){
+        //If a favorited app is running when extension starts,
+        //the corresponding AppIcon may initially be created with isFavorite = false.
+        //Check if isFavorite changed, and create new AppIcon if true.
+        const favoriteChanged = item && item.isFavorite !== isFavorite;
+
+        if(item && !favoriteChanged){
             item.setActiveState();
             item.setIconSize(this._settings.get_int('icon-size'));
             return item;
+        }
+        else if(item && favoriteChanged){
+            this.oldAppIcons.delete(appID);
+            item.destroy();
         }
 
         let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex, isFavorite);
@@ -113,17 +122,18 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 const index = running.indexOf(oldApp.app);
                 if (index > -1) {
                     const [app] = running.splice(index, 1);
-                    if (!showFavorites || !(app.get_id() in favorites))
-                    newApps.push({
-                        app,
-                        pos: oldApp.pos
-                    });
+                    if (!showFavorites || !(app.get_id() in favorites)) {
+                        newApps.push({
+                            app,
+                            pos: oldApp.pos
+                        });
+                    }
                 }
             });
 
             if(showFavorites){
                 let favsArray = appFavorites.getFavorites();
-                for (let i = favsArray.length - 1; i >= 0; i--){
+                for (let i = favsArray.length - 1; i >= 0; i--) {
                     newApps.push({
                         app: favsArray[i],
                         pos: 0,
@@ -134,11 +144,12 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
             // Second: add the new apps
             running.forEach(app => {
-                if (!showFavorites || !(app.get_id() in favorites))
+                if (!showFavorites || !(app.get_id() in favorites)) {
                     newApps.push({
                         app,
                         pos: -1
                     });
+                }
             });
 
             if(newApps.length > 0){
@@ -219,10 +230,12 @@ class azTaskbar_AppIcon extends St.Button {
 
         this._delegate = this;
 
-        this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
-        this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
-        this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
-        this._draggable.connect('drag-end', this._onDragEnd.bind(this));
+        if(!this.isFavorite){
+            this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
+            this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
+            this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
+            this._draggable.connect('drag-end', this._onDragEnd.bind(this));
+        }
 
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
 
