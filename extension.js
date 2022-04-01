@@ -2,6 +2,7 @@ const { Clutter, GLib, GObject, Shell, St } = imports.gi;
 
 const { AppMenu } = imports.ui.appMenu;
 const AppFavorites = imports.ui.appFavorites;
+const DND = imports.ui.dnd;
 const ExtensionUtils = imports.misc.extensionUtils;
 const IconGrid = imports.ui.iconGrid;
 const Main = imports.ui.main;
@@ -48,7 +49,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this.connect("destroy", () => this._destroy());
     }
 
-    _createAppItem(app, monitorIndex){
+    _createAppItem(app, monitorIndex, isFavorite){
         let appID = app.get_id() + ", " + monitorIndex;
         let item = this.oldAppIcons.get(appID);
 
@@ -58,7 +59,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             return item;
         }
 
-        let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex);
+        let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex, isFavorite);
         this.oldAppIcons.set(appID, button);
         return button;
     }
@@ -87,9 +88,9 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this.boxes = [];
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
-        let monitorCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
+        let boxesCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
 
-        for(let i = 0; i < monitorCount; i++){
+        for(let i = 0; i < boxesCount; i++){
             let monitorIndex = i;
 
             let oldApps = this.oldApps.filter(oldApp => {
@@ -125,7 +126,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 for (let i = favsArray.length - 1; i >= 0; i--){
                     newApps.push({
                         app: favsArray[i],
-                        pos: 0
+                        pos: 0,
+                        isFavorite: true,
                     });
                 }
             }
@@ -144,7 +146,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 this.boxes.push(box);
                 this.add_child(box);
                 newApps.forEach(app => {
-                    let item = this._createAppItem(app.app, monitorIndex);
+                    let item = this._createAppItem(app.app, monitorIndex, app.isFavorite);
 
                     let pos = app.pos;
                     if(pos > -1){
@@ -201,7 +203,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
 var AppIcon = GObject.registerClass(
 class azTaskbar_AppIcon extends St.Button {
-    _init(settings, app, menuManager, monitorIndex) {
+    _init(settings, app, menuManager, monitorIndex, isFavorite) {
         super._init({
             reactive: true,
             can_focus: true,
@@ -213,6 +215,14 @@ class azTaskbar_AppIcon extends St.Button {
         this._menuManager = menuManager;
         this.monitorIndex = monitorIndex;
         this._settings = settings;
+        this.isFavorite = isFavorite;
+
+        this._delegate = this;
+
+        this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
+        this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
+        this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
+        this._draggable.connect('drag-end', this._onDragEnd.bind(this));
 
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
 
@@ -272,8 +282,16 @@ class azTaskbar_AppIcon extends St.Button {
 
             this._previewMenu.destroy();
 
-            if (this.child !== null)
-                this.child.destroy();
+            if (this._dragMonitor) {
+                DND.removeDragMonitor(this._dragMonitor);
+                this._dragMonitor = null;
+            }
+
+            if (this._draggable) {
+                if (this._dragging)
+                    Main.overview.endItemDrag(this);
+                this._draggable = null;
+            }
 
             this._removeMenuTimeout();
             this._removePreviewMenuTimeout();
@@ -307,6 +325,80 @@ class azTaskbar_AppIcon extends St.Button {
 
         this.connect('clicked', () => {
             this.hideLabel();
+        });
+    }
+
+    getDragActor() {
+        return this.app.create_icon_texture(this._settings.get_int('icon-size') * 1.5);
+    }
+
+    getDragActorSource() {
+        return this;
+    }
+
+    _onDragBegin() {
+        this.newIndex = -1;
+        this._removePreviewMenuTimeout();
+        this._removeMenuTimeout();
+        this.hideLabel();
+        this._dragging = true;
+        
+        
+        this._dragMonitor = {
+            dragMotion: this._onDragMotion.bind(this),
+        };
+        DND.addDragMonitor(this._dragMonitor);
+
+        this.opacity = 55;
+        Main.overview.beginItemDrag(this);
+    }
+
+    _onDragMotion(dragEvent) {
+        this.get_allocation_box();
+
+        let parentBox = this.get_parent();
+
+        let [x, y] = parentBox.get_transformed_position();
+
+        const deltaX = dragEvent.x - x;
+
+        this.index = Math.floor((deltaX) / (this.width));
+        if(this.newIndex < 0)
+            this.newIndex = this.index;
+
+        this.index = Math.min(Math.max(this.index, 0), parentBox.get_n_children() - 1);
+
+        const itemAtIndex = parentBox.get_child_at_index(this.index);
+        if(itemAtIndex instanceof AppIcon && !itemAtIndex.isFavorite && this.newIndex !== this.index){
+            this.newIndex = this.index;
+            parentBox.remove_child(this);
+            parentBox.insert_child_at_index(this, this.index);
+        }
+
+        return DND.DragMotionResult.CONTINUE;
+    }
+
+    _onDragCancelled() {
+        this._dragging = false;
+        Main.overview.cancelledItemDrag(this);
+    }
+
+    _onDragEnd() {
+        this._dragging = false;
+        this.undoFade();
+
+        if (this._dragMonitor) {
+            DND.removeDragMonitor(this._dragMonitor);
+            this._dragMonitor = null;
+        }
+        Main.overview.endItemDrag(this);
+    }
+
+    undoFade() {
+        this.ease({
+            scale_x: 1.0,
+            scale_y: 1.0,
+            opacity: 255,
         });
     }
 
