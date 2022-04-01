@@ -333,7 +333,7 @@ class azTaskbar_AppIcon extends St.Button {
 
 
         this.connect('notify::hover', () => {
-            this._syncLabel();
+            this._onHover();
         });
 
         this.connect('clicked', () => {
@@ -637,16 +637,15 @@ class azTaskbar_AppIcon extends St.Button {
         }
     }
 
-    _syncLabel() {
-        let shouldShow = this.hover;
-
-        if (shouldShow) {
+    _onHover() {
+        if (this.hover) {
             if(this.getInterestingWindows().length >= 1 && this.app.state == Shell.AppState.RUNNING)
                 this._setPreviewPopupTimeout();
             this.showLabel();
         } else {
-            this.hideLabel();
             this._removePreviewMenuTimeout();
+            this._removeMenuTimeout();
+            this.hideLabel();
         }
     }
 
