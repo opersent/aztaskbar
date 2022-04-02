@@ -25,6 +25,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._appSystem = Shell.AppSystem.get_default();
 
         this.oldAppIcons = new Map();
+        this.boxes = [];
 
         this._connections = new Map();
 
@@ -49,8 +50,11 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this.connect("destroy", () => this._destroy());
     }
 
-    _createAppItem(app, monitorIndex, isFavorite){
-        let appID = app.get_id() + ", " + monitorIndex;
+    _createAppItem(appIcon, monitorIndex, positionIndex){
+        const isFavorite = appIcon.isFavorite;
+        const app = appIcon.app;
+        const appID = app.get_id() + ", " + monitorIndex;
+
         let item = this.oldAppIcons.get(appID);
 
         //If a favorited app is running when extension starts,
@@ -59,8 +63,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         const favoriteChanged = item && item.isFavorite !== isFavorite;
 
         if(item && !favoriteChanged){
-            item.setActiveState();
-            item.setIconSize(this._settings.get_int('icon-size'));
+            item.isSet = true;
             return item;
         }
         else if(item && favoriteChanged){
@@ -68,7 +71,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             item.destroy();
         }
 
-        let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex, isFavorite);
+        let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex, positionIndex, isFavorite);
+        button.isSet = true;
         this.oldAppIcons.set(appID, button);
         return button;
     }
@@ -76,25 +80,27 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _redisplay() {
         this.oldApps = [];
 
+        //track this.oldAppIcons position in box,
+        //if app no longer running, destroy and remove form this.oldAppIcons
+        //add new apps to end position of box.
+
         if(this.boxes){
             for(let i = 0; i < this.boxes.length; i++){
-                let pos = 0;
                 this.boxes[i].get_children().forEach(actor => {
                     if(actor instanceof AppIcon){
-                        this.boxes[i].remove_child(actor);
+                        actor.isSet = false;
                         this.oldApps.push({
                             monitorIndex: actor.monitorIndex,
                             app: actor.app,
-                            pos
                         });
-                        pos++;
+                    }
+                    else{
+                        this.boxes[i].remove_child(actor);
+                        actor.destroy();
                     }
                 });
             }
         }
-
-        this.destroy_all_children();
-        this.boxes = [];
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
         let boxesCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
@@ -117,6 +123,16 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
             running = running.filter(app => getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
+            if(showFavorites){
+                let favsArray = appFavorites.getFavorites();
+                for (let i = 0; i < favsArray.length; i++) {
+                    newApps.push({
+                        app: favsArray[i],
+                        isFavorite: true,
+                    });
+                }
+            }
+
             //Search old apps, if running contains an old app, remove from running
             oldApps.forEach(oldApp => {
                 const index = running.indexOf(oldApp.app);
@@ -125,47 +141,55 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                     if (!showFavorites || !(app.get_id() in favorites)) {
                         newApps.push({
                             app,
-                            pos: oldApp.pos
+                            isFavorite: false
                         });
                     }
                 }
             });
-
-            if(showFavorites){
-                let favsArray = appFavorites.getFavorites();
-                for (let i = favsArray.length - 1; i >= 0; i--) {
-                    newApps.push({
-                        app: favsArray[i],
-                        pos: 0,
-                        isFavorite: true,
-                    });
-                }
-            }
 
             // Second: add the new apps
             running.forEach(app => {
                 if (!showFavorites || !(app.get_id() in favorites)) {
                     newApps.push({
                         app,
-                        pos: -1
+                        isFavorite: false
                     });
                 }
             });
 
-            if(newApps.length > 0){
-                let box = new St.BoxLayout();
+            let box;
+            if(!this.boxes[i]){
+                box = new St.BoxLayout();
                 this.boxes.push(box);
                 this.add_child(box);
-                newApps.forEach(app => {
-                    let item = this._createAppItem(app.app, monitorIndex, app.isFavorite);
+            }
+            else
+                box = this.boxes[i];
 
-                    let pos = app.pos;
-                    if(pos > -1){
-                        box.insert_child_at_index(item, pos);
+            if(newApps.length > 0){
+                let positionIndex = 0;
+                newApps.forEach(app => {
+                    let item = this._createAppItem(app, monitorIndex, positionIndex);
+
+                    //log(item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
+
+                    if(item.get_parent() && item.positionIndex === positionIndex){
+
                     }
-                    else{
+                    else if(item.get_parent() && item.positionIndex !== positionIndex){
+                        //log(item.app.get_name() + " moved from " + item.positionIndex + " to " + positionIndex);
+                        item.positionIndex = positionIndex;
+                        box.remove_child(item);
                         box.add_child(item);
                     }
+                    else {
+                        //log(item.app.get_name() + " added at end")
+                        box.add_child(item);
+                    }
+
+                    item.setActiveState();
+                    item.setIconSize(this._settings.get_int('icon-size'));
+                    positionIndex++;
                 });
             }
         }
@@ -183,7 +207,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
         //destroy old AppIcons that are no longer needed
         this.oldAppIcons.forEach((value,key,map) => {
-            if(!value.get_parent()){
+            if(!value.isSet){
+                //log("destroy " + value.app.get_name())
                 value.destroy();
                 this.oldAppIcons.delete(key);
             }
@@ -214,7 +239,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
 var AppIcon = GObject.registerClass(
 class azTaskbar_AppIcon extends St.Button {
-    _init(settings, app, menuManager, monitorIndex, isFavorite) {
+    _init(settings, app, menuManager, monitorIndex, positionIndex, isFavorite) {
         super._init({
             reactive: true,
             can_focus: true,
@@ -225,6 +250,7 @@ class azTaskbar_AppIcon extends St.Button {
         this.app = app;
         this._menuManager = menuManager;
         this.monitorIndex = monitorIndex;
+        this.positionIndex = positionIndex;
         this._settings = settings;
         this.isFavorite = isFavorite;
 
@@ -269,8 +295,6 @@ class azTaskbar_AppIcon extends St.Button {
         box.add_child(this.appIcon);
         this.set_child(box);
 
-        this.setActiveState();
-
         this.tooltipLabel = new St.Label({
             style_class: 'dash-label azTaskbar-Tooltip',
             text: app.get_name()
@@ -292,6 +316,9 @@ class azTaskbar_AppIcon extends St.Button {
             });
 
             this._connections = null;
+
+            if(this._menu?.isOpen)
+                this._menu.close();
 
             this._previewMenu.destroy();
 
@@ -350,13 +377,17 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragBegin() {
+        this.indicator.remove_all_transitions();
+        this.indicator.style += 'transition-duration: 0ms;';
+        this.appIcon.remove_all_transitions();
+        this.appIcon.style = 'transition-duration: 0ms;';
         this.newIndex = -1;
+
         this._removePreviewMenuTimeout();
         this._removeMenuTimeout();
         this.hideLabel();
         this._dragging = true;
-        
-        
+
         this._dragMonitor = {
             dragMotion: this._onDragMotion.bind(this),
         };
@@ -386,17 +417,22 @@ class azTaskbar_AppIcon extends St.Button {
             this.newIndex = this.index;
             parentBox.remove_child(this);
             parentBox.insert_child_at_index(this, this.index);
+            this.positionIndex = this.index;
         }
 
         return DND.DragMotionResult.CONTINUE;
     }
 
     _onDragCancelled() {
+        this.indicator.style.replace('transition-duration: 0ms;', '');
+        this.appIcon.style = null;
         this._dragging = false;
         Main.overview.cancelledItemDrag(this);
     }
 
     _onDragEnd() {
+        this.indicator.style.replace('transition-duration: 0ms;', '');
+        this.appIcon.style = null;
         this._dragging = false;
         this.undoFade();
 
@@ -420,8 +456,13 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     setActiveState(){
-        this.appIcon.set_style_pseudo_class(null)
+        if(this._dragging)
+            return;
+
+        this.appIcon.style = null;
+        this.appIcon.set_style_pseudo_class(null);
         let indicatorColor = 'transparent';
+        let indicatorWidth = 7;
 
         let windows = this.getInterestingWindows();
 
@@ -430,6 +471,7 @@ class azTaskbar_AppIcon extends St.Button {
             windows.forEach(window => {
                 if(window.has_focus()){
                     this.appIcon.add_style_pseudo_class('active');
+                    indicatorWidth = 13;
                     indicatorColor = this._settings.get_string('indicator-color-focused');
                 }
             });
@@ -439,6 +481,9 @@ class azTaskbar_AppIcon extends St.Button {
             indicatorColor = 'transparent';
 
         this.indicator.style = `background-color: ${indicatorColor};`;
+        this.indicator.ease({
+            width: indicatorWidth,
+        });
     }
 
     setForcedHighlight(highlighted) {
