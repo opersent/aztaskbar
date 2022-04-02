@@ -168,8 +168,11 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                         this.add_child(item);
                     }
 
-                    item.setActiveState();
-                    item.setIconSize(this._settings.get_int('icon-size'));
+                    if(this.mapped){
+                        item.setActiveState();
+                        item.setIconSize(this._settings.get_int('icon-size'));
+                    }
+
                     positionIndex++;
                 });
             }
@@ -206,10 +209,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
     _destroy() {
         this.oldAppIcons.forEach((value, key, map) => {
-            if(!value.get_parent()){
-                value.destroy();
-                this.oldAppIcons.delete(key);
-            }
+            value.destroy();
+            this.oldAppIcons.delete(key);
         });
         this.oldAppIcons = null;
 
@@ -219,8 +220,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         });
 
         this._connections = null;
-
-        this.destroy_all_children();
     }
 });
 
@@ -297,6 +296,11 @@ class azTaskbar_AppIcon extends St.Button {
         this._menuTimeoutId = 0;
 
         this.connect('destroy', () => {
+            this.indicator.style = 'transition-duration: 0ms;';
+            this.appIcon.style = 'transition-duration: 0ms;';
+            this.indicator.remove_all_transitions();
+            this.appIcon.remove_all_transitions();
+
             this._connections.forEach((object, id) => {
                 object.disconnect(id);
                 id = null;
@@ -364,10 +368,11 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragBegin() {
-        this.indicator.remove_all_transitions();
         this.indicator.style += 'transition-duration: 0ms;';
-        this.appIcon.remove_all_transitions();
         this.appIcon.style = 'transition-duration: 0ms;';
+        this.indicator.remove_all_transitions();
+        this.appIcon.remove_all_transitions();
+        
         this.newIndex = -1;
 
         this._removePreviewMenuTimeout();
@@ -443,7 +448,7 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     setActiveState(){
-        if(this._dragging)
+        if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
             return;
 
         this.appIcon.style = null;
