@@ -25,7 +25,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._appSystem = Shell.AppSystem.get_default();
 
         this.oldAppIcons = new Map();
-        this.boxes = [];
 
         this._connections = new Map();
 
@@ -80,31 +79,23 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _redisplay() {
         this.oldApps = [];
 
-        //track this.oldAppIcons position in box,
-        //if app no longer running, destroy and remove form this.oldAppIcons
-        //add new apps to end position of box.
-
-        if(this.boxes){
-            for(let i = 0; i < this.boxes.length; i++){
-                this.boxes[i].get_children().forEach(actor => {
-                    if(actor instanceof AppIcon){
-                        actor.isSet = false;
-                        this.oldApps.push({
-                            monitorIndex: actor.monitorIndex,
-                            app: actor.app,
-                        });
-                    }
-                    else{
-                        this.boxes[i].remove_child(actor);
-                        actor.destroy();
-                    }
+        this.get_children().forEach(actor => {
+            if(actor instanceof AppIcon){
+                actor.isSet = false;
+                this.oldApps.push({
+                    monitorIndex: actor.monitorIndex,
+                    app: actor.app,
                 });
             }
-        }
+            else{
+                this.remove_child(actor);
+                actor.destroy();
+            }
+        });
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
         let boxesCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
-
+        let positionIndex = 0;
         for(let i = 0; i < boxesCount; i++){
             let monitorIndex = i;
 
@@ -157,17 +148,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 }
             });
 
-            let box;
-            if(!this.boxes[i]){
-                box = new St.BoxLayout();
-                this.boxes.push(box);
-                this.add_child(box);
-            }
-            else
-                box = this.boxes[i];
-
             if(newApps.length > 0){
-                let positionIndex = 0;
                 newApps.forEach(app => {
                     let item = this._createAppItem(app, monitorIndex, positionIndex);
 
@@ -179,12 +160,12 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                     else if(item.get_parent() && item.positionIndex !== positionIndex){
                         //log(item.app.get_name() + " moved from " + item.positionIndex + " to " + positionIndex);
                         item.positionIndex = positionIndex;
-                        box.remove_child(item);
-                        box.add_child(item);
+                        this.remove_child(item);
+                        this.add_child(item);
                     }
                     else {
                         //log(item.app.get_name() + " added at end")
-                        box.add_child(item);
+                        this.add_child(item);
                     }
 
                     item.setActiveState();
@@ -192,17 +173,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                     positionIndex++;
                 });
             }
-        }
-
-        for(let i = 0; i < this.boxes.length - 1; i++){
-            let separator = new St.Widget({
-                style_class: "azTaskbar-Separator",
-                x_align: Clutter.ActorAlign.FILL,
-                y_align: Clutter.ActorAlign.CENTER,
-                width: 1,
-                height: 15,
-            });
-            this.boxes[i].add_child(separator);
         }
 
         //destroy old AppIcons that are no longer needed
@@ -213,6 +183,23 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 this.oldAppIcons.delete(key);
             }
         });
+
+        let children = this.get_children();
+        for(let i = 0; i < children.length; i++){
+            const appicon = children[i];
+            const previusAppicon = children[i - 1];
+            //if the previous AppIcon has different monitorIndex, add a separator.
+            if(previusAppicon && appicon.monitorIndex !== previusAppicon.monitorIndex){
+                let separator = new St.Widget({
+                    style_class: "azTaskbar-Separator",
+                    x_align: Clutter.ActorAlign.FILL,
+                    y_align: Clutter.ActorAlign.CENTER,
+                    width: 1,
+                    height: 15,
+                });
+                this.insert_child_at_index(separator, i);
+            }
+        }
 
         this.queue_relayout();
     }
