@@ -157,11 +157,12 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                     debugLog("LIST - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
 
                     if(item.get_parent() && item.positionIndex === positionIndex){
-                        //debugLog("DON'T MOVE - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
+                        debugLog("DON'T MOVE - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
                     }
                     else if(item.get_parent() && item.positionIndex !== positionIndex){
                         debugLog("MOVE - " + item.app.get_name() + " from " + item.positionIndex + " to " + positionIndex);
                         item.positionIndex = positionIndex;
+                        item.stopAllAnimations();
                         this.remove_child(item);
                         this.insert_child_at_index(item, positionIndex);
                     }
@@ -330,10 +331,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._menuTimeoutId = 0;
 
         this.connect('destroy', () => {
-            this.indicatorTop.style = 'transition-duration: 0ms;';
-            this.appIcon.style = 'transition-duration: 0ms;';
-            this.indicatorTop.remove_all_transitions();
-            this.appIcon.remove_all_transitions();
+            this.stopAllAnimations();
 
             this._connections.forEach((object, id) => {
                 object.disconnect(id);
@@ -393,6 +391,13 @@ class azTaskbar_AppIcon extends St.Button {
         });
     }
 
+    stopAllAnimations(){
+        this.indicatorTop.style += 'transition-duration: 0ms;';
+        this.appIcon.style = 'transition-duration: 0ms;';
+        this.indicatorTop.remove_all_transitions();
+        this.appIcon.remove_all_transitions();
+    }
+
     getDragActor() {
         return this.app.create_icon_texture(this._settings.get_int('icon-size') * 1.5);
     }
@@ -402,10 +407,7 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragBegin() {
-        this.indicatorTop.style += 'transition-duration: 0ms;';
-        this.appIcon.style = 'transition-duration: 0ms;';
-        this.indicatorTop.remove_all_transitions();
-        this.appIcon.remove_all_transitions();
+        this.stopAllAnimations();
         
         this.newIndex = -1;
 
@@ -493,6 +495,7 @@ class azTaskbar_AppIcon extends St.Button {
     setActiveState(){
         if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
             return;
+
         this.overlayWidget.hide();
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
