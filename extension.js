@@ -12,8 +12,6 @@ const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 let settings, appDisplayBar;
 
-const EnableLog = false;
-
 var AppDisplayBar = GObject.registerClass(
 class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _init(settings) {
@@ -154,20 +152,16 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 newApps.forEach(app => {
                     let item = this._createAppItem(app, monitorIndex, positionIndex);
 
-                    debugLog("LIST - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
-
                     if(item.get_parent() && item.positionIndex === positionIndex){
-                        debugLog("DON'T MOVE - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
+
                     }
                     else if(item.get_parent() && item.positionIndex !== positionIndex){
-                        debugLog("MOVE - " + item.app.get_name() + " from " + item.positionIndex + " to " + positionIndex);
                         item.positionIndex = positionIndex;
                         item.stopAllAnimations();
                         this.remove_child(item);
                         this.insert_child_at_index(item, positionIndex);
                     }
                     else {
-                        debugLog("ADD - " + item.app.get_name() + " at index " + positionIndex);
                         this.insert_child_at_index(item, positionIndex);
                     }
 
@@ -184,7 +178,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         //destroy old AppIcons that are no longer needed
         this.oldAppIcons.forEach((value,key,map) => {
             if(!value.isSet){
-                debugLog("destroy " + value.app.get_name())
                 value.destroy();
                 this.oldAppIcons.delete(key);
             }
@@ -840,8 +833,4 @@ function getInterestingWindows(settings, windows, monitorIndex) {
     }
 
     return windows.filter(w => !w.skipTaskbar);
-}
-
-function debugLog(msg){
-    if(EnableLog) log(msg);
 }
