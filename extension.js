@@ -12,6 +12,8 @@ const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 let settings, appDisplayBar;
 
+const EnableLog = false;
+
 var AppDisplayBar = GObject.registerClass(
 class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _init(settings) {
@@ -152,20 +154,20 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
                 newApps.forEach(app => {
                     let item = this._createAppItem(app, monitorIndex, positionIndex);
 
-                    //log(item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
+                    debugLog("LIST - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
 
                     if(item.get_parent() && item.positionIndex === positionIndex){
-
+                        //debugLog("DON'T MOVE - " + item.app.get_name() + " - pos " + positionIndex + ", on " + monitorIndex);
                     }
                     else if(item.get_parent() && item.positionIndex !== positionIndex){
-                        //log(item.app.get_name() + " moved from " + item.positionIndex + " to " + positionIndex);
+                        debugLog("MOVE - " + item.app.get_name() + " from " + item.positionIndex + " to " + positionIndex);
                         item.positionIndex = positionIndex;
                         this.remove_child(item);
-                        this.add_child(item);
+                        this.insert_child_at_index(item, positionIndex);
                     }
                     else {
-                        //log(item.app.get_name() + " added at end")
-                        this.add_child(item);
+                        debugLog("ADD - " + item.app.get_name() + " at index " + positionIndex);
+                        this.insert_child_at_index(item, positionIndex);
                     }
 
                     if(this.mapped){
@@ -181,7 +183,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         //destroy old AppIcons that are no longer needed
         this.oldAppIcons.forEach((value,key,map) => {
             if(!value.isSet){
-                //log("destroy " + value.app.get_name())
+                debugLog("destroy " + value.app.get_name())
                 value.destroy();
                 this.oldAppIcons.delete(key);
             }
@@ -253,9 +255,11 @@ class azTaskbar_AppIcon extends St.Button {
 
         let box = new St.BoxLayout({
             vertical: true,
+            y_expand: true,
+            y_align: Clutter.ActorAlign.FILL,
         });
 
-        this.indicator = new St.Widget({
+        this.indicatorTop = new St.Widget({
             style_class: 'azTaskbar-indicator',
             layout_manager: new Clutter.BinLayout(),
             x_expand: true,
@@ -263,7 +267,7 @@ class azTaskbar_AppIcon extends St.Button {
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.START,
         });
-        box.add_child(this.indicator);
+        box.add_child(this.indicatorTop);
 
         let iconSize = this._settings.get_int('icon-size');
         this.appIcon = new St.Bin({
@@ -279,7 +283,37 @@ class azTaskbar_AppIcon extends St.Button {
         this.bind_property('hover', this.appIcon, 'hover', GObject.BindingFlags.SYNC_CREATE);
 
         box.add_child(this.appIcon);
-        this.set_child(box);
+
+        this.indicatorBottom = new St.Widget({
+            style_class: 'azTaskbar-indicator',
+            layout_manager: new Clutter.BinLayout(),
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER,
+            y_expand: false,
+            y_align: Clutter.ActorAlign.END
+        });
+        box.add_child(this.indicatorBottom);
+
+        this.overlayWidget = new St.Icon({
+            icon_name: 'list-add-symbolic',
+            icon_size: 8,
+            style_class: 'azTaskbar-multi-window-indicator',
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.START,
+            y_align: Clutter.ActorAlign.START,
+        });
+        this.overlayWidget.hide();
+
+        let overlayGroup = new Clutter.Actor({
+            layout_manager: new Clutter.BinLayout(),
+            y_expand: true,
+            y_align: Clutter.ActorAlign.FILL,
+        });
+        overlayGroup.add_actor(box);
+        overlayGroup.add_actor(this.overlayWidget);
+
+        this.set_child(overlayGroup);
 
         this.tooltipLabel = new St.Label({
             style_class: 'dash-label azTaskbar-Tooltip',
@@ -296,9 +330,9 @@ class azTaskbar_AppIcon extends St.Button {
         this._menuTimeoutId = 0;
 
         this.connect('destroy', () => {
-            this.indicator.style = 'transition-duration: 0ms;';
+            this.indicatorTop.style = 'transition-duration: 0ms;';
             this.appIcon.style = 'transition-duration: 0ms;';
-            this.indicator.remove_all_transitions();
+            this.indicatorTop.remove_all_transitions();
             this.appIcon.remove_all_transitions();
 
             this._connections.forEach((object, id) => {
@@ -368,9 +402,9 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragBegin() {
-        this.indicator.style += 'transition-duration: 0ms;';
+        this.indicatorTop.style += 'transition-duration: 0ms;';
         this.appIcon.style = 'transition-duration: 0ms;';
-        this.indicator.remove_all_transitions();
+        this.indicatorTop.remove_all_transitions();
         this.appIcon.remove_all_transitions();
         
         this.newIndex = -1;
@@ -416,14 +450,14 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragCancelled() {
-        this.indicator.style.replace('transition-duration: 0ms;', '');
+        this.indicatorTop.style.replace('transition-duration: 0ms;', '');
         this.appIcon.style = null;
         this._dragging = false;
         Main.overview.cancelledItemDrag(this);
     }
 
     _onDragEnd() {
-        this.indicator.style.replace('transition-duration: 0ms;', '');
+        this.indicatorTop.style.replace('transition-duration: 0ms;', '');
         this.appIcon.style = null;
         this._dragging = false;
         this.undoFade();
@@ -450,7 +484,7 @@ class azTaskbar_AppIcon extends St.Button {
     setActiveState(){
         if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
             return;
-
+        this.overlayWidget.hide();
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
         let indicatorColor = 'transparent';
@@ -462,6 +496,8 @@ class azTaskbar_AppIcon extends St.Button {
             indicatorColor = this._settings.get_string('indicator-color-running');
             windows.forEach(window => {
                 if(window.has_focus()){
+                    if(windows.length > 1)
+                        this.overlayWidget.show();
                     this.appIcon.add_style_pseudo_class('active');
                     indicatorWidth = 13;
                     indicatorColor = this._settings.get_string('indicator-color-focused');
@@ -472,8 +508,8 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('indicators'))
             indicatorColor = 'transparent';
 
-        this.indicator.style = `background-color: ${indicatorColor};`;
-        this.indicator.ease({
+        this.indicatorTop.style = `background-color: ${indicatorColor};`;
+        this.indicatorTop.ease({
             width: indicatorWidth,
         });
     }
@@ -792,4 +828,8 @@ function getInterestingWindows(settings, windows, monitorIndex) {
     }
 
     return windows.filter(w => !w.skipTaskbar);
+}
+
+function debugLog(msg){
+    if(EnableLog) log(msg);
 }
