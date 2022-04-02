@@ -163,8 +163,8 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         this._stateChangedId = 0;
     }
 
-    _createPreviewItem(window) {
-        let preview = new WindowPreviewMenuItem(window);
+    _createPreviewItem(window, app) {
+        let preview = new WindowPreviewMenuItem(window, app);
         return preview;
     }
 
@@ -209,7 +209,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
             // Window added at newIndex
             if (newWin[newIndex] &&
                 oldWin.indexOf(newWin[newIndex]) == -1) {
-                addedItems.push({ item: this._createPreviewItem(newWin[newIndex]),
+                addedItems.push({ item: this._createPreviewItem(newWin[newIndex], this.app),
                                   pos: newIndex });
                 newIndex++;
                 continue;
@@ -224,7 +224,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
             }, false);
 
             if (insertHere || alreadyRemoved) {
-                addedItems.push({ item: this._createPreviewItem(newWin[newIndex]),
+                addedItems.push({ item: this._createPreviewItem(newWin[newIndex], this.app),
                                   pos: newIndex + removedActors.length });
                 newIndex++;
             } else {
@@ -306,57 +306,71 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
 
 var WindowPreviewMenuItem = GObject.registerClass(
 class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
-    _init(window, params) {
+    _init(window, app, params) {
         super._init(params);
 
         this._window = window;
+        this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
         [this._width, this._height, this._scale] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
 
         // We don't want this: it adds spacing on the left of the item.
         this.remove_child(this._ornamentLabel);
-        this.add_style_class_name('azTaskbar-app-well-preview-menu-item');
+        this.add_style_class_name('azTaskbar-window-preview-menu-item');
 
         // Now we don't have to set PREVIEW_MAX_WIDTH and PREVIEW_MAX_HEIGHT as preview size - that made all kinds of windows either stretched or squished (aspect ratio problem)
-        this._cloneBin = new St.Bin();
+        this._cloneBin = new St.Bin({
+            style_class: 'azTaskbar-window-preview',
+            x_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.CENTER,
+            y_expand: true
+        });
         this._cloneBin.set_size(this._width*this._scale, this._height*this._scale);
 
-        // TODO: improve the way the closebutton is layout. Just use some padding
-        // for the moment.
-        this._cloneBin.set_style('padding-bottom: 0.5em');
-
-        this.closeButton = new St.Button({ style_class: 'window-close',
-                                          x_expand: true,
-                                          y_expand: true});
-        this.closeButton.add_actor(new St.Icon({ icon_name: 'window-close-symbolic' }));
+        this.closeButton = new St.Button({ 
+            style_class: 'window-close azTaskbar-close-button',
+            x_expand: true,
+            y_expand: true
+        });
+        this.closeButton.add_actor(new St.Icon({ 
+            icon_name: 'window-close-symbolic',
+            icon_size: 20
+        }));
         this.closeButton.set_x_align(Clutter.ActorAlign.END);
         this.closeButton.set_y_align(Clutter.ActorAlign.START);
-
 
         this.closeButton.opacity = 0;
         this.closeButton.connect('clicked', this._closeWindow.bind(this));
 
-        let overlayGroup = new Clutter.Actor({layout_manager: new Clutter.BinLayout(), y_expand: true });
+        let titleBox = new St.BoxLayout({
+            x_expand: true,
+            style_class: 'azTaskbar-window-preview-header-box'
+        });
+        titleBox.add_child(this._app.create_icon_texture(20));
 
-        overlayGroup.add_actor(this._cloneBin);
+        let label = new St.Label({ 
+            text: this._app.get_name()
+        });
+        label.set_style('max-width: ' + PREVIEW_MAX_WIDTH + 'px');
+        let labelBin = new St.Bin({ child: label,
+            x_align: Clutter.ActorAlign.START,
+        });
+        titleBox.add_child(labelBin);
+
+        let overlayGroup = new Clutter.Actor({layout_manager: new Clutter.BinLayout(), y_expand: false });
+        
+        overlayGroup.add_actor(titleBox);
         overlayGroup.add_actor(this.closeButton);
 
-        let label = new St.Label({ text: window.get_title()});
-        label.set_style('max-width: '+PREVIEW_MAX_WIDTH +'px');
-        let labelBin = new St.Bin({ child: label,
-            x_align: Clutter.ActorAlign.CENTER,
+        let box = new St.BoxLayout({ 
+            vertical: true,
+            reactive: true,
+            x_expand: true,
+            y_expand: true
         });
-
-        this._windowTitleId = this._window.connect('notify::title', () => {
-                                  label.set_text(this._window.get_title());
-                              });
-
-        let box = new St.BoxLayout({ vertical: true,
-                                     reactive:true,
-                                     x_expand:true });
         box.add(overlayGroup);
-        box.add(labelBin);
+        box.add(this._cloneBin);
         this.add_actor(box);
 
         this._cloneTexture(window);
@@ -367,16 +381,13 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     _getWindowPreviewSize() {
         let mutterWindow = this._window.get_compositor_private();
 
-        if(!mutterWindow)
-            return [1, 1, 1];
-
         let [width, height] = mutterWindow.get_size();
 
         // a simple example with 1680x1050:
         // * 250/1680 = 0,1488
         // * 150/1050 = 0,1429
         // => scale is 0,1429
-        let scale = Math.min(1.0, PREVIEW_MAX_WIDTH/width, PREVIEW_MAX_HEIGHT/height)
+        let scale = Math.min(1.0, PREVIEW_MAX_WIDTH/width, PREVIEW_MAX_HEIGHT/height);
 
         // width and height that we wanna multiply by scale
         return [width, height, scale];
@@ -591,11 +602,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         if (this._destroyId > 0) {
             this._mutterWindow.disconnect(this._destroyId);
             this._destroyId = 0;
-        }
-
-        if (this._windowTitleId > 0) {
-            this._window.disconnect(this._windowTitleId);
-            this._windowTitleId = 0;
         }
     }
 });

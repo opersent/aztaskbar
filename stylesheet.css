@@ -3,8 +3,12 @@
   padding: 4px 10px;
 }
 
-.azTaskbar-app-well-preview-menu-item {
-  padding: 1em 1em 0.5em 1em;
+.azTaskbar-window-preview-menu-item {
+  padding: 0px;
+}
+
+.azTaskbar-window-preview {
+  padding: 6px;
 }
 
 .azTaskbar-Separator{
@@ -14,14 +18,16 @@
 
 .azTaskbar-indicator{
   height: 3px;
-  width: 10px;
-  border-radius: 99px;
+  width: 7px;
+  border-radius: 25px;
+  transition-duration: 300ms;
 }
 
 .azTaskbar-AppButton{
   padding: 0px 8px;
   border-radius: 99px;
   margin: 0px 1px 3px 1px;
+  transition-duration: 300ms;
 }
 
 .azTaskbar-AppButton:hover, .azTaskbar-AppButton:focus, .azTaskbar-AppButton:checked {
@@ -30,4 +36,14 @@
 
 .azTaskbar-AppButton:active{
   background-color: rgba(211, 211, 211, 0.25);
+}
+
+.azTaskbar-window-preview-header-box{
+  spacing: 8px;
+  padding: 0px 8px;
+}
+
+.azTaskbar-close-button{
+  padding: 0px;
+  margin: 4px;
 }
