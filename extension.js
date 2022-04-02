@@ -419,27 +419,36 @@ class azTaskbar_AppIcon extends St.Button {
         };
         DND.addDragMonitor(this._dragMonitor);
 
-        this.opacity = 55;
+        this.opacity = 105;
         Main.overview.beginItemDrag(this);
     }
 
     _onDragMotion(dragEvent) {
-        this.get_allocation_box();
-
         let parentBox = this.get_parent();
 
         let [x, y] = parentBox.get_transformed_position();
 
         const deltaX = dragEvent.x - x;
+        const appIconMargin = 2;
 
-        this.index = Math.floor((deltaX) / (this.width));
+        this.index = Math.ceil((deltaX) / (this.width + appIconMargin));
         if(this.newIndex < 0)
             this.newIndex = this.index;
 
         this.index = Math.min(Math.max(this.index, 0), parentBox.get_n_children() - 1);
 
         const itemAtIndex = parentBox.get_child_at_index(this.index);
-        if(itemAtIndex instanceof AppIcon && !itemAtIndex.isFavorite && this.newIndex !== this.index){
+
+        if(itemAtIndex.monitorIndex !== this.monitorIndex)
+            return DND.DragMotionResult.CONTINUE;
+
+        if(itemAtIndex.isFavorite)
+            return DND.DragMotionResult.CONTINUE;
+
+        if(this.newIndex === this.index)
+            return DND.DragMotionResult.CONTINUE;
+    
+        if(itemAtIndex instanceof AppIcon){
             this.newIndex = this.index;
             parentBox.remove_child(this);
             parentBox.insert_child_at_index(this, this.index);
