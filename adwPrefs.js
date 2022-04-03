@@ -164,7 +164,7 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
     _init(settings) {
         super._init({
             title: _("Actions"),
-            icon_name: 'info-circle-symbolic',
+            icon_name: 'input-mouse-symbolic',
             name: 'ActionsPage'
         });
         this._settings = settings;
