@@ -4,6 +4,11 @@
         <value value='0' nick='TOP'/>
         <value value='1' nick='BOTTOM'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.click-action'>
+        <value value='0' nick='CYCLE'/>
+        <value value='1' nick='CYCLE_MINIMIZE'/>
+        <value value='2' nick='PREVIEW'/>
+    </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
             <default>true</default>
@@ -54,6 +59,11 @@
             <default>20</default>
             <summary>Icon size for the AppIcons</summary>
             <description>Icon size for the AppIcons.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.click-action" name="click-action">
+            <default>'CYCLE'</default>
+            <summary>Left Click action for running AppIcons</summary>
+            <description>Left Click action for running AppIcons.</description>
         </key>
     </schema>
 </schemalist>

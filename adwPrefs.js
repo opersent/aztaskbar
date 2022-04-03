@@ -12,17 +12,17 @@ function init() {
 
 var GeneralPage = GObject.registerClass(
 class azTaskbar_GeneralPage extends Adw.PreferencesPage {
-    _init() {
+    _init(settings) {
         super._init({
             title: _("Settings"),
             icon_name: 'preferences-system-symbolic',
             name: 'GeneralPage'
         });
 
-        this._settings = ExtensionUtils.getSettings();
+        this._settings = settings;
 
         let generalGroup = new Adw.PreferencesGroup({
-            title: _("General Settings")
+            title: _("General")
         });
         this.add(generalGroup);
 
@@ -39,20 +39,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         favoritesRow.add_suffix(favoritesSwitch);
         generalGroup.add(favoritesRow);
-
-        let toolTipsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
-        });
-        let toolTipsRow = new Adw.ActionRow({
-            title: _("Tool-Tips"),
-            activatable_widget: toolTipsSwitch
-        });
-        toolTipsSwitch.set_active(this._settings.get_boolean('tool-tips'));
-        toolTipsSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('tool-tips', widget.get_active());
-        });
-        toolTipsRow.add_suffix(toolTipsSwitch);
-        generalGroup.add(toolTipsRow);
 
         let iconSizeSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
@@ -74,11 +60,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         iconSizeRow.add_suffix(iconSizeSpinButton);
         generalGroup.add(iconSizeRow);
 
-        let runningAppsGroup = new Adw.PreferencesGroup({
-            title: _("Running Apps Settings")
-        });
-        this.add(runningAppsGroup);
-
         let isolateWorkspacesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });
@@ -91,7 +72,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_boolean('isolate-workspaces', widget.get_active());
         });
         isolateWorkspacesRow.add_suffix(isolateWorkspacesSwitch);
-        runningAppsGroup.add(isolateWorkspacesRow);
+        generalGroup.add(isolateWorkspacesRow);
 
         let isolateMonitorsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -105,21 +86,12 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_boolean('isolate-monitors', widget.get_active());
         });
         isolateMonitorsRow.add_suffix(isolateMonitorsSwitch);
-        runningAppsGroup.add(isolateMonitorsRow);
+        generalGroup.add(isolateMonitorsRow);
 
-        let windowPreviewsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        let indicatorGroup = new Adw.PreferencesGroup({
+            title: _("Indicator")
         });
-        let windowPreviewsRow = new Adw.ActionRow({
-            title: _("Window Previews"),
-            activatable_widget: windowPreviewsSwitch
-        });
-        windowPreviewsSwitch.set_active(this._settings.get_boolean('window-previews'));
-        windowPreviewsSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('window-previews', widget.get_active());
-        });
-        windowPreviewsRow.add_suffix(windowPreviewsSwitch);
-        runningAppsGroup.add(windowPreviewsRow);
+        this.add(indicatorGroup);
 
         let indicatorSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -133,7 +105,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_boolean('indicators', widget.get_active());
         });
         indicatorRow.add_suffix(indicatorSwitch);
-        runningAppsGroup.add(indicatorRow);
+        indicatorGroup.add(indicatorRow);
 
         let indicatorLocations = new Gtk.StringList();
         indicatorLocations.append(_("Top"));
@@ -146,7 +118,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         indicatorLocationRow.connect("notify::selected", (widget) => {
             this._settings.set_enum('indicator-location', widget.selected);
         });
-        runningAppsGroup.add(indicatorLocationRow);
+        indicatorGroup.add(indicatorLocationRow);
 
         let color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-running'));
@@ -164,7 +136,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             activatable_widget: indicatorRunningColorButton
         });
         indicatorRunningRow.add_suffix(indicatorRunningColorButton);
-        runningAppsGroup.add(indicatorRunningRow);
+        indicatorGroup.add(indicatorRunningRow);
 
         color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-focused'));
@@ -183,7 +155,91 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             activatable_widget: indicatorFocusedColorButton
         });
         indicatorFocusedRow.add_suffix(indicatorFocusedColorButton);
-        runningAppsGroup.add(indicatorFocusedRow);
+        indicatorGroup.add(indicatorFocusedRow);
+    }
+});
+
+var ActionsPage = GObject.registerClass(
+class azTaskbar_ActionsPage extends Adw.PreferencesPage {
+    _init(settings) {
+        super._init({
+            title: _("Actions"),
+            icon_name: 'info-circle-symbolic',
+            name: 'ActionsPage'
+        });
+        this._settings = settings;
+
+        let clickActionGroup = new Adw.PreferencesGroup({
+            title: _("Click Actions")
+        });
+        this.add(clickActionGroup);
+
+        let clickOptions = new Gtk.StringList();
+        clickOptions.append(_("Toggle / Cycle"));
+        clickOptions.append(_("Toggle / Cycle + Minimize"));
+        clickOptions.append(_("Toggle / Preview"));
+        let clickOptionsRow = new Adw.ComboRow({
+            title: _("Left Click"),
+            subtitle: _("Modify Left Click Action of Running App Icons"),
+            model: clickOptions,
+            selected: this._settings.get_enum('click-action')
+        });
+        clickOptionsRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('click-action', widget.selected);
+        });
+        clickActionGroup.add(clickOptionsRow);
+
+        let scrollActionGroup = new Adw.PreferencesGroup({
+            title: _("Scroll Actions")
+        });
+        this.add(scrollActionGroup);
+
+        let scrollOptions = new Gtk.StringList();
+        scrollOptions.append(_("No Action"));
+        scrollOptions.append(_("Cycle Windows"));
+
+        let scrollOptionsRow = new Adw.ComboRow({
+            title: _("Scroll Action"),
+            model: scrollOptions,
+            //selected: this._settings.get_enum('indicator-location')
+        });
+        scrollOptionsRow.connect("notify::selected", (widget) => {
+            //this._settings.set_enum('indicator-location', widget.selected);
+        });
+        scrollActionGroup.add(scrollOptionsRow);
+
+        let hoverActionGroup = new Adw.PreferencesGroup({
+            title: _("Hover Actions")
+        });
+        this.add(hoverActionGroup);
+
+        let toolTipsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let toolTipsRow = new Adw.ActionRow({
+            title: _("Tool-Tips"),
+            activatable_widget: toolTipsSwitch
+        });
+        toolTipsSwitch.set_active(this._settings.get_boolean('tool-tips'));
+        toolTipsSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('tool-tips', widget.get_active());
+        });
+        toolTipsRow.add_suffix(toolTipsSwitch);
+        hoverActionGroup.add(toolTipsRow);
+
+        let windowPreviewsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let windowPreviewsRow = new Adw.ActionRow({
+            title: _("Window Previews"),
+            activatable_widget: windowPreviewsSwitch
+        });
+        windowPreviewsSwitch.set_active(this._settings.get_boolean('window-previews'));
+        windowPreviewsSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('window-previews', widget.get_active());
+        });
+        windowPreviewsRow.add_suffix(windowPreviewsSwitch);
+        hoverActionGroup.add(windowPreviewsRow);
     }
 });
 

@@ -329,6 +329,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
+        this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
         this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
             if (!isPoppedUp){
                 this.setForcedHighlight(false);
@@ -669,10 +670,16 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _clearCycleWindow(){
-        let windows = this.getInterestingWindows();
-        windows.forEach(window => {
+        this._cycleWindowList?.forEach(window => {
             delete window.cycled;
         });
+    }
+
+    _resetCycleWindows(){
+        if (this._cycleWindowList && this._cycleWindowList.length !== this.getInterestingWindows().length) {
+            this._clearCycleWindow();
+            this._cycleWindowList = null;
+        }
     }
 
     _setCylceWindowsTimeout() {
@@ -681,6 +688,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._cylceWindowsTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             this._cylceWindowsTimeoutId = 0;
             this._clearCycleWindow();
+            this._cycleWindowList = null;
             return GLib.SOURCE_REMOVE;
         });
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
@@ -705,30 +713,46 @@ class azTaskbar_AppIcon extends St.Button {
             this.app.open_new_window(-1);
         else{
             if(windows.length > 1){
-                //start a timer that clears cycle state after x amount of time
-                this._setCylceWindowsTimeout();
+                const clickActionSetting = this._settings.get_enum('click-action');
+                const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
+                const cycle = clickActionSetting === ClickAction.CYCLE;
+                if(cycleMinimize || cycle){
+                    //start a timer that clears cycle state after x amount of time
+                    this._setCylceWindowsTimeout();
 
-                let cycled = windows.filter(window => {
-                    if(window.cycled)
-                        return window;
-                });
-                if(cycled.length === windows.length){
-                    windows.forEach(window => {
-                        window.minimize();
-                        window.cycled = false;
+                    if(!this._cycleWindowList)
+                        this._cycleWindowList = windows;
+
+                    let cycled = this._cycleWindowList.filter(window => {
+                        if(window.cycled)
+                            return window;
                     });
-                    return;
+                    if(cycled.length === this._cycleWindowList.length){
+                        this._cycleWindowList.forEach(window => {
+                            if(cycleMinimize)
+                                window.minimize();
+                            window.cycled = false;
+                        });
+                        if(cycleMinimize)
+                            return;
+                    }
+                    for(let i = 0; i < this._cycleWindowList.length; i++){
+                        let window = this._cycleWindowList[i];
+                        if(window.has_focus() && !window.cycled){
+                            window.cycled = true;
+                        }
+                        if(!window.cycled){
+                            window.cycled = true;
+                            Main.activateWindow(window);
+                            break;
+                        }
+                    }
                 }
-                for(let i = 0; i < windows.length; i++){
-                    let window = windows[i];
-                    if(window.has_focus() && !window.cycled){
-                        window.cycled = true;
-                    }
-                    if(!window.cycled){
-                        window.cycled = true;
-                        Main.activateWindow(window);
-                        break;
-                    }
+                else{
+                    this._removePreviewMenuTimeout();
+                    this._removeMenuTimeout();
+                    this.hideLabel();
+                    this._previewMenu.popup();
                 }
             }
             else if(windows.length === 1){
@@ -870,4 +894,10 @@ function getInterestingWindows(settings, windows, monitorIndex) {
 var IndicatorLocation = {
     TOP: 0,
     BOTTOM: 1
+}
+
+var ClickAction = {
+    CYCLE: 0,
+    CYCLE_MINIMIZE: 1,
+    PREVIEW: 2,
 }
