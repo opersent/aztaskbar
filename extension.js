@@ -36,6 +36,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._redisplay()), this._settings);
 
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
+
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._redisplay()), this._appSystem);
 
         this._connections.set(global.window_manager.connect('switch-workspace', this._redisplay.bind(this)), global.window_manager);
@@ -151,17 +152,15 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             if(newApps.length > 0){
                 newApps.forEach(app => {
                     let item = this._createAppItem(app, monitorIndex, positionIndex);
+                    const parent = item.get_parent();
 
-                    if(item.get_parent() && item.positionIndex === positionIndex){
-
-                    }
-                    else if(item.get_parent() && item.positionIndex !== positionIndex){
+                    if(parent && item.positionIndex !== positionIndex){
                         item.positionIndex = positionIndex;
                         item.stopAllAnimations();
                         this.remove_child(item);
                         this.insert_child_at_index(item, positionIndex);
                     }
-                    else {
+                    else if(!parent) {
                         this.insert_child_at_index(item, positionIndex);
                     }
 
@@ -323,6 +322,8 @@ class azTaskbar_AppIcon extends St.Button {
 
         this._menuTimeoutId = 0;
 
+        this._setIndicator();
+
         this.connect('destroy', () => {
             this.stopAllAnimations();
 
@@ -361,6 +362,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections = new Map();
 
         this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-location', () => this._setIndicator()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
 
         this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
@@ -384,10 +386,24 @@ class azTaskbar_AppIcon extends St.Button {
         });
     }
 
+    _setIndicator(){
+        const indicatorLocation = this._settings.get_enum('indicator-location');
+
+        if(this.indicator)
+            this.indicator.style = null;
+
+        if(indicatorLocation === IndicatorLocation.TOP)
+            this.indicator = this.indicatorTop;
+        else
+            this.indicator = this.indicatorBottom;
+
+        this.setActiveState();
+    }
+
     stopAllAnimations(){
-        this.indicatorTop.style += 'transition-duration: 0ms;';
+        this.indicator.style += 'transition-duration: 0ms;';
         this.appIcon.style = 'transition-duration: 0ms;';
-        this.indicatorTop.remove_all_transitions();
+        this.indicator.remove_all_transitions();
         this.appIcon.remove_all_transitions();
     }
 
@@ -454,14 +470,14 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _onDragCancelled() {
-        this.indicatorTop.style.replace('transition-duration: 0ms;', '');
+        this.indicator.style.replace('transition-duration: 0ms;', '');
         this.appIcon.style = null;
         this._dragging = false;
         Main.overview.cancelledItemDrag(this);
     }
 
     _onDragEnd() {
-        this.indicatorTop.style.replace('transition-duration: 0ms;', '');
+        this.indicator.style.replace('transition-duration: 0ms;', '');
         this.appIcon.style = null;
         this._dragging = false;
         this.undoFade();
@@ -513,8 +529,8 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('indicators'))
             indicatorColor = 'transparent';
 
-        this.indicatorTop.style = `background-color: ${indicatorColor};`;
-        this.indicatorTop.ease({
+        this.indicator.style = `background-color: ${indicatorColor};`;
+        this.indicator.ease({
             width: indicatorWidth,
         });
     }
@@ -833,4 +849,9 @@ function getInterestingWindows(settings, windows, monitorIndex) {
     }
 
     return windows.filter(w => !w.skipTaskbar);
+}
+
+var IndicatorLocation = {
+    TOP: 0,
+    BOTTOM: 1
 }

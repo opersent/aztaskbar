@@ -176,6 +176,26 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
         indicatorRow.add(indicatorSwitch);
         runningAppsGroup.add(indicatorRow);
 
+        let indicatorLocationCombo = new Gtk.ComboBoxText({
+            valign: Gtk.Align.CENTER,
+            hexpand: true,
+            halign: Gtk.Align.END
+        });
+        indicatorLocationCombo.append_text(_('Top'));
+        indicatorLocationCombo.append_text(_('Bottom'));
+        indicatorLocationCombo.set_active(this._settings.get_enum('indicator-location'));
+        indicatorLocationCombo.connect('changed', (widget) => {
+            this._settings.set_enum('indicator-location', widget.get_active());
+        });
+        let indicatorLocationRow = new FrameBoxRow();
+        indicatorLocationRow.add(new Gtk.Label({
+            label: _("Indicator Location"),
+            use_markup: true,
+            xalign: 0
+        }))
+        indicatorLocationRow.add(indicatorLocationCombo);
+        runningAppsGroup.add(indicatorLocationRow);
+
         let color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-running'));
         let indicatorRunningColorButton = new Gtk.ColorButton({

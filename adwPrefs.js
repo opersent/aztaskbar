@@ -135,6 +135,19 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         indicatorRow.add_suffix(indicatorSwitch);
         runningAppsGroup.add(indicatorRow);
 
+        let indicatorLocations = new Gtk.StringList();
+        indicatorLocations.append(_("Top"));
+        indicatorLocations.append(_("Bottom"));
+        let indicatorLocationRow = new Adw.ComboRow({
+            title: _("Indicator Location"),
+            model: indicatorLocations,
+            selected: this._settings.get_enum('indicator-location')
+        });
+        indicatorLocationRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('indicator-location', widget.selected);
+        });
+        runningAppsGroup.add(indicatorLocationRow);
+
         let color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-running'));
         let indicatorRunningColorButton = new Gtk.ColorButton({
@@ -183,7 +196,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             name: 'AboutPage'
         });
 
-        //ArcMenu Logo and project description-------------------------------------
+        //Logo and project description-------------------------------------
         let arcMenuLogoGroup = new Adw.PreferencesGroup();
         let arcMenuImage = new Gtk.Image({
             margin_bottom: 5,
