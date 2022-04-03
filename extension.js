@@ -12,6 +12,9 @@ const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 let settings, appDisplayBar;
 
+const INDICATOR_RUNNING_WIDTH = 9;
+const INDICATOR_FOCUSED_WIDTH = 13;
+
 var AppDisplayBar = GObject.registerClass(
 class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _init(settings) {
@@ -32,8 +35,6 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._redisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-size', () => this._redisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this._redisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._redisplay()), this._settings);
 
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
 
@@ -322,7 +323,7 @@ class azTaskbar_AppIcon extends St.Button {
 
         this._menuTimeoutId = 0;
 
-        this._setIndicator();
+        this._setIndicatorLocation();
 
         this.connect('destroy', () => {
             this.stopAllAnimations();
@@ -362,7 +363,9 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections = new Map();
 
         this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-location', () => this._setIndicator()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-location', () => this._setIndicatorLocation()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
 
         this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
@@ -386,7 +389,7 @@ class azTaskbar_AppIcon extends St.Button {
         });
     }
 
-    _setIndicator(){
+    _setIndicatorLocation(){
         const indicatorLocation = this._settings.get_enum('indicator-location');
 
         if(this.indicator)
@@ -509,7 +512,7 @@ class azTaskbar_AppIcon extends St.Button {
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
         let indicatorColor = 'transparent';
-        let indicatorWidth = 7;
+        let indicatorWidth = INDICATOR_RUNNING_WIDTH;
 
         let windows = this.getInterestingWindows();
 
@@ -520,7 +523,7 @@ class azTaskbar_AppIcon extends St.Button {
                     if(windows.length > 1)
                         this.overlayWidget.show();
                     this.appIcon.add_style_pseudo_class('active');
-                    indicatorWidth = 13;
+                    indicatorWidth = INDICATOR_FOCUSED_WIDTH;
                     indicatorColor = this._settings.get_string('indicator-color-focused');
                 }
             });
