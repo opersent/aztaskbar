@@ -256,7 +256,7 @@ class azTaskbar_ActionsPage extends Gtk.ScrolledWindow {
         clickActionGroup.add(clickOptionsRow);
 
         this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("Scroll Action") + "</b>",
+            label: "<b>" + _("Scroll Actions") + "</b>",
             use_markup: true,
             xalign: 0
         }))
