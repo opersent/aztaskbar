@@ -354,7 +354,7 @@ class azTaskbar_AppIcon extends St.Button {
 
     _onMouseScroll(actor, event) {
         let scrollAction = this._settings.get_enum('scroll-action');
-   
+
         if(scrollAction === ScrollAction.CYCLE){
             if (!this._scrollTimeOutId) {
                 this._scrollTimeOutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
@@ -372,7 +372,7 @@ class azTaskbar_AppIcon extends St.Button {
                 let isScroll = true;
                 this._cycleWindows(windows, isScroll);
             }
-        } 
+        }
         else
             return;
     }
