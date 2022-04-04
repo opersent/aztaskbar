@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aztaskbar\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-31 15:07-0400\n"
+"POT-Creation-Date: 2022-04-04 18:02-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,82 +17,142 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: adwPrefs.js:17 prefs.js:486
+#: adwPrefs.js:17 prefs.js:599
 msgid "Settings"
 msgstr ""
 
 #: adwPrefs.js:25 prefs.js:32
-msgid "General Settings"
+msgid "General"
 msgstr ""
 
 #: adwPrefs.js:33 prefs.js:46
 msgid "Favorites"
 msgstr ""
 
-#: adwPrefs.js:47 prefs.js:64
-msgid "Tool-Tips"
-msgstr ""
-
-#: adwPrefs.js:71 prefs.js:92
+#: adwPrefs.js:57 prefs.js:74
 msgid "Icon Size"
 msgstr ""
 
-#: adwPrefs.js:78 prefs.js:101
-msgid "Running Apps Settings"
-msgstr ""
-
-#: adwPrefs.js:86 prefs.js:114
+#: adwPrefs.js:67 prefs.js:88
 msgid "Isolate Workspaces"
 msgstr ""
 
-#: adwPrefs.js:100 prefs.js:132
+#: adwPrefs.js:81 prefs.js:106
 msgid "Isolate Monitors"
 msgstr ""
 
-#: adwPrefs.js:114 prefs.js:150
-msgid "Window Previews"
+#: adwPrefs.js:92 prefs.js:118
+msgid "Indicator"
 msgstr ""
 
-#: adwPrefs.js:128 prefs.js:168
+#: adwPrefs.js:100 prefs.js:132
 msgid "Indicators"
 msgstr ""
 
-#: adwPrefs.js:150 prefs.js:194
+#: adwPrefs.js:111 prefs.js:148
+msgid "Top"
+msgstr ""
+
+#: adwPrefs.js:112 prefs.js:149
+msgid "Bottom"
+msgstr ""
+
+#: adwPrefs.js:114 prefs.js:156
+msgid "Indicator Location"
+msgstr ""
+
+#: adwPrefs.js:135 prefs.js:178
 msgid "Running Indicator Color"
 msgstr ""
 
-#: adwPrefs.js:169 prefs.js:217
+#: adwPrefs.js:154 prefs.js:201
 msgid "Focused Indicator Color"
 msgstr ""
 
-#: adwPrefs.js:181 prefs.js:492
+#: adwPrefs.js:166 prefs.js:605
+msgid "Actions"
+msgstr ""
+
+#: adwPrefs.js:173 prefs.js:230
+msgid "Click Actions"
+msgstr ""
+
+#: adwPrefs.js:178 prefs.js:242
+msgid "Toggle / Cycle"
+msgstr ""
+
+#: adwPrefs.js:179 prefs.js:243
+msgid "Toggle / Cycle + Minimize"
+msgstr ""
+
+#: adwPrefs.js:180 prefs.js:244
+msgid "Toggle / Preview"
+msgstr ""
+
+#: adwPrefs.js:182 prefs.js:251
+msgid "Left Click"
+msgstr ""
+
+#: adwPrefs.js:183 prefs.js:251
+msgid "Modify Left Click Action of Running App Icons"
+msgstr ""
+
+#: adwPrefs.js:193 prefs.js:259
+msgid "Scroll Actions"
+msgstr ""
+
+#: adwPrefs.js:198 prefs.js:271
+msgid "Cycle Windows"
+msgstr ""
+
+#: adwPrefs.js:199 prefs.js:272
+msgid "No Action"
+msgstr ""
+
+#: adwPrefs.js:201 prefs.js:279
+msgid "Scroll Action"
+msgstr ""
+
+#: adwPrefs.js:211 prefs.js:287
+msgid "Hover Actions"
+msgstr ""
+
+#: adwPrefs.js:219 prefs.js:301
+msgid "Tool-Tips"
+msgstr ""
+
+#: adwPrefs.js:233 prefs.js:319
+msgid "Window Previews"
+msgstr ""
+
+#: adwPrefs.js:249 prefs.js:611
 msgid "About"
 msgstr ""
 
-#: adwPrefs.js:200 prefs.js:275
+#: adwPrefs.js:268 prefs.js:381
 msgid "App Icons Taskbar"
 msgstr ""
 
-#: adwPrefs.js:206 prefs.js:282
+#: adwPrefs.js:274 prefs.js:388
 msgid "Show running apps and favorites on the main panel"
 msgstr ""
 
-#: adwPrefs.js:220 prefs.js:295
+#: adwPrefs.js:288 prefs.js:401
 msgid "App Icons Taskbar Version"
 msgstr ""
 
-#: adwPrefs.js:233 prefs.js:309
+#: adwPrefs.js:301 prefs.js:415
 msgid "Git Commit"
 msgstr ""
 
-#: adwPrefs.js:246 prefs.js:329
+#: adwPrefs.js:314 prefs.js:435
 msgid "GNOME Version"
 msgstr ""
 
-#: adwPrefs.js:254 prefs.js:347
+#: adwPrefs.js:322 prefs.js:453
 msgid "OS"
 msgstr ""
 
-#: adwPrefs.js:277 prefs.js:379
+#: adwPrefs.js:345 prefs.js:485
 msgid "Session Type"
 msgstr ""
