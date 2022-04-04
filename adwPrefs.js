@@ -195,16 +195,15 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
         this.add(scrollActionGroup);
 
         let scrollOptions = new Gtk.StringList();
-        scrollOptions.append(_("No Action"));
         scrollOptions.append(_("Cycle Windows"));
-
+        scrollOptions.append(_("No Action"));
         let scrollOptionsRow = new Adw.ComboRow({
             title: _("Scroll Action"),
             model: scrollOptions,
-            //selected: this._settings.get_enum('indicator-location')
+            selected: this._settings.get_enum('scroll-action')
         });
         scrollOptionsRow.connect("notify::selected", (widget) => {
-            //this._settings.set_enum('indicator-location', widget.selected);
+            this._settings.set_enum('scroll-action', widget.selected);
         });
         scrollActionGroup.add(scrollOptionsRow);
 

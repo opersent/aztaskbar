@@ -9,6 +9,10 @@
         <value value='1' nick='CYCLE_MINIMIZE'/>
         <value value='2' nick='PREVIEW'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.scroll-action'>
+        <value value='0' nick='CYCLE'/>
+        <value value='1' nick='NO_ACTION'/>
+    </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
             <default>true</default>
@@ -64,6 +68,11 @@
             <default>'CYCLE'</default>
             <summary>Left Click action for running AppIcons</summary>
             <description>Left Click action for running AppIcons.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.scroll-action" name="scroll-action">
+            <default>'CYCLE'</default>
+            <summary>Scroll action for running AppIcons</summary>
+            <description>Scroll action for running AppIcons.</description>
         </key>
     </schema>
 </schemalist>

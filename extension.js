@@ -330,6 +330,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
+        this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
         this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
             if (!isPoppedUp){
                 this.setForcedHighlight(false);
@@ -346,8 +347,38 @@ class azTaskbar_AppIcon extends St.Button {
         this.connect('destroy', () => this._onDestroy());
     }
 
+    _onMouseScroll(actor, event) {
+        let scrollAction = this._settings.get_enum('scroll-action');
+   
+        if(scrollAction === ScrollAction.CYCLE){
+            if (!this._scrollTimeOutId) {
+                this._scrollTimeOutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+                    this._scrollTimeOutId = null;
+                    return GLib.SOURCE_REMOVE;
+                });
+
+                let windows = this.getInterestingWindows();
+                if(windows.length <= 1)
+                    return;
+
+                this._removePreviewMenuTimeout();
+                this._removeMenuTimeout();
+                this.hideLabel();
+                let isScroll = true;
+                this._cycleWindows(windows, isScroll);
+            }
+        } 
+        else
+            return;
+    }
+
     _onDestroy(){
         this.stopAllAnimations();
+
+        if (this._scrollTimeOutId) {
+            GLib.source_remove(this._scrollTimeOutId);
+            this._scrollTimeOutId = null;
+        }
 
         this._connections.forEach((object, id) => {
             object.disconnect(id);
@@ -682,7 +713,7 @@ class azTaskbar_AppIcon extends St.Button {
         }
     }
 
-    _setCylceWindowsTimeout() {
+    _setCylceWindowsTimeout(windows) {
         this._removeCylceWindowsTimeout();
 
         this._cylceWindowsTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
@@ -692,6 +723,46 @@ class azTaskbar_AppIcon extends St.Button {
             return GLib.SOURCE_REMOVE;
         });
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
+    }
+
+    _cycleWindows(windows, scroll){
+        const clickActionSetting = this._settings.get_enum('click-action');
+        const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE && !scroll;
+        const cycle = clickActionSetting === ClickAction.CYCLE || scroll;
+        if(cycleMinimize || cycle){
+            //start a timer that clears cycle state after x amount of time
+            this._setCylceWindowsTimeout();
+
+            if(!this._cycleWindowList)
+                this._cycleWindowList = windows;
+
+            let cycled = this._cycleWindowList.filter(window => {
+                if(window.cycled)
+                    return window;
+            });
+            if(cycled.length === this._cycleWindowList.length){
+                this._cycleWindowList.forEach(window => {
+                    if(cycleMinimize)
+                        window.minimize();
+                    window.cycled = false;
+                });
+                if(cycleMinimize)
+                    return true;
+            }
+            for(let i = 0; i < this._cycleWindowList.length; i++){
+                let window = this._cycleWindowList[i];
+                if(window.has_focus() && !window.cycled){
+                    window.cycled = true;
+                }
+                if(!window.cycled){
+                    window.cycled = true;
+                    Main.activateWindow(window);
+                    break;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     activate(button) {
@@ -713,42 +784,7 @@ class azTaskbar_AppIcon extends St.Button {
             this.app.open_new_window(-1);
         else{
             if(windows.length > 1){
-                const clickActionSetting = this._settings.get_enum('click-action');
-                const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
-                const cycle = clickActionSetting === ClickAction.CYCLE;
-                if(cycleMinimize || cycle){
-                    //start a timer that clears cycle state after x amount of time
-                    this._setCylceWindowsTimeout();
-
-                    if(!this._cycleWindowList)
-                        this._cycleWindowList = windows;
-
-                    let cycled = this._cycleWindowList.filter(window => {
-                        if(window.cycled)
-                            return window;
-                    });
-                    if(cycled.length === this._cycleWindowList.length){
-                        this._cycleWindowList.forEach(window => {
-                            if(cycleMinimize)
-                                window.minimize();
-                            window.cycled = false;
-                        });
-                        if(cycleMinimize)
-                            return;
-                    }
-                    for(let i = 0; i < this._cycleWindowList.length; i++){
-                        let window = this._cycleWindowList[i];
-                        if(window.has_focus() && !window.cycled){
-                            window.cycled = true;
-                        }
-                        if(!window.cycled){
-                            window.cycled = true;
-                            Main.activateWindow(window);
-                            break;
-                        }
-                    }
-                }
-                else{
+                if(!this._cycleWindows(windows)){
                     this._removePreviewMenuTimeout();
                     this._removeMenuTimeout();
                     this.hideLabel();
@@ -899,5 +935,10 @@ var IndicatorLocation = {
 var ClickAction = {
     CYCLE: 0,
     CYCLE_MINIMIZE: 1,
-    PREVIEW: 2,
+    PREVIEW: 2
+}
+
+var ScrollAction = {
+    CYCLE: 0,
+    NO_ACTION: 1
 }

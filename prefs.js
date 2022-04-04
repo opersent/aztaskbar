@@ -268,11 +268,11 @@ class azTaskbar_ActionsPage extends Gtk.ScrolledWindow {
             hexpand: true,
             halign: Gtk.Align.END
         });
-        scrollOptionsCombo.append_text(_('No Action'));
         scrollOptionsCombo.append_text(_('Cycle Windows'));
-        //clickOptionsCombo.set_active(this._settings.get_enum('click-action'));
+        scrollOptionsCombo.append_text(_('No Action'));
+        scrollOptionsCombo.set_active(this._settings.get_enum('scroll-action'));
         scrollOptionsCombo.connect('changed', (widget) => {
-            //this._settings.set_enum('click-action', widget.get_active());
+            this._settings.set_enum('scroll-action', widget.get_active());
         });
         let scrollOptionsRow = new FrameBoxRow();
         scrollOptionsRow.add(new Gtk.Label({
