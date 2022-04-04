@@ -24,6 +24,9 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const PREVIEW_MAX_WIDTH = 250;
 const PREVIEW_MAX_HEIGHT = 150;
 
+const PREVIEW_ITEM_WIDTH = 250;
+const PREVIEW_ITEM_HEIGHT = 185;
+
 const PREVIEW_ANIMATION_DURATION = 250;
 
 var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.PopupMenu {
@@ -308,25 +311,31 @@ var WindowPreviewMenuItem = GObject.registerClass(
 class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     _init(window, app, params) {
         super._init(params);
-
+        this.x_align = Clutter.ActorAlign.FILL;
+        this.x_expand = true;
+        this.y_align = Clutter.ActorAlign.FILL;
+        this.y_expand = true;
         this._window = window;
         this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
         [this._width, this._height, this._scale] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
 
+        //hard set the width and height for consistancy
+        this.style = `width: ${PREVIEW_ITEM_WIDTH}px; height: ${PREVIEW_ITEM_HEIGHT}px;`
+
         // We don't want this: it adds spacing on the left of the item.
         this.remove_child(this._ornamentLabel);
         this.add_style_class_name('azTaskbar-window-preview-menu-item');
 
-        // Now we don't have to set PREVIEW_MAX_WIDTH and PREVIEW_MAX_HEIGHT as preview size - that made all kinds of windows either stretched or squished (aspect ratio problem)
         this._cloneBin = new St.Bin({
             style_class: 'azTaskbar-window-preview',
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
-            y_expand: true
+            y_expand: true,
+            x_expand: true
         });
-        this._cloneBin.set_size(this._width*this._scale, this._height*this._scale);
+        this._cloneBin.set_size(this._width * this._scale, this._height * this._scale);
 
         this.closeButton = new St.Button({ 
             style_class: 'window-close azTaskbar-close-button',
@@ -347,18 +356,23 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             x_expand: true,
             style_class: 'azTaskbar-window-preview-header-box'
         });
-        titleBox.add_child(this._app.create_icon_texture(20));
+        titleBox.add_child(this._app.create_icon_texture(24));
 
         let label = new St.Label({ 
-            text: this._app.get_name()
+            text: this._app.get_name(),
         });
-        label.set_style('max-width: ' + PREVIEW_MAX_WIDTH + 'px');
+        label.set_style('max-width: ' + PREVIEW_ITEM_WIDTH + 'px');
         let labelBin = new St.Bin({ child: label,
             x_align: Clutter.ActorAlign.START,
+            y_align: Clutter.ActorAlign.CENTER,
+            y_expand: true,
         });
         titleBox.add_child(labelBin);
 
-        let overlayGroup = new Clutter.Actor({layout_manager: new Clutter.BinLayout(), y_expand: false });
+        let overlayGroup = new Clutter.Actor({
+            layout_manager: new Clutter.BinLayout(), 
+            y_expand: false,
+        });
         
         overlayGroup.add_actor(titleBox);
         overlayGroup.add_actor(this.closeButton);
@@ -387,7 +401,8 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         // * 250/1680 = 0,1488
         // * 150/1050 = 0,1429
         // => scale is 0,1429
-        let scale = Math.min(1.0, PREVIEW_MAX_WIDTH/width, PREVIEW_MAX_HEIGHT/height);
+
+        let scale = Math.min(1.0, PREVIEW_MAX_WIDTH / width, PREVIEW_MAX_HEIGHT / height);
 
         // width and height that we wanna multiply by scale
         return [width, height, scale];
@@ -552,16 +567,12 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     show(animate) {
-        let fullWidth = this.get_width();
-
         this.opacity = 0;
-        this.set_width(0);
 
         let time = animate ? PREVIEW_ANIMATION_DURATION : 0;
         this.remove_all_transitions();
         this.ease({
             opacity: 255,
-            width: fullWidth,
             duration: time,
             mode: Clutter.AnimationMode.EASE_IN_OUT_QUAD,
         });

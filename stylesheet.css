@@ -4,11 +4,7 @@
 }
 
 .azTaskbar-window-preview-menu-item {
-  padding: 0px;
-}
-
-.azTaskbar-window-preview {
-  padding: 0px 6px 6px 6px;
+  padding: 8px;
 }
 
 .azTaskbar-Separator{
@@ -40,12 +36,13 @@
 
 .azTaskbar-window-preview-header-box{
   spacing: 8px;
-  padding: 0px 8px;
+  padding: 0px;
+  margin: 3px 0px 6px 0px;
 }
 
 .azTaskbar-close-button{
   padding: 0px;
-  margin: 4px;
+  margin: 0px;
 }
 
 .azTaskbar-multi-window-indicator{
