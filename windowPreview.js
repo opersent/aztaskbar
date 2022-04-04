@@ -35,10 +35,11 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
 
     constructor(source) {
         super(source, 0.5, St.Side.TOP);
-
+        this.actor.track_hover = true;
         this._source = source;
         this._app = this._source.app;
         let monitorIndex = this._source.monitorIndex;
+        this.appDisplayBar = source.appDisplayBar;
 
         this.actor.add_style_class_name('app-menu');
         this.actor.set_style('max-width: '  + (Main.layoutManager.monitors[monitorIndex].width  - 22) + 'px;' +
@@ -50,6 +51,8 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
             if (!this._source.mapped)
                 this.close();
         });
+
+        this.actor.connect('notify::hover', () => this._onHover());
 
         Main.uiGroup.add_actor(this.actor);
 
@@ -69,12 +72,26 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     open(animate){
-        let windows = this._source.getInterestingWindows();
-        if (windows.length > 0) {
+        if (this.shouldOpen) {
             this.redisplay();
             super.open(animate);
             this.actor.navigate_focus(null, St.DirectionType.TAB_FORWARD, false);
         }
+    }
+
+    get shouldOpen() {
+        let windows = this._source.getInterestingWindows();
+        if (windows.length > 0)
+            return true;
+        else
+            return false;
+    }
+
+    _onHover(){
+        if(this.actor.hover)
+            this.appDisplayBar.removeWindowPreviewCloseTimeout();
+        else
+            this.appDisplayBar.setWindowPreviewCloseTimeout();
     }
 
     _onDestroy() {

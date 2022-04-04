@@ -2,6 +2,8 @@ const { Clutter, GLib, GObject, Meta, Shell, St } = imports.gi;
 
 const { AppMenu } = imports.ui.appMenu;
 const AppFavorites = imports.ui.appFavorites;
+const BoxPointer = imports.ui.boxpointer;
+const Config = imports.misc.config;
 const DND = imports.ui.dnd;
 const ExtensionUtils = imports.misc.extensionUtils;
 const IconGrid = imports.ui.iconGrid;
@@ -15,6 +17,9 @@ let settings, appDisplayBar;
 const INDICATOR_RUNNING_WIDTH = 9;
 const INDICATOR_FOCUSED_WIDTH = 13;
 
+const [major] = Config.PACKAGE_VERSION.split('.');
+const shellVersion = Number.parseInt(major);
+
 var AppDisplayBar = GObject.registerClass(
 class azTaskbar_AppDisplayBar extends St.BoxLayout {
     _init(settings) {
@@ -22,7 +27,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._settings = settings;
         this.clip_to_allocation = true,
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
-        this._menuManager = new PopupMenu.PopupMenuManager(this);
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+
         this._appSystem = Shell.AppSystem.get_default();
         this.oldAppIcons = new Map();
 
@@ -64,7 +70,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             item.destroy();
         }
 
-        let button = new AppIcon(this._settings, app, this._menuManager, monitorIndex, positionIndex, isFavorite);
+        let button = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
         button.isSet = true;
         this.oldAppIcons.set(appID, button);
         return button;
@@ -209,7 +215,29 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this.queue_relayout();
     }
 
+    removeWindowPreviewCloseTimeout(){
+        if (this._windowPreviewCloseTimeoutId > 0) {
+            GLib.source_remove(this._windowPreviewCloseTimeoutId);
+            this._windowPreviewCloseTimeoutId = 0;
+        }
+    }
+
+    setWindowPreviewCloseTimeout(){
+        if(this._windowPreviewCloseTimeoutId > 0)
+            return;
+
+        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
+            this._windowPreviewCloseTimeoutId = 0;
+            let activePreview = this.menuManager.activeMenu;
+            if(activePreview)
+                activePreview.close(BoxPointer.PopupAnimation.FULL);
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
     _destroy() {
+        this.removeWindowPreviewCloseTimeout();
+
         this._connections.forEach((object, id) => {
             object.disconnect(id);
             id = null;
@@ -228,7 +256,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
 var AppIcon = GObject.registerClass(
 class azTaskbar_AppIcon extends St.Button {
-    _init(settings, app, menuManager, monitorIndex, positionIndex, isFavorite) {
+    _init(appDisplayBar, app, monitorIndex, positionIndex, isFavorite) {
         super._init({
             reactive: true,
             can_focus: true,
@@ -236,11 +264,12 @@ class azTaskbar_AppIcon extends St.Button {
             button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
         });
 
+        this.appDisplayBar = appDisplayBar;
         this.app = app;
-        this._menuManager = menuManager;
+        this.menuManager = appDisplayBar.menuManager;
         this.monitorIndex = monitorIndex;
         this.positionIndex = positionIndex;
-        this._settings = settings;
+        this._settings = appDisplayBar._settings;
         this.isFavorite = isFavorite;
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
 
@@ -322,9 +351,10 @@ class azTaskbar_AppIcon extends St.Button {
         Main.layoutManager.addChrome(this.tooltipLabel);
 
         this._menu = null;
-        this._previewMenu = new WindowPreviewMenu(this);
-        this._menuManager.addMenu(this._previewMenu);
         this._menuTimeoutId = 0;
+
+        this._previewMenu = new WindowPreviewMenu(this);
+        this.menuManager.addMenu(this._previewMenu);
 
         this._setIndicatorLocation();
 
@@ -336,20 +366,46 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
-        this._connections.set(this._previewMenu.connect('open-state-changed', (menu, isPoppedUp) => {
-            if (!isPoppedUp){
-                this.setForcedHighlight(false);
-                this._onMenuPoppedDown();
-            }
-            else{
-                this.hideLabel();
-                this.setForcedHighlight(true);
-            }
-        }), this._previewMenu);
+        this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
+        if(shellVersion >= 42)
+            this._connections.set(this._previewMenu.actor.connect('captured-event', this._previewMenuCapturedEvent.bind(this)), this._previewMenu.actor);
 
         this.connect('notify::hover', () => this._onHover());
         this.connect('clicked', () => this.hideLabel());
         this.connect('destroy', () => this._onDestroy());
+    }
+
+    _previewMenuCapturedEvent(actor, event){
+        let menu = actor._delegate;
+        const targetActor = global.stage.get_event_actor(event);
+
+        if (event.type() === Clutter.EventType.ENTER &&
+                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
+            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
+
+            if(targetActor instanceof AppIcon && hoveredMenu && !targetActor.isFavorite){
+                this.appDisplayBar.removeWindowPreviewCloseTimeout();
+            }
+        }
+        else if (event.type() === Clutter.EventType.LEAVE &&
+                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
+            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
+
+            if((!hoveredMenu || !hoveredMenu.shouldOpen) && !menu.actor.hover){
+                this.appDisplayBar.setWindowPreviewCloseTimeout();
+            }
+        }
+    }
+
+    _previewMenuOpenStateChanged(menu, isPoppedUp){
+        if (!isPoppedUp){
+            this.setForcedHighlight(false);
+            this._onMenuPoppedDown();
+        }
+        else{
+            this.hideLabel();
+            this.setForcedHighlight(true);
+        }
     }
 
     _onMouseScroll(actor, event) {
@@ -394,7 +450,7 @@ class azTaskbar_AppIcon extends St.Button {
         });
         this._connections = null;
 
-        this._previewMenu.destroy();
+        this._previewMenu?.destroy();
 
         if (this._dragMonitor) {
             DND.removeDragMonitor(this._dragMonitor);
@@ -797,7 +853,7 @@ class azTaskbar_AppIcon extends St.Button {
                     this._removePreviewMenuTimeout();
                     this._removeMenuTimeout();
                     this.hideLabel();
-                    this._previewMenu.popup();
+                    this._previewMenu?.popup();
                 }
             }
             else if(windows.length === 1){
@@ -818,10 +874,17 @@ class azTaskbar_AppIcon extends St.Button {
 
     _onHover() {
         if (this.hover) {
-            if(this.getInterestingWindows().length >= 1 && this.app.state == Shell.AppState.RUNNING)
+            if(this.getInterestingWindows().length >= 1 && this.app.state == Shell.AppState.RUNNING){
                 this._setPreviewPopupTimeout();
-            this.showLabel();
-        } else {
+                if(shellVersion < 42 && this.menuManager.activeMenu)
+                    this.appDisplayBar.removeWindowPreviewCloseTimeout();
+            }
+            if(!this.menuManager.activeMenu)
+                this.showLabel();
+        }
+        else {
+            if(shellVersion < 42 && this.menuManager.activeMenu)
+                this.appDisplayBar.setWindowPreviewCloseTimeout();
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -839,12 +902,12 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _windowPreviews() {
-        if (this._previewMenu.isOpen)
+        if (this._previewMenu?.isOpen)
             return;
         else{
             this._removeMenuTimeout();
 
-            this._previewMenu.popup();
+            this._previewMenu?.popup();
         }
     }
 
@@ -852,7 +915,7 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('tool-tips'))
             return;
 
-        if (this._previewMenu.isOpen)
+        if (this._previewMenu?.isOpen)
             return;
 
         this.tooltipLabel.opacity = 0;
