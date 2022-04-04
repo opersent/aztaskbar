@@ -179,6 +179,16 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             }
         }
 
+        this.oldAppIcons.forEach((value,key,map) => {
+            if(value.isSet){
+                value.updateIconGeometry();
+            }
+            else{
+                this.oldAppIcons.delete(key);
+                value.destroy();
+            }
+        });
+
         let children = this.get_children();
         for(let i = 0; i < children.length; i++){
             const appicon = children[i];
@@ -197,27 +207,22 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         }
 
         this.queue_relayout();
-
-        this.oldAppIcons.forEach((value,key,map) => {
-            if(value.isSet){
-                value.updateIconGeometry();
-            }
-        });
     }
 
     _destroy() {
-        this.oldAppIcons.forEach((value, key, map) => {
-            value.destroy();
-            this.oldAppIcons.delete(key);
-        });
-        this.oldAppIcons = null;
-
         this._connections.forEach((object, id) => {
             object.disconnect(id);
             id = null;
         });
 
         this._connections = null;
+
+        this.oldAppIcons.forEach((value, key, map) => {
+            value.stopAllAnimations();
+            value.destroy();
+            this.oldAppIcons.delete(key);
+        });
+        this.oldAppIcons = null;
     }
 });
 
