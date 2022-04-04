@@ -313,6 +313,7 @@ var WindowPreviewMenuItem = GObject.registerClass(
 class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     _init(window, app, params) {
         super._init(params);
+        this.add_style_class_name('azTaskbar-window-preview-menu-item');
         this.x_align = Clutter.ActorAlign.FILL;
         this.x_expand = true;
         this.y_align = Clutter.ActorAlign.FILL;
@@ -321,30 +322,29 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
-        [this._width, this._height, this._scale] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
+        [this._width, this._height] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
 
-        //hard set the width and height for consistancy
+        //hard set the width and height for consistancy across all window previews
         this.style = `width: ${PREVIEW_ITEM_WIDTH}px; height: ${PREVIEW_ITEM_HEIGHT}px;`
 
         // We don't want this: it adds spacing on the left of the item.
         this.remove_child(this._ornamentLabel);
-        this.add_style_class_name('azTaskbar-window-preview-menu-item');
 
         this._cloneBin = new St.Bin({
             style_class: 'azTaskbar-window-preview',
+            style: `width: ${this._width}px; height: ${this._height}px;`,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             x_expand: true
         });
-        this._cloneBin.set_size(this._width * this._scale, this._height * this._scale);
 
-        this.closeButton = new St.Button({ 
+        this.closeButton = new St.Button({
             style_class: 'window-close azTaskbar-window-preview-close-button',
             x_expand: true,
             y_expand: true
         });
-        this.closeButton.add_actor(new St.Icon({ 
+        this.closeButton.add_actor(new St.Icon({
             icon_name: 'window-close-symbolic',
             icon_size: 20
         }));
@@ -360,7 +360,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         });
         titleBox.add_child(this._app.create_icon_texture(PREVIEW_ICON_SIZE));
 
-        let label = new St.Label({ 
+        let label = new St.Label({
             text: window.get_title(),
             style: 'font-size: 10pt; font-weight: bolder;'
         });
@@ -376,14 +376,13 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         });
 
         let overlayGroup = new Clutter.Actor({
-            layout_manager: new Clutter.BinLayout(), 
+            layout_manager: new Clutter.BinLayout(),
             y_expand: false,
         });
-        
         overlayGroup.add_actor(titleBox);
         overlayGroup.add_actor(this.closeButton);
 
-        let box = new St.BoxLayout({ 
+        let box = new St.BoxLayout({
             vertical: true,
             reactive: true,
             x_expand: true,
@@ -411,7 +410,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         let scale = Math.min(1.0, PREVIEW_MAX_WIDTH / width, PREVIEW_MAX_HEIGHT / height);
 
         // width and height that we wanna multiply by scale
-        return [width, height, scale];
+        return [width * scale, height * scale];
     }
 
     _cloneTexture(metaWin){
@@ -434,10 +433,10 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             return;
         }
 
-        let clone = new Clutter.Clone ({ source: mutterWindow,
-                                         reactive: true,
-                                         width: this._width * this._scale,
-                                         height: this._height * this._scale });
+        let clone = new Clutter.Clone ({
+            source: mutterWindow,
+            reactive: true,
+        });
 
         // when the source actor is destroyed, i.e. the window closed, first destroy the clone
         // and then destroy the menu item (do this animating out)
