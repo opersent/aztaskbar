@@ -29,6 +29,8 @@ const PREVIEW_ITEM_HEIGHT = 185;
 
 const PREVIEW_ANIMATION_DURATION = 250;
 
+const PREVIEW_ICON_SIZE = 22;
+
 var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.PopupMenu {
 
     constructor(source) {
@@ -338,7 +340,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._cloneBin.set_size(this._width * this._scale, this._height * this._scale);
 
         this.closeButton = new St.Button({ 
-            style_class: 'window-close azTaskbar-close-button',
+            style_class: 'window-close azTaskbar-window-preview-close-button',
             x_expand: true,
             y_expand: true
         });
@@ -356,18 +358,22 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             x_expand: true,
             style_class: 'azTaskbar-window-preview-header-box'
         });
-        titleBox.add_child(this._app.create_icon_texture(24));
+        titleBox.add_child(this._app.create_icon_texture(PREVIEW_ICON_SIZE));
 
         let label = new St.Label({ 
-            text: this._app.get_name(),
+            text: window.get_title(),
+            style: 'font-size: 10pt; font-weight: bolder;'
         });
-        label.set_style('max-width: ' + PREVIEW_ITEM_WIDTH + 'px');
         let labelBin = new St.Bin({ child: label,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
         });
         titleBox.add_child(labelBin);
+
+        this._windowTitleId = this._window.connect('notify::title', () => {
+            label.set_text(this._window.get_title());
+        });
 
         let overlayGroup = new Clutter.Actor({
             layout_manager: new Clutter.BinLayout(), 
@@ -381,7 +387,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             vertical: true,
             reactive: true,
             x_expand: true,
-            y_expand: true
+            y_expand: true,
         });
         box.add(overlayGroup);
         box.add(this._cloneBin);
@@ -613,6 +619,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         if (this._destroyId > 0) {
             this._mutterWindow.disconnect(this._destroyId);
             this._destroyId = 0;
+        }
+
+        if (this._windowTitleId > 0) {
+            this._window.disconnect(this._windowTitleId);
+            this._windowTitleId = 0;
         }
     }
 });

@@ -3,10 +3,6 @@
   padding: 4px 10px;
 }
 
-.azTaskbar-window-preview-menu-item {
-  padding: 8px;
-}
-
 .azTaskbar-Separator{
   background-color: rgba(211, 211, 211, 0.5); 
   margin: 0px 3px;
@@ -34,17 +30,6 @@
   background-color: rgba(211, 211, 211, 0.25);
 }
 
-.azTaskbar-window-preview-header-box{
-  spacing: 8px;
-  padding: 0px;
-  margin: 3px 0px 6px 0px;
-}
-
-.azTaskbar-close-button{
-  padding: 0px;
-  margin: 0px;
-}
-
 .azTaskbar-multi-window-indicator{
   margin: 2px 0px 0px 2px;
   padding: 2px;
@@ -53,4 +38,19 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
   transition-duration: 300ms;
+}
+
+.azTaskbar-window-preview-menu-item {
+  padding: 4px;
+}
+
+.azTaskbar-window-preview-header-box{
+  spacing: 6px;
+  padding: 0px;
+  margin: 2px 0px 4px 3px;
+}
+
+.azTaskbar-window-preview-close-button{
+  padding: 0px;
+  margin: 0px;
 }
