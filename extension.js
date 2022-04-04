@@ -380,6 +380,9 @@ class azTaskbar_AppIcon extends St.Button {
     _onDestroy(){
         this.stopAllAnimations();
 
+        this._menu?.close();
+        this._previewMenu?.close();
+
         if (this._scrollTimeOutId) {
             GLib.source_remove(this._scrollTimeOutId);
             this._scrollTimeOutId = null;
@@ -390,9 +393,6 @@ class azTaskbar_AppIcon extends St.Button {
             id = null;
         });
         this._connections = null;
-
-        if(this._menu?.isOpen)
-            this._menu.close();
 
         this._previewMenu.destroy();
 
@@ -414,6 +414,10 @@ class azTaskbar_AppIcon extends St.Button {
         this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.hide();
         this.tooltipLabel.destroy();
+    }
+
+    animateLaunch(){
+        IconGrid.zoomOutActor(this.appIcon);
     }
 
     /**
