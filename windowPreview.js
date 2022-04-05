@@ -534,16 +534,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         return n>0;
     }
 
-    vfunc_key_focus_in() {
-        super.vfunc_key_focus_in();
-        this._showCloseButton();
-    }
-
-    vfunc_key_focus_out() {
-        super.vfunc_key_focus_out();
-        this._hideCloseButton();
-    }
-
     vfunc_enter_event(crossingEvent) {
         this._showCloseButton();
         return super.vfunc_enter_event(crossingEvent);
@@ -563,7 +553,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _showCloseButton() {
-
         if (this._windowCanClose()) {
             this.closeButton.show();
             this.closeButton.remove_all_transitions();
