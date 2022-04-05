@@ -837,7 +837,7 @@ class azTaskbar_AppIcon extends St.Button {
         let isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
         let isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) != 0;
         let openNewWindow = this.app.can_open_new_window() &&
-                            this.app.state == Shell.AppState.RUNNING &&
+                            this.app.state === Shell.AppState.RUNNING &&
                             (isCtrlPressed || isMiddleButton);
 
         Main.overview.hide();
@@ -863,6 +863,7 @@ class azTaskbar_AppIcon extends St.Button {
                 else
                     window.minimize();
             }
+            //a favorited app is running, but no interesting windows on current workspace/monitor
             else if(this.app.state === Shell.AppState.RUNNING){
                 IconGrid.zoomOutActor(this.appIcon);
                 this.app.open_new_window(-1);
@@ -915,9 +916,6 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('tool-tips'))
             return;
 
-        if (this._previewMenu?.isOpen)
-            return;
-
         this.tooltipLabel.opacity = 0;
         this.tooltipLabel.show();
 
@@ -933,10 +931,11 @@ class azTaskbar_AppIcon extends St.Button {
         const yOffset = 6;
         const y = stageY + itemHeight + yOffset;
 
+        this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.set_position(x, y);
         this.tooltipLabel.ease({
             opacity: 255,
-            duration: 150,
+            duration: 250,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         });
     }
