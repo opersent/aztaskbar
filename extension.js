@@ -46,12 +46,16 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(global.display.connect('window-demands-attention', this._redisplay.bind(this)), global.display);
 
         this._redisplay();
+
+        //If AppDisplayBar position is moved in the main panel, updateIconGeometry
+        this.connect("notify::position", () => this._updateIconGeometry());
+
         this.connect("destroy", () => this._destroy());
     }
 
-    _createAppItem(appIcon, monitorIndex, positionIndex){
-        const isFavorite = appIcon.isFavorite;
-        const app = appIcon.app;
+    _createAppItem(newApp, monitorIndex, positionIndex){
+        const isFavorite = newApp.isFavorite;
+        const app = newApp.app;
         const appID = app.get_id() + ", " + monitorIndex;
 
         let item = this.oldAppIcons.get(appID);
@@ -70,10 +74,10 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             item.destroy();
         }
 
-        let button = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
-        button.isSet = true;
-        this.oldAppIcons.set(appID, button);
-        return button;
+        let appIcon = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
+        appIcon.isSet = true;
+        this.oldAppIcons.set(appID, appIcon);
+        return appIcon;
     }
 
     _redisplay() {
@@ -161,8 +165,8 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             });
 
             if(newApps.length > 0){
-                newApps.forEach(app => {
-                    let item = this._createAppItem(app, monitorIndex, positionIndex);
+                newApps.forEach(newApp => {
+                    let item = this._createAppItem(newApp, monitorIndex, positionIndex);
                     const parent = item.get_parent();
 
                     if(parent && item.positionIndex !== positionIndex){
@@ -185,13 +189,13 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
             }
         }
 
-        this.oldAppIcons.forEach((value,key,map) => {
-            if(value.isSet){
-                value.updateIconGeometry();
+        this.oldAppIcons.forEach((appIcon, appID) => {
+            if(appIcon.isSet){
+                appIcon.updateIconGeometry();
             }
             else{
-                this.oldAppIcons.delete(key);
-                value.destroy();
+                this.oldAppIcons.delete(appID);
+                appIcon.destroy();
             }
         });
 
@@ -213,6 +217,14 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         }
 
         this.queue_relayout();
+    }
+
+    _updateIconGeometry(){
+        this.oldAppIcons.forEach((appIcon, appID) => {
+            if(appIcon.isSet){
+                appIcon.updateIconGeometry();
+            }
+        });
     }
 
     removeWindowPreviewCloseTimeout(){
@@ -245,10 +257,10 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
         this._connections = null;
 
-        this.oldAppIcons.forEach((value, key, map) => {
-            value.stopAllAnimations();
-            value.destroy();
-            this.oldAppIcons.delete(key);
+        this.oldAppIcons.forEach((appIcon, appID) => {
+            appIcon.stopAllAnimations();
+            appIcon.destroy();
+            this.oldAppIcons.delete(appID);
         });
         this.oldAppIcons = null;
     }
