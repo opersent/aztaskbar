@@ -24,8 +24,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const PREVIEW_MAX_WIDTH = 250;
 const PREVIEW_MAX_HEIGHT = 150;
 
-const PREVIEW_ITEM_WIDTH = 250;
-const PREVIEW_ITEM_HEIGHT = 185;
+const PREVIEW_ITEM_WIDTH = 255;
+const PREVIEW_ITEM_HEIGHT = 190;
 
 const PREVIEW_ANIMATION_DURATION = 250;
 
@@ -60,10 +60,10 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     redisplay() {
-        if (this._previewBox)
-            this._previewBox.destroy();
-        this._previewBox = new WindowPreviewList(this._source);
-        this.addMenuItem(this._previewBox);
+        if (!this._previewBox){
+            this._previewBox = new WindowPreviewList(this._source);
+            this.addMenuItem(this._previewBox);
+        }
         this._previewBox.redisplay();
     }
 

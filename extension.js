@@ -383,7 +383,7 @@ class azTaskbar_AppIcon extends St.Button {
                 (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
             let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
 
-            if(targetActor instanceof AppIcon && hoveredMenu && !targetActor.isFavorite){
+            if(targetActor instanceof AppIcon && hoveredMenu && targetActor.getInterestingWindows().length > 0){
                 this.appDisplayBar.removeWindowPreviewCloseTimeout();
             }
         }
