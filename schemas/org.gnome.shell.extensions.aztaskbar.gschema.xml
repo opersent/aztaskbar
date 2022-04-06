@@ -13,6 +13,11 @@
         <value value='0' nick='CYCLE'/>
         <value value='1' nick='NO_ACTION'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.position-in-panel'>
+        <value value='0' nick='LEFT'/>
+        <value value='1' nick='CENTER'/>
+        <value value='2' nick='RIGHT'/>
+    </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
             <default>true</default>
@@ -73,6 +78,16 @@
             <default>'CYCLE'</default>
             <summary>Scroll action for running AppIcons</summary>
             <description>Scroll action for running AppIcons.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.position-in-panel" name="position-in-panel">
+            <default>'LEFT'</default>
+            <summary>Position in panel. LEFT, CENTER, or RIGHT</summary>
+            <description>Position in panel. LEFT, CENTER, or RIGHT</description>
+        </key>
+        <key type="i" name="position-offset">
+            <default>1</default>
+            <summary>Position in the selected panel-box</summary>
+            <description>Position in the selected panel-box.</description>
         </key>
     </schema>
 </schemalist>

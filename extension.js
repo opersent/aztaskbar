@@ -12,7 +12,7 @@ const Me = ExtensionUtils.getCurrentExtension();
 const PopupMenu = imports.ui.popupMenu;
 const { WindowPreviewMenu } = Me.imports.windowPreview;
 
-let settings, appDisplayBar;
+let settings, appDisplayBox, extensionConnections;
 
 const INDICATOR_RUNNING_WIDTH = 9;
 const INDICATOR_FOCUSED_WIDTH = 13;
@@ -20,8 +20,8 @@ const INDICATOR_FOCUSED_WIDTH = 13;
 const [major] = Config.PACKAGE_VERSION.split('.');
 const shellVersion = Number.parseInt(major);
 
-var AppDisplayBar = GObject.registerClass(
-class azTaskbar_AppDisplayBar extends St.BoxLayout {
+var AppDisplayBox = GObject.registerClass(
+class azTaskbar_AppDisplayBox extends St.BoxLayout {
     _init(settings) {
         super._init();
         this._settings = settings;
@@ -46,7 +46,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this._connections.set(global.display.connect('window-demands-attention', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(Main.layoutManager.connect('startup-complete', this._queueRedisplay.bind(this)), Main.layoutManager);
 
-        //If AppDisplayBar position is moved in the main panel, updateIconGeometry
+        //If appDisplayBox position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
 
         this.connect("destroy", () => this._destroy());
@@ -271,7 +271,7 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
 
 var AppIcon = GObject.registerClass(
 class azTaskbar_AppIcon extends St.Button {
-    _init(appDisplayBar, app, monitorIndex, positionIndex, isFavorite) {
+    _init(appDisplayBox, app, monitorIndex, positionIndex, isFavorite) {
         super._init({
             reactive: true,
             can_focus: true,
@@ -279,12 +279,12 @@ class azTaskbar_AppIcon extends St.Button {
             button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
         });
 
-        this.appDisplayBar = appDisplayBar;
+        this.appDisplayBox = appDisplayBox;
         this.app = app;
-        this.menuManager = appDisplayBar.menuManager;
+        this.menuManager = appDisplayBox.menuManager;
         this.monitorIndex = monitorIndex;
         this.positionIndex = positionIndex;
-        this._settings = appDisplayBar._settings;
+        this._settings = appDisplayBox._settings;
         this.isFavorite = isFavorite;
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
 
@@ -399,7 +399,7 @@ class azTaskbar_AppIcon extends St.Button {
             let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
 
             if(targetActor instanceof AppIcon && hoveredMenu && targetActor.getInterestingWindows().length > 0){
-                this.appDisplayBar.removeWindowPreviewCloseTimeout();
+                this.appDisplayBox.removeWindowPreviewCloseTimeout();
             }
         }
         else if (event.type() === Clutter.EventType.LEAVE &&
@@ -407,7 +407,7 @@ class azTaskbar_AppIcon extends St.Button {
             let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
 
             if((!hoveredMenu || !hoveredMenu.shouldOpen) && !menu.actor.hover){
-                this.appDisplayBar.setWindowPreviewCloseTimeout();
+                this.appDisplayBox.setWindowPreviewCloseTimeout();
             }
         }
     }
@@ -893,14 +893,14 @@ class azTaskbar_AppIcon extends St.Button {
             if(this.getInterestingWindows().length >= 1 && this.app.state == Shell.AppState.RUNNING){
                 this._setPreviewPopupTimeout();
                 if(shellVersion < 42 && this.menuManager.activeMenu)
-                    this.appDisplayBar.removeWindowPreviewCloseTimeout();
+                    this.appDisplayBox.removeWindowPreviewCloseTimeout();
             }
             if(!this.menuManager.activeMenu)
                 this.showLabel();
         }
         else {
             if(shellVersion < 42 && this.menuManager.activeMenu)
-                this.appDisplayBar.setWindowPreviewCloseTimeout();
+                this.appDisplayBox.setWindowPreviewCloseTimeout();
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -970,29 +970,55 @@ function enable() {
         Me.metadata.isWayland = true;
     else
         Me.metadata.isWayland = false;
+
     settings = ExtensionUtils.getSettings();
-    appDisplayBar = new AppDisplayBar(settings);
-    Main.panel._leftBox.add_child(appDisplayBar);
+    extensionConnections = new Map();
+    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel(true)), settings);
+    extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel(true)), settings);
+
+    appDisplayBox = new AppDisplayBox(settings);
+    addAppBoxToPanel();
 
     Main.panel.statusArea.appMenu.container.hide();
 }
 
 function disable() {
-    if(Main.panel._leftBox.contains(appDisplayBar))
-        Main.panel._leftBox.remove_child(appDisplayBar);
-
-    if (!Main.overview.visible && !Main.sessionMode.isLocked) {
+    if (!Main.overview.visible && !Main.sessionMode.isLocked)
         Main.panel.statusArea.appMenu.container.show();
-    }
 
-    appDisplayBar.destroy();
-    appDisplayBar = null;
+    extensionConnections.forEach((object, id) => {
+        object.disconnect(id);
+        id = null;
+    });
+    extensionConnections = null;
+
+    appDisplayBox.destroy();
+    appDisplayBox = null;
     settings.run_dispose();
     settings = null;
 }
 
 function init() {
     ExtensionUtils.initTranslations(Me.metadata['gettext-domain']);
+}
+
+function addAppBoxToPanel(redisplay){
+    if(redisplay){
+        appDisplayBox.destroy();
+        appDisplayBox = new AppDisplayBox(settings);
+    }
+
+    const offset = settings.get_int('position-offset');
+
+    if(settings.get_enum('position-in-panel') === PanelPosition.LEFT)
+        Main.panel._leftBox.insert_child_at_index(appDisplayBox, offset);
+    else if(settings.get_enum('position-in-panel') === PanelPosition.CENTER)
+        Main.panel._centerBox.insert_child_at_index(appDisplayBox, offset);
+    else if(settings.get_enum('position-in-panel') === PanelPosition.RIGHT){
+        let nChildren = Main.panel._rightBox.get_n_children();
+        const order = Math.clamp(nChildren - offset, 0, nChildren);
+        Main.panel._rightBox.insert_child_at_index(appDisplayBox, order);
+    }
 }
 
 function getInterestingWindows(settings, windows, monitorIndex) {
@@ -1027,4 +1053,10 @@ var ClickAction = {
 var ScrollAction = {
     CYCLE: 0,
     NO_ACTION: 1
+}
+
+var PanelPosition = {
+    LEFT: 0,
+    CENTER: 1,
+    RIGHT: 2,
 }

@@ -26,19 +26,40 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(generalGroup);
 
-        let favoritesSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        let panelPositions = new Gtk.StringList();
+        panelPositions.append(_("Left"));
+        panelPositions.append(_("Center"));
+        panelPositions.append(_("Right"));
+        let panelPositionRow = new Adw.ComboRow({
+            title: _("Position in Panel"),
+            model: panelPositions,
+            selected: this._settings.get_enum('position-in-panel')
         });
-        let favoritesRow = new Adw.ActionRow({
-            title: _("Favorites"),
-            activatable_widget: favoritesSwitch
+        panelPositionRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('position-in-panel', widget.selected);
         });
-        favoritesSwitch.set_active(this._settings.get_boolean('favorites'));
-        favoritesSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('favorites', widget.get_active());
+        generalGroup.add(panelPositionRow);
+
+        let positionOffsetSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0, upper: 15, step_increment: 1, page_increment: 1, page_size: 0,
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
         });
-        favoritesRow.add_suffix(favoritesSwitch);
-        generalGroup.add(favoritesRow);
+        positionOffsetSpinButton.set_value(this._settings.get_int('position-offset'));
+        positionOffsetSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('position-offset', widget.get_value());
+        });
+        let positionOffsetRow = new Adw.ActionRow({
+            title: _("Position Offset"),
+            subtitle: _("Offset the position within the above selected box"),
+            activatable_widget: positionOffsetSpinButton
+        });
+        positionOffsetRow.add_suffix(positionOffsetSpinButton);
+        generalGroup.add(positionOffsetRow);
 
         let iconSizeSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
@@ -59,6 +80,20 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         iconSizeRow.add_suffix(iconSizeSpinButton);
         generalGroup.add(iconSizeRow);
+
+        let favoritesSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let favoritesRow = new Adw.ActionRow({
+            title: _("Favorites"),
+            activatable_widget: favoritesSwitch
+        });
+        favoritesSwitch.set_active(this._settings.get_boolean('favorites'));
+        favoritesSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('favorites', widget.get_active());
+        });
+        favoritesRow.add_suffix(favoritesSwitch);
+        generalGroup.add(favoritesRow);
 
         let isolateWorkspacesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER

@@ -39,7 +39,7 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
         this._source = source;
         this._app = this._source.app;
         let monitorIndex = this._source.monitorIndex;
-        this.appDisplayBar = source.appDisplayBar;
+        this.appDisplayBox = source.appDisplayBox;
 
         this.actor.add_style_class_name('app-menu');
         this.actor.set_style('max-width: '  + (Main.layoutManager.monitors[monitorIndex].width  - 22) + 'px;' +
@@ -89,9 +89,9 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
 
     _onHover(){
         if(this.actor.hover)
-            this.appDisplayBar.removeWindowPreviewCloseTimeout();
+            this.appDisplayBox.removeWindowPreviewCloseTimeout();
         else
-            this.appDisplayBar.setWindowPreviewCloseTimeout();
+            this.appDisplayBox.setWindowPreviewCloseTimeout();
     }
 
     _onDestroy() {
