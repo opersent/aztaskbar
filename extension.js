@@ -33,19 +33,18 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         this.oldAppIcons = new Map();
 
         this._connections = new Map();
-        this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._redisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._redisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::favorites', () => this._redisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::icon-size', () => this._redisplay()), this._settings);
-        this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._redisplay()), AppFavorites.getAppFavorites());
-        this._connections.set(this._appSystem.connect('app-state-changed', () => this._redisplay()), this._appSystem);
-        this._connections.set(global.window_manager.connect('switch-workspace', this._redisplay.bind(this)), global.window_manager);
-        this._connections.set(global.display.connect('window-entered-monitor', this._redisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('restacked', this._redisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('window-marked-urgent', this._redisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('window-demands-attention', this._redisplay.bind(this)), global.display);
-
-        this._redisplay();
+        this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
+        this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
+        this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
+        this._connections.set(global.window_manager.connect('switch-workspace', this._queueRedisplay.bind(this)), global.window_manager);
+        this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-marked-urgent', this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-demands-attention', this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(Main.layoutManager.connect('startup-complete', this._queueRedisplay.bind(this)), Main.layoutManager);
 
         //If AppDisplayBar position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
@@ -78,6 +77,10 @@ class azTaskbar_AppDisplayBar extends St.BoxLayout {
         appIcon.isSet = true;
         this.oldAppIcons.set(appID, appIcon);
         return appIcon;
+    }
+
+    _queueRedisplay() {
+        Main.queueDeferredWork(this._workId);
     }
 
     _redisplay() {
