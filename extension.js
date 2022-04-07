@@ -765,9 +765,6 @@ class azTaskbar_AppIcon extends St.Button {
                     this.setForcedHighlight(false);
                     this._onMenuPoppedDown();
                 }
-                else{
-                    this.setForcedHighlight(true);
-                }
             }), this._menu);
 
             Main.uiGroup.add_actor(this._menu.actor);
@@ -775,6 +772,7 @@ class azTaskbar_AppIcon extends St.Button {
         }
 
         this._menu.open();
+        this.setForcedHighlight(true);
         this._contextMenuManager.ignoreRelease();
 
         return false;
