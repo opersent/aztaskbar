@@ -48,8 +48,9 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
 
         // Chain our visibility and lifecycle to that of the source
         this._mappedId = this._source.connect('notify::mapped', () => {
-            if (!this._source.mapped)
+            if (!this._source.mapped){
                 this.close();
+            }
         });
 
         this.actor.connect('notify::hover', () => this._onHover());
@@ -373,7 +374,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         let titleBox = new St.BoxLayout({
             x_expand: true,
-            style_class: 'azTaskbar-window-preview-header-box'
+            style_class: 'azTaskbar-window-preview-header-box',
         });
         titleBox.add_child(this._app.create_icon_texture(PREVIEW_ICON_SIZE));
 

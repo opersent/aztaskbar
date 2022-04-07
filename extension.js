@@ -14,7 +14,7 @@ const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 let settings, appDisplayBox, extensionConnections;
 
-const INDICATOR_RUNNING_WIDTH = 9;
+const INDICATOR_RUNNING_WIDTH = 7;
 const INDICATOR_FOCUSED_WIDTH = 13;
 
 const [major] = Config.PACKAGE_VERSION.split('.');
@@ -327,6 +327,10 @@ class azTaskbar_AppIcon extends St.Button {
         this.bind_property('hover', this.appIcon, 'hover', GObject.BindingFlags.SYNC_CREATE);
         box.add_child(this.appIcon);
 
+        this.desaturateEffect = new Clutter.DesaturateEffect();
+        this.appIcon.add_effect(this.desaturateEffect);
+        this._setDesaturateEffect();
+
         this.indicatorBottom = new St.Widget({
             style_class: 'azTaskbar-indicator',
             layout_manager: new Clutter.BinLayout(),
@@ -378,6 +382,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections.set(this._settings.connect('changed::indicator-location', () => this._setIndicatorLocation()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
@@ -388,6 +393,10 @@ class azTaskbar_AppIcon extends St.Button {
         this.connect('notify::hover', () => this._onHover());
         this.connect('clicked', () => this.hideLabel());
         this.connect('destroy', () => this._onDestroy());
+    }
+
+    _setDesaturateEffect(){
+        this.desaturateEffect.factor = this._settings.get_double('desaturation-factor');
     }
 
     _previewMenuCapturedEvent(actor, event){

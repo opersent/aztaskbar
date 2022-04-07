@@ -89,5 +89,10 @@
             <summary>Position in the selected panel-box</summary>
             <description>Position in the selected panel-box.</description>
         </key>
+        <key type="d" name="desaturation-factor">
+            <default>0.0</default>
+            <summary>Desaturate effect for AppIcons. 0.0 - 1.0</summary>
+            <description>Desaturate effect for AppIcons. 0.0 - 1.0, 0 = off</description>
+        </key>
     </schema>
 </schemalist>

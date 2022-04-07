@@ -105,6 +105,30 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
         iconSizeRow.add(iconSizeSpinButton);
         generalGroup.add(iconSizeRow);
 
+        let desatureFactorSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0.0, upper: 1.0, step_increment: 0.05, page_increment: 0.1, page_size: 0,
+            }),
+            climb_rate: 0.05,
+            digits: 2,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+            halign: Gtk.Align.END,
+            hexpand: true
+        });
+        desatureFactorSpinButton.set_value(this._settings.get_double('desaturation-factor'));
+        desatureFactorSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_double('desaturation-factor', widget.get_value());
+        });
+        let desatureFactorRow = new FrameBoxRow();
+        desatureFactorRow.add(new Gtk.Label({
+            label: _("Icon Desaturate Factor"),
+            use_markup: true,
+            xalign: 0
+        }))
+        desatureFactorRow.add(desatureFactorSpinButton);
+        generalGroup.add(desatureFactorRow);
+
         let favoritesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER,
             hexpand: true,
