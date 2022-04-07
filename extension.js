@@ -331,9 +331,9 @@ class azTaskbar_AppIcon extends St.Button {
             style_class: 'azTaskbar-indicator',
             layout_manager: new Clutter.BinLayout(),
             x_expand: true,
-            x_align: Clutter.ActorAlign.CENTER,
             y_expand: false,
-            y_align: Clutter.ActorAlign.END
+            x_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.START,
         });
         box.add_child(this.indicatorBottom);
 
@@ -633,6 +633,8 @@ class azTaskbar_AppIcon extends St.Button {
         if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
             return;
 
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+
         this.overlayWidget.hide();
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
@@ -640,13 +642,13 @@ class azTaskbar_AppIcon extends St.Button {
         let indicatorWidth = INDICATOR_RUNNING_WIDTH;
 
         let windows = this.getInterestingWindows();
-
         if(windows.length >= 1){
             indicatorColor = this._settings.get_string('indicator-color-running');
             windows.forEach(window => {
                 if(window.has_focus()){
                     if(windows.length > 1)
                         this.overlayWidget.show();
+
                     this.appIcon.add_style_pseudo_class('active');
                     indicatorWidth = INDICATOR_FOCUSED_WIDTH;
                     indicatorColor = this._settings.get_string('indicator-color-focused');
@@ -657,9 +659,18 @@ class azTaskbar_AppIcon extends St.Button {
         if(!this._settings.get_boolean('indicators'))
             indicatorColor = 'transparent';
 
+        //Some visual glitches occur during easing of the indicator width
+        //when the condition below is met. Offset the width of the indicator
+        //by 1px in this case.
+        let offset = (this._settings.get_int('icon-size') % 2) === (INDICATOR_RUNNING_WIDTH % 2) ? 1 : 0;
+        indicatorWidth -= offset;
+
+        this.indicator.remove_all_transitions();
         this.indicator.style = `background-color: ${indicatorColor};`;
         this.indicator.ease({
-            width: indicatorWidth,
+            width: indicatorWidth * scaleFactor,
+            duration: 300,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         });
     }
 
