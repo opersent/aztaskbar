@@ -51,6 +51,10 @@ Additional credits:
 
 ### Contributors:
 
+#### App Icons Taskbar Logo
+
+Created by **@[AndyC](https://gitlab.com/LinxGem33)** and licensed under CC BY-SA 4.0
+
 #### Thanks to the following people for contributing via merge requests:
 
 **@[wednesbunny](https://gitlab.com/wednesbunny)**
