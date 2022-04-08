@@ -427,26 +427,26 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
 
         let projectUrl = Me.metadata.url;
 
-        let arcMenuImage = new Gtk.Image({
+        let azTaskbarImage = new Gtk.Image({
             margin_bottom: 5,
-            icon_name: 'arc-menu-logo',
+            icon_name: 'aztaskbar-logo',
             pixel_size: 100,
         });
-        let arcMenuImageBox = new Gtk.Box( {
+        let azTaskbarImageBox = new Gtk.Box( {
             orientation: Gtk.Orientation.VERTICAL,
             margin_top: 10,
             margin_bottom: 10,
             hexpand: false,
             vexpand: false
         });
-        arcMenuImageBox.append(arcMenuImage);
+        azTaskbarImageBox.append(azTaskbarImage);
 
-        let arcMenuInfoBox = new Gtk.Box( {
+        let azTaskbarInfoBox = new Gtk.Box( {
             orientation: Gtk.Orientation.VERTICAL,
             hexpand: false,
             vexpand: false
         });
-        let arcMenuLabel = new Gtk.Label({
+        let azTaskbarLabel = new Gtk.Label({
             label: '<span size="large"><b>' + _('App Icons Taskbar') + '</b></span>',
             use_markup: true,
             vexpand: true,
@@ -462,7 +462,7 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
 
         let extensionInfoFrame = new FrameBox();
 
-        let arcMenuVersionRow = new FrameBoxRow({
+        let azTaskbarVersionRow = new FrameBoxRow({
             selectable: false,
             activatable: false
         });
@@ -475,9 +475,9 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
             sensitive: false,
             halign: Gtk.Align.END
         });
-        arcMenuVersionRow.add(versionText);
-        arcMenuVersionRow.add(versionInfo);
-        extensionInfoFrame.add(arcMenuVersionRow);
+        azTaskbarVersionRow.add(versionText);
+        azTaskbarVersionRow.add(versionInfo);
+        extensionInfoFrame.add(azTaskbarVersionRow);
 
         let commitRow = new FrameBoxRow();
         let commitText = new Gtk.Label({
@@ -599,8 +599,8 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
         linksBox.append(projectLinkButton);
         linksBox.append(donateLinkButton);
 
-        arcMenuImageBox.append(arcMenuLabel);
-        arcMenuImageBox.append(projectDescriptionLabel);
+        azTaskbarImageBox.append(azTaskbarLabel);
+        azTaskbarImageBox.append(projectDescriptionLabel);
 
         let gnuSofwareLabel = new Gtk.Label({
             label: _(GNU_SOFTWARE),
@@ -616,8 +616,8 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
         });
         gnuSofwareLabelBox.append(gnuSofwareLabel);
 
-        this.mainBox.append(arcMenuImageBox);
-        this.mainBox.append(arcMenuInfoBox);
+        this.mainBox.append(azTaskbarImageBox);
+        this.mainBox.append(azTaskbarInfoBox);
         this.mainBox.append(extensionInfoFrame);
 
         this.mainBox.append(gnuSofwareLabelBox);

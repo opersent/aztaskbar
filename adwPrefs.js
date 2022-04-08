@@ -307,19 +307,19 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         });
 
         //Logo and project description-------------------------------------
-        let arcMenuLogoGroup = new Adw.PreferencesGroup();
-        let arcMenuImage = new Gtk.Image({
+        let azTaskbarLogoGroup = new Adw.PreferencesGroup();
+        let azTaskbarImage = new Gtk.Image({
             margin_bottom: 5,
-            icon_name: 'arc-menu-logo',
+            icon_name: 'aztaskbar-logo',
             pixel_size: 100,
         });
-        let arcMenuImageBox = new Gtk.Box( {
+        let azTaskbarImageBox = new Gtk.Box( {
             orientation: Gtk.Orientation.VERTICAL,
             hexpand: false,
             vexpand: false
         });
-        arcMenuImageBox.append(arcMenuImage);
-        let arcMenuLabel = new Gtk.Label({
+        azTaskbarImageBox.append(azTaskbarImage);
+        let azTaskbarLabel = new Gtk.Label({
             label: '<span size="larger"><b>' + _('App Icons Taskbar') + '</b></span>',
             use_markup: true,
             vexpand: true,
@@ -330,16 +330,16 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             hexpand: false,
             vexpand: false,
         });
-        arcMenuImageBox.append(arcMenuLabel);
-        arcMenuImageBox.append(projectDescriptionLabel);
-        arcMenuLogoGroup.add(arcMenuImageBox);
+        azTaskbarImageBox.append(azTaskbarLabel);
+        azTaskbarImageBox.append(projectDescriptionLabel);
+        azTaskbarLogoGroup.add(azTaskbarImageBox);
 
-        this.add(arcMenuLogoGroup);
+        this.add(azTaskbarLogoGroup);
         //-----------------------------------------------------------------------
 
         //Extension/OS Info Group------------------------------------------------
         let extensionInfoGroup = new Adw.PreferencesGroup();
-        let arcMenuVersionRow = new Adw.ActionRow({
+        let azTaskbarVersionRow = new Adw.ActionRow({
             title: _("App Icons Taskbar Version"),
         });
         let releaseVersion;
@@ -347,10 +347,10 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             releaseVersion = Me.metadata.version;
         else
             releaseVersion = 'unknown';
-        arcMenuVersionRow.add_suffix(new Gtk.Label({
+        azTaskbarVersionRow.add_suffix(new Gtk.Label({
             label: releaseVersion + ''
         }));
-        extensionInfoGroup.add(arcMenuVersionRow);
+        extensionInfoGroup.add(azTaskbarVersionRow);
 
         let commitRow = new Adw.ActionRow({
             title: _('Git Commit')
