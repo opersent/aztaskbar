@@ -61,10 +61,12 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     redisplay() {
-        if (!this._previewBox){
-            this._previewBox = new WindowPreviewList(this._source);
-            this.addMenuItem(this._previewBox);
-        }
+        if (this._previewBox)
+            this._previewBox.destroy();
+
+        this._previewBox = new WindowPreviewList(this._source);
+        this.addMenuItem(this._previewBox);
+        
         this._previewBox.redisplay();
     }
 
@@ -193,13 +195,13 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
 
     redisplay () {
         let children = this._getMenuItems().filter(function(actor) {
-                return actor._window;
-            });
+            return actor._window;
+        });
 
         // Windows currently on the menu
         let oldWin = children.map(function(actor) {
-                return actor._window;
-            });
+            return actor._window;
+        });
 
         // All app windows with a static order
         let newWin = this._source.getInterestingWindows().sort(function(a, b) {
