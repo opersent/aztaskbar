@@ -46,6 +46,7 @@ When reporting a bug, please provide as much information as you can about the is
 
 Additional credits:
 * Large parts of the window preview feature copied from Dash to Dock extension and modified for this extensions needs.
+* AppIcon mouse scroll cycle window logic borrowed from Dash to Panel (https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430)
 
 -----
 

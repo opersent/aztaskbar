@@ -437,7 +437,20 @@ class azTaskbar_AppIcon extends St.Button {
     _onMouseScroll(actor, event) {
         let scrollAction = this._settings.get_enum('scroll-action');
 
-        if(scrollAction === ScrollAction.CYCLE){
+        let direction;
+
+        switch (event.get_scroll_direction()) {
+            case Clutter.ScrollDirection.UP:
+            case Clutter.ScrollDirection.LEFT:
+                direction = 'up';
+                break;
+            case Clutter.ScrollDirection.DOWN:
+            case Clutter.ScrollDirection.RIGHT:
+                direction = 'down';
+                break;
+        }
+
+        if(scrollAction === ScrollAction.CYCLE && direction){
             if (!this._scrollTimeOutId) {
                 this._scrollTimeOutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
                     this._scrollTimeOutId = null;
@@ -451,8 +464,7 @@ class azTaskbar_AppIcon extends St.Button {
                 this._removePreviewMenuTimeout();
                 this._removeMenuTimeout();
                 this.hideLabel();
-                let isScroll = true;
-                this._cycleWindows(windows, isScroll);
+                this._cycleWindows(windows, direction);
             }
         }
         else
@@ -825,11 +837,31 @@ class azTaskbar_AppIcon extends St.Button {
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
     }
 
-    _cycleWindows(windows, scroll){
+    _cycleWindows(windows, scrollDirection){
+        windows = windows.sort((a, b) => {
+            return a.get_stable_sequence() > b.get_stable_sequence();
+        });
+        
         const clickActionSetting = this._settings.get_enum('click-action');
-        const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE && !scroll;
-        const cycle = clickActionSetting === ClickAction.CYCLE || scroll;
-        if(cycleMinimize || cycle){
+        const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
+        const cycle = clickActionSetting === ClickAction.CYCLE;
+        if(scrollDirection){
+            //mouse scroll cycle window logic borrowed from Dash to Panel
+            //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
+            let windowIndex = windows.indexOf(global.display.focus_window);
+            let nextWindowIndex = windowIndex < 0 ? 0 : 
+                                  windowIndex + (scrollDirection == 'up' ? -1 : 1);
+        
+            if(nextWindowIndex === windows.length)
+                nextWindowIndex = 0;
+            else if(nextWindowIndex < 0)
+                nextWindowIndex = windows.length - 1;
+        
+            if(windowIndex != nextWindowIndex)
+                Main.activateWindow(windows[nextWindowIndex]);
+            return true;
+        }
+        else if(cycleMinimize || cycle){
             //start a timer that clears cycle state after x amount of time
             this._setCylceWindowsTimeout();
 
