@@ -115,7 +115,9 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
             let appFavorites = AppFavorites.getAppFavorites();
             let favorites = appFavorites.getFavoriteMap();
 
-            let showFavorites = monitorIndex === Main.layoutManager.primaryIndex && this._settings.get_boolean('favorites');
+            //if both Favorites and Isolate Monitors enabled, only show favs in primary monitor section
+            let showFavorites = this._settings.get_boolean('favorites') && 
+                (isolateMonitors ? monitorIndex === Main.layoutManager.primaryIndex : true);
 
             let running = this._appSystem.get_running();
 
