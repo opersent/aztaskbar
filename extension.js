@@ -3,7 +3,6 @@ const { Clutter, GLib, GObject, Meta, Shell, St } = imports.gi;
 const { AppMenu } = imports.ui.appMenu;
 const AppFavorites = imports.ui.appFavorites;
 const BoxPointer = imports.ui.boxpointer;
-const Config = imports.misc.config;
 const DND = imports.ui.dnd;
 const ExtensionUtils = imports.misc.extensionUtils;
 const IconGrid = imports.ui.iconGrid;
@@ -17,9 +16,6 @@ let settings, appDisplayBox, extensionConnections;
 const INDICATOR_RUNNING_WIDTH = 7;
 const INDICATOR_FOCUSED_WIDTH = 13;
 
-const [major] = Config.PACKAGE_VERSION.split('.');
-const shellVersion = Number.parseInt(major);
-
 var AppDisplayBox = GObject.registerClass(
 class azTaskbar_AppDisplayBox extends St.BoxLayout {
     _init(settings) {
@@ -28,9 +24,9 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         this.clip_to_allocation = true,
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
         this.menuManager = new PopupMenu.PopupMenuManager(this);
-
         this._appSystem = Shell.AppSystem.get_default();
         this.oldAppIcons = new Map();
+        this.peekInitialWorkspaceIndex = -1;
 
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
@@ -39,7 +35,11 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
-        this._connections.set(global.window_manager.connect('switch-workspace', this._queueRedisplay.bind(this)), global.window_manager);
+        this._connections.set(this._appSystem.connect('installed-changed', () => {
+            AppFavorites.getAppFavorites().reload();
+            this._queueRedisplay();
+        }), this._appSystem);
+        this._connections.set(global.window_manager.connect('switch-workspace', () => this._queueRedisplay()), global.window_manager);
         this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-marked-urgent', this._queueRedisplay.bind(this)), global.display);
@@ -48,7 +48,6 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
 
         //If appDisplayBox position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
-
         this.connect("destroy", () => this._destroy());
     }
 
@@ -77,6 +76,26 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         appIcon.isSet = true;
         this.oldAppIcons.set(appID, appIcon);
         return appIcon;
+    }
+
+    /**
+     * this._appSystem.get_running() is slow to update
+     * use this function from Dash to Panel instead,
+    */
+    _getRunningApps() {
+        let tracker = Shell.WindowTracker.get_default();
+        let windows = global.get_window_actors();
+        let apps = [];
+
+        for (let i = 0, l = windows.length; i < l; ++i) {
+            let app = tracker.get_window_app(windows[i].metaWindow);
+
+            if (app && apps.indexOf(app) < 0) {
+                apps.push(app);
+            }
+        }
+
+        return apps;
     }
 
     _queueRedisplay() {
@@ -116,10 +135,10 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
             let favorites = appFavorites.getFavoriteMap();
 
             //if both Favorites and Isolate Monitors enabled, only show favs in primary monitor section
-            let showFavorites = this._settings.get_boolean('favorites') && 
+            let showFavorites = this._settings.get_boolean('favorites') &&
                 (isolateMonitors ? monitorIndex === Main.layoutManager.primaryIndex : true);
 
-            let running = this._appSystem.get_running();
+            let running = this._getRunningApps();
 
             running = running.filter(app => getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
@@ -159,7 +178,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
                 }
             });
 
-            // Second: add the new apps
+            //add the new apps
             running.forEach(app => {
                 if (!showFavorites || !(app.get_id() in favorites)) {
                     newApps.push({
@@ -184,11 +203,6 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
                         this.insert_child_at_index(item, positionIndex);
                     }
 
-                    if(item.get_stage()){
-                        item.setActiveState();
-                        item.setIconSize(this._settings.get_int('icon-size'));
-                    }
-
                     positionIndex++;
                 });
             }
@@ -197,6 +211,8 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         this.oldAppIcons.forEach((appIcon, appID) => {
             if(appIcon.isSet){
                 appIcon.updateIconGeometry();
+                appIcon.setActiveState();
+                appIcon.setIconSize(this._settings.get_int('icon-size'));
             }
             else{
                 this.oldAppIcons.delete(appID);
@@ -243,11 +259,12 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         if(this._windowPreviewCloseTimeoutId > 0)
             return;
 
-        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
-            this._windowPreviewCloseTimeoutId = 0;
+        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
             let activePreview = this.menuManager.activeMenu;
             if(activePreview)
                 activePreview.close(BoxPointer.PopupAnimation.FULL);
+
+            this._windowPreviewCloseTimeoutId = 0;
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -374,7 +391,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._menu = null;
         this._menuTimeoutId = 0;
 
-        this._previewMenu = new WindowPreviewMenu(this);
+        this._previewMenu = new WindowPreviewMenu(this, this.menuManager);
         this.menuManager.addMenu(this._previewMenu);
 
         this._setIndicatorLocation();
@@ -389,8 +406,6 @@ class azTaskbar_AppIcon extends St.Button {
         this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
         this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
-        if(shellVersion >= 42)
-            this._connections.set(this._previewMenu.actor.connect('captured-event', this._previewMenuCapturedEvent.bind(this)), this._previewMenu.actor);
 
         this.connect('notify::hover', () => this._onHover());
         this.connect('clicked', () => this.hideLabel());
@@ -399,28 +414,6 @@ class azTaskbar_AppIcon extends St.Button {
 
     _setDesaturateEffect(){
         this.desaturateEffect.factor = this._settings.get_double('desaturation-factor');
-    }
-
-    _previewMenuCapturedEvent(actor, event){
-        let menu = actor._delegate;
-        const targetActor = global.stage.get_event_actor(event);
-
-        if (event.type() === Clutter.EventType.ENTER &&
-                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
-            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
-
-            if(targetActor instanceof AppIcon && hoveredMenu && targetActor.getInterestingWindows().length > 0){
-                this.appDisplayBox.removeWindowPreviewCloseTimeout();
-            }
-        }
-        else if (event.type() === Clutter.EventType.LEAVE &&
-                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
-            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
-
-            if((!hoveredMenu || !hoveredMenu.shouldOpen) && !menu.actor.hover){
-                this.appDisplayBox.setWindowPreviewCloseTimeout();
-            }
-        }
     }
 
     _previewMenuOpenStateChanged(menu, isPoppedUp){
@@ -841,7 +834,7 @@ class azTaskbar_AppIcon extends St.Button {
         windows = windows.sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
-        
+
         const clickActionSetting = this._settings.get_enum('click-action');
         const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
         const cycle = clickActionSetting === ClickAction.CYCLE;
@@ -849,14 +842,14 @@ class azTaskbar_AppIcon extends St.Button {
             //mouse scroll cycle window logic borrowed from Dash to Panel
             //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
             let windowIndex = windows.indexOf(global.display.focus_window);
-            let nextWindowIndex = windowIndex < 0 ? 0 : 
+            let nextWindowIndex = windowIndex < 0 ? 0 :
                                   windowIndex + (scrollDirection == 'up' ? -1 : 1);
-        
+
             if(nextWindowIndex === windows.length)
                 nextWindowIndex = 0;
             else if(nextWindowIndex < 0)
                 nextWindowIndex = windows.length - 1;
-        
+
             if(windowIndex != nextWindowIndex)
                 Main.activateWindow(windows[nextWindowIndex]);
             return true;
@@ -942,17 +935,13 @@ class azTaskbar_AppIcon extends St.Button {
 
     _onHover() {
         if (this.hover) {
-            if(this.getInterestingWindows().length >= 1 && this.app.state == Shell.AppState.RUNNING){
+            if(this.getInterestingWindows().length >= 1){
                 this._setPreviewPopupTimeout();
-                if(shellVersion < 42 && this.menuManager.activeMenu)
-                    this.appDisplayBox.removeWindowPreviewCloseTimeout();
             }
             if(!this.menuManager.activeMenu)
                 this.showLabel();
         }
         else {
-            if(shellVersion < 42 && this.menuManager.activeMenu)
-                this.appDisplayBox.setWindowPreviewCloseTimeout();
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -992,11 +981,29 @@ class azTaskbar_AppIcon extends St.Button {
         const itemHeight = this.allocation.get_height();
 
         const labelWidth = this.tooltipLabel.get_width();
+        const labelHeight = this.tooltipLabel.get_height();
         const xOffset = Math.floor((itemWidth - labelWidth) / 2);
         const x = Math.clamp(stageX + xOffset, 0, global.stage.width - labelWidth);
 
-        const yOffset = 6;
-        const y = stageY + itemHeight + yOffset;
+        const offset = 6;
+        let y;
+
+        //Check if should place tool-tip above or below app icon
+        //Needed in case user has moved the panel to bottom of screen
+        let labelBelowIconRect = new Meta.Rectangle({
+            x,
+            y: stageY + itemHeight + offset,
+            width: labelWidth,
+            height: labelHeight
+        });
+
+        let monitorIndex = Main.layoutManager.findIndexForActor(this);
+        let workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
+
+        if(workArea.contains_rect(labelBelowIconRect))
+            y = labelBelowIconRect.y;
+        else
+            y = stageY - labelHeight - offset;
 
         this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.set_position(x, y);

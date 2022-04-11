@@ -1,25 +1,26 @@
-/*
+/**
  * Credits:
- * This file is copied from the Dash to Dock extension.
- * Slight modifications were made.
- * See - https://github.com/micheleg/dash-to-dock/blob/master/windowPreview.js
  *
- * This file is based on code from the Dash to Panel extension by Jason DeRose
- * and code from the Taskbar extension by Zorin OS
+ * This file is largely a copy of windowPreview.js from Dash to Dock.
+ * See https://github.com/micheleg/dash-to-dock/blob/master/windowPreview.js
+ * for more details.
+ *
+ * This file is also based on code from Dash to Panel
+ * https://github.com/home-sweet-gnome/dash-to-panel/blob/master/windowPreview.js
+ * and code from the Taskbar extension by Zorin OS.
+ *
  * Some code was also adapted from the upstream Gnome Shell source code.
+ *
+ * New code and modifications implemented to better suit this extensions needs.
  */
-const Clutter = imports.gi.Clutter;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const St = imports.gi.St;
-const Main = imports.ui.main;
+
+const { Clutter, GLib, GObject, St } = imports.gi;
 
 const BoxPointer = imports.ui.boxpointer;
-const Params = imports.misc.params;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Workspace = imports.ui.workspace;
-
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const PREVIEW_MAX_WIDTH = 250;
 const PREVIEW_MAX_HEIGHT = 150;
@@ -32,28 +33,27 @@ const PREVIEW_ANIMATION_DURATION = 250;
 const PREVIEW_ICON_SIZE = 22;
 
 var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.PopupMenu {
-
-    constructor(source) {
+    constructor(source, menuManager) {
         super(source, 0.5, St.Side.TOP);
         this.actor.track_hover = true;
+        this.actor.reactive = true;
         this._source = source;
         this._app = this._source.app;
         let monitorIndex = this._source.monitorIndex;
         this.appDisplayBox = source.appDisplayBox;
-
-        this.actor.add_style_class_name('app-menu');
+        this.menuManager = menuManager;
+        this._hasPointer = false;
         this.actor.set_style('max-width: '  + (Main.layoutManager.monitors[monitorIndex].width  - 22) + 'px;' +
                              'max-height: ' + (Main.layoutManager.monitors[monitorIndex].height - 22) + 'px;');
         this.actor.hide();
 
         // Chain our visibility and lifecycle to that of the source
         this._mappedId = this._source.connect('notify::mapped', () => {
-            if (!this._source.mapped){
+            if(!this._source.mapped)
                 this.close();
-            }
         });
 
-        this.actor.connect('notify::hover', () => this._onHover());
+        this.actor.connect('captured-event', this._previewMenuCapturedEvent.bind(this));
 
         Main.uiGroup.add_actor(this.actor);
 
@@ -66,7 +66,7 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
 
         this._previewBox = new WindowPreviewList(this._source);
         this.addMenuItem(this._previewBox);
-        
+
         this._previewBox.redisplay();
     }
 
@@ -90,29 +90,46 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
             return false;
     }
 
-    _onHover(){
-        if(this.actor.hover)
-            this.appDisplayBox.removeWindowPreviewCloseTimeout();
-        else
-            this.appDisplayBox.setWindowPreviewCloseTimeout();
+    _previewMenuCapturedEvent(actor, event){
+        let menu = actor._delegate;
+        const targetActor = global.stage.get_event_actor(event);
+        const hasPointer = this._source.has_pointer || this.actor.has_pointer || this.box.has_pointer
+                            || this._previewBox.box.get_children().some(a => a._hasPointer || a.has_pointer);
+
+        if (event.type() === Clutter.EventType.ENTER &&
+                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
+            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
+
+            if((hasPointer && this.shouldOpen) || hoveredMenu?.shouldOpen){
+                this.appDisplayBox.removeWindowPreviewCloseTimeout();
+            }
+        }
+        else if (event.type() === Clutter.EventType.LEAVE &&
+                (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
+
+            let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
+
+            if((!hoveredMenu || !hoveredMenu.shouldOpen) && !hasPointer){
+                this.appDisplayBox.setWindowPreviewCloseTimeout();
+            }
+        }
     }
 
     _onDestroy() {
-        if (this._mappedId)
+        if (this._mappedId > 0)
             this._source.disconnect(this._mappedId);
     }
 };
 
 var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.PopupMenuSection {
-
     constructor(source) {
         super();
+
         this.actor = new St.ScrollView({
             hscrollbar_policy: St.PolicyType.NEVER,
             vscrollbar_policy: St.PolicyType.NEVER,
             enable_mouse_scrolling: true
         });
-
         this.actor.connect('scroll-event', this._onScrollEvent.bind(this));
 
         let position = St.Side.TOP;
@@ -129,8 +146,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         this._redisplayId = Main.initializeDeferredWork(this.actor, this.redisplay.bind(this));
 
         this.actor.connect('destroy', this._onDestroy.bind(this));
-        this._stateChangedId = this.app.connect('windows-changed',
-                                                this._queueRedisplay.bind(this));
+        this._stateChangedId = this.app.connect('windows-changed', this._queueRedisplay.bind(this));
     }
 
     _queueRedisplay () {
@@ -189,7 +205,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
     }
 
     _createPreviewItem(window, app) {
-        let preview = new WindowPreviewMenuItem(window, app);
+        let preview = new WindowPreviewMenuItem(this._source, window, app);
         return preview;
     }
 
@@ -331,7 +347,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
 
 var WindowPreviewMenuItem = GObject.registerClass(
 class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
-    _init(window, app, params) {
+    _init(source, window, app, params) {
         super._init(params);
         this.add_style_class_name('azTaskbar-window-preview-menu-item');
         this.x_align = Clutter.ActorAlign.FILL;
@@ -342,6 +358,8 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
+        this._settings = ExtensionUtils.getSettings();
+        this._source = source.appDisplayBox;
         [this._width, this._height] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
 
         //hard set the width and height for consistancy across all window previews
@@ -380,8 +398,12 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         });
         titleBox.add_child(this._app.create_icon_texture(PREVIEW_ICON_SIZE));
 
+        let workSpaceIndexText = ''
+        if(!this._settings.get_boolean('isolate-workspaces'))
+            workSpaceIndexText = (this._window.get_workspace().index() + 1) + "  ";
+
         let label = new St.Label({
-            text: window.get_title(),
+            text: workSpaceIndexText + window.get_title(),
             style: 'font-size: 10pt; font-weight: bolder;'
         });
         let labelBin = new St.Bin({ child: label,
@@ -392,7 +414,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         titleBox.add_child(labelBin);
 
         this._windowTitleId = this._window.connect('notify::title', () => {
-            label.set_text(this._window.get_title());
+            label.set_text(workSpaceIndexText + this._window.get_title());
         });
 
         let overlayGroup = new Clutter.Actor({
@@ -404,7 +426,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         let box = new St.BoxLayout({
             vertical: true,
-            reactive: true,
             x_expand: true,
             y_expand: true,
         });
@@ -415,6 +436,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._cloneTexture(window);
 
         this.connect('destroy', this._onDestroy.bind(this));
+        this.connect('notify::hover', () => this._onHover());
     }
 
     _getWindowPreviewSize() {
@@ -434,12 +456,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _cloneTexture(metaWin){
-
         let mutterWindow = metaWin.get_compositor_private();
 
         // Newly-created windows are added to a workspace before
         // the compositor finds out about them...
-        // Moreover sometimes they return an empty texture, thus as a workarounf also check for it size
+        // Moreover sometimes they return an empty texture, thus as a workaround also check for it size
         if (!mutterWindow || !mutterWindow.get_texture() || !mutterWindow.get_size()[0]) {
             this._cloneTextureId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                 // Check if there's still a point in getting the texture,
@@ -455,7 +476,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         let clone = new Clutter.Clone ({
             source: mutterWindow,
-            reactive: true,
         });
 
         // when the source actor is destroyed, i.e. the window closed, first destroy the clone
@@ -486,6 +506,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _closeWindow(actor) {
+        this._endPeek();
         this._workspace = this._window.get_workspace();
 
         // This mechanism is copied from the workspace.js upstream code
@@ -496,6 +517,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
                                                       this._onWindowAdded.bind(this));
 
         this.deleteAllWindows();
+        this._getTopMenu().close();
     }
 
     deleteAllWindows() {
@@ -537,14 +559,25 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         return n>0;
     }
 
-    vfunc_enter_event(crossingEvent) {
-        this._showCloseButton();
-        return super.vfunc_enter_event(crossingEvent);
-    }
+    _onHover(){
+        //this.hover changes on mouse movement even though
+        //the mouse has never left this actor. use has_pointer instead.
+        const hasPointer = this.has_pointer || this.closeButton.has_pointer || this._getTopMenu().has_pointer;
+        if(this._hasPointer === hasPointer)
+            return;
 
-    vfunc_leave_event(crossingEvent) {
-        this._hideCloseButton();
-        return super.vfunc_leave_event(crossingEvent);
+        if(hasPointer){
+            this._showCloseButton();
+            if(this._settings.get_boolean('peek-windows'))
+                this._startPeek();
+            this._hasPointer = true;
+        }
+        else{
+            this._hideCloseButton();
+            if(!this.get_parent().get_children().some(a => a.has_pointer))
+                this._endPeek();
+            this._hasPointer = false;
+        }
     }
 
     _idleToggleCloseButton() {
@@ -553,6 +586,143 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._hideCloseButton();
 
         return GLib.SOURCE_REMOVE;
+    }
+
+
+    _startPeek(){
+        if(this._source.peekTimeoutId > 0){
+            GLib.source_remove(this._source.peekTimeoutId);
+            this._source.peekTimeoutId = 0;
+        }
+
+        if(this._source.peekInitialWorkspaceIndex < 0){
+            this._source.peekTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('peek-windows-timeout'), () => {
+                this._peek();
+                this._source.peekTimeoutId = 0;
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+        else
+            this._peek();
+    }
+
+    _peek(){
+        if(this.workspaceSwitchId > 0){
+            GLib.source_remove(this.workspaceSwitchId);
+            this.workspaceSwitchId = 0;
+        }
+
+        const activeWorkspace = global.workspace_manager.get_active_workspace();
+        const windowWorkspace = this._window.get_workspace();
+
+        this._restorePeekedWindowStack();
+
+        if (this._source.peekedWindow && windowWorkspace != activeWorkspace)
+            activeWorkspace.list_windows().forEach(mw => this.animateWindowOpacity(mw, null, 255));
+
+        this._source.peekedWindow = this._window;
+
+        if (activeWorkspace != windowWorkspace) {
+            this._switchToWorkspaceImmediate(windowWorkspace.index());
+        }
+
+        this._focusMetaWindow(this._settings.get_int('peek-windows-opacity'), this._window);
+
+        if (this._source.peekInitialWorkspaceIndex < 0) {
+            this._source.peekInitialWorkspaceIndex = activeWorkspace.index();
+        }
+    }
+
+    _focusMetaWindow(dimOpacity, window, immediate, ignoreFocus){
+        window.get_workspace().list_windows().forEach(mw => {
+            let wa = mw.get_compositor_private();
+            let isFocused = !ignoreFocus && mw == window;
+
+            if (wa) {
+                if (isFocused) {
+                    mw['azTaskbarFocus'] = wa.get_parent().get_children().indexOf(wa);
+                    wa.get_parent().set_child_above_sibling(wa, null);
+                }
+
+                if (isFocused && mw.minimized) {
+                    wa.show();
+                }
+
+                this.animateWindowOpacity(mw, wa, isFocused ? 255 : dimOpacity, immediate)
+            }
+        });
+    }
+
+    _endPeek(stayHere){
+        if(this.workspaceSwitchId > 0){
+            GLib.source_remove(this.workspaceSwitchId);
+            this.workspaceSwitchId = 0;
+        }
+        if(this._source.peekTimeoutId > 0){
+            GLib.source_remove(this._source.peekTimeoutId);
+            this._source.peekTimeoutId = 0;
+        }
+
+        if(this._source.peekedWindow){
+            let immediate = !stayHere && this._source.peekInitialWorkspaceIndex != global.workspace_manager.get_active_workspace_index();
+
+            this._restorePeekedWindowStack();
+            this._focusMetaWindow(255, this._source.peekedWindow, immediate, true);
+            this._source.peekedWindow = null;
+
+            if(!stayHere)
+                this._switchToWorkspaceImmediate(this._source.peekInitialWorkspaceIndex);
+
+            this._source.peekInitialWorkspaceIndex = -1;
+        }
+    }
+
+    _switchToWorkspaceImmediate(workspaceIndex) {
+        let workspace = global.workspace_manager.get_workspace_by_index(workspaceIndex);
+        let shouldAnimate = Main.wm._shouldAnimate;
+
+        if (!workspace || (!workspace.list_windows().length &&
+            workspaceIndex < global.workspace_manager.n_workspaces - 1)) {
+            workspace = global.workspace_manager.get_active_workspace();
+        }
+
+        Main.wm._shouldAnimate = () => false;
+        workspace.activate(global.display.get_current_time_roundtrip());
+        Main.wm._shouldAnimate = shouldAnimate;
+    }
+
+    _restorePeekedWindowStack() {
+        let windowActor = this._source.peekedWindow ? this._source.peekedWindow.get_compositor_private() : null;
+
+        if (windowActor) {
+            if (this._source.peekedWindow.hasOwnProperty('azTaskbarFocus')) {
+                windowActor.get_parent().set_child_at_index(windowActor, this._source.peekedWindow['azTaskbarFocus']);
+                delete this._source.peekedWindow['azTaskbarFocus'];
+            }
+
+            if (this._source.peekedWindow.minimized) {
+                windowActor.hide();
+            }
+        }
+    }
+
+    animateWindowOpacity(metaWindow, windowActor, opacity, immediate) {
+        windowActor = windowActor || metaWindow.get_compositor_private();
+
+        if (windowActor && !metaWindow.minimized) {
+            let duration = 255;
+
+            if (immediate && !metaWindow.is_on_all_workspaces())
+                duration = 0;
+
+            windowActor = windowActor.get_first_child() || windowActor;
+
+            windowActor.ease({
+                opacity,
+                duration,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            });
+        }
     }
 
     _showCloseButton() {
@@ -568,10 +738,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _hideCloseButton() {
-        if (this.closeButton.has_pointer ||
-            this.get_children().some(a => a.has_pointer))
-            return;
-
         this.closeButton.remove_all_transitions();
         this.closeButton.ease({
             opacity: 0,
@@ -609,12 +775,25 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     activate() {
-        this._getTopMenu().close();
-        Main.activateWindow(this._window);
+
+        
+        this.activateTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5, () => {
+            this._getTopMenu().close();
+            this._endPeek(true);
+            Main.activateWindow(this._window);
+            this.activateTimeoutId = 0;
+            return GLib.SOURCE_REMOVE;
+        });
+        
     }
 
     _onDestroy() {
-        if (this._cloneTextureId) {
+        if (this.activateTimeoutId > 0) {
+            GLib.source_remove(this.activateTimeoutId);
+            this.activateTimeoutId = 0;
+        }
+
+        if (this._cloneTextureId > 0) {
             GLib.source_remove(this._cloneTextureId);
             this._cloneTextureId = 0;
         }
@@ -632,6 +811,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         if (this._windowTitleId > 0) {
             this._window.disconnect(this._windowTitleId);
             this._windowTitleId = 0;
+        }
+
+        if (this.workspaceSwitchId > 0) {
+            GLib.source_remove(this.workspaceSwitchId);
+            this.workspaceSwitchId = 0;
         }
     }
 });

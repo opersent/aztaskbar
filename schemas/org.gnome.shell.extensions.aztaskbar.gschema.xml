@@ -34,6 +34,21 @@
             <summary>Show window previews for running apps</summary>
             <description>Show window previews for running apps.</description>
         </key>
+        <key type="b" name="peek-windows">
+            <default>true</default>
+            <summary>Peek to window when mouse over a window previews</summary>
+            <description>Peek to window when mouse over a window previews.</description>
+        </key>
+        <key type="i" name="peek-windows-timeout">
+            <default>200</default>
+            <summary>Peek to window delay in ms</summary>
+            <description>Peek to window delay in ms.</description>
+        </key>
+        <key type="i" name="peek-windows-opacity">
+            <default>40</default>
+            <summary>Peek to window - opacity of inactive windows. 0 - 255</summary>
+            <description>Peek to window - opacity of inactive windows. 0 - 255</description>
+        </key>
         <key type="b" name="indicators">
             <default>true</default>
             <summary>Show running app indicators</summary>

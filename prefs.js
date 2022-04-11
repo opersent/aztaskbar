@@ -1,60 +1,38 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-const {Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
+const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
-function init() {
-    ExtensionUtils.initTranslations();
-}
-
 var GeneralPage = GObject.registerClass(
-class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
+class azTaskbar_GeneralPage extends Adw.PreferencesPage {
     _init(settings) {
-        super._init();
-        this.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-
-        this.mainBox = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 24,
-            margin_bottom: 24,
-            margin_start: 64,
-            margin_end: 64,
-            spacing: 20,
-            homogeneous: false
+        super._init({
+            title: _("Settings"),
+            icon_name: 'preferences-system-symbolic',
+            name: 'GeneralPage'
         });
-        this.set_child(this.mainBox);
 
         this._settings = settings;
 
-        this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("General") + "</b>",
-            use_markup: true,
-            xalign: 0
-        }))
-        let generalGroup = new FrameBox();
-        this.mainBox.append(generalGroup);
+        let generalGroup = new Adw.PreferencesGroup({
+            title: _("General")
+        });
+        this.add(generalGroup);
 
-        let panelPositionCombo = new Gtk.ComboBoxText({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+        let panelPositions = new Gtk.StringList();
+        panelPositions.append(_("Left"));
+        panelPositions.append(_("Center"));
+        panelPositions.append(_("Right"));
+        let panelPositionRow = new Adw.ComboRow({
+            title: _("Position in Panel"),
+            model: panelPositions,
+            selected: this._settings.get_enum('position-in-panel')
         });
-        panelPositionCombo.append_text(_('Left'));
-        panelPositionCombo.append_text(_('Center'));
-        panelPositionCombo.append_text(_('Right'));
-        panelPositionCombo.set_active(this._settings.get_enum('position-in-panel'));
-        panelPositionCombo.connect('changed', (widget) => {
-            this._settings.set_enum('position-in-panel', widget.get_active());
+        panelPositionRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('position-in-panel', widget.selected);
         });
-        let panelPositionRow = new FrameBoxRow();
-        panelPositionRow.add(new Gtk.Label({
-            label: _("Position in Panel"),
-            use_markup: true,
-            xalign: 0
-        }))
-        panelPositionRow.add(panelPositionCombo);
         generalGroup.add(panelPositionRow);
 
         let positionOffsetSpinButton = new Gtk.SpinButton({
@@ -65,20 +43,17 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
             digits: 0,
             numeric: true,
             valign: Gtk.Align.CENTER,
-            halign: Gtk.Align.END,
-            hexpand: true
         });
         positionOffsetSpinButton.set_value(this._settings.get_int('position-offset'));
         positionOffsetSpinButton.connect('value-changed', (widget) => {
             this._settings.set_int('position-offset', widget.get_value());
         });
-        let positionOffsetRow = new FrameBoxRow();
-        positionOffsetRow.add(new Gtk.Label({
-            label: _("Position Offset") + '\n<span size="smaller">'+ _("Offset the position within the above selected box") + "</span>",
-            use_markup: true,
-            xalign: 0
-        }))
-        positionOffsetRow.add(positionOffsetSpinButton);
+        let positionOffsetRow = new Adw.ActionRow({
+            title: _("Position Offset"),
+            subtitle: _("Offset the position within the above selected box"),
+            activatable_widget: positionOffsetSpinButton
+        });
+        positionOffsetRow.add_suffix(positionOffsetSpinButton);
         generalGroup.add(positionOffsetRow);
 
         let iconSizeSpinButton = new Gtk.SpinButton({
@@ -89,20 +64,16 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
             digits: 0,
             numeric: true,
             valign: Gtk.Align.CENTER,
-            halign: Gtk.Align.END,
-            hexpand: true
         });
         iconSizeSpinButton.set_value(this._settings.get_int('icon-size'));
         iconSizeSpinButton.connect('value-changed', (widget) => {
             this._settings.set_int('icon-size', widget.get_value());
         });
-        let iconSizeRow = new FrameBoxRow();
-        iconSizeRow.add(new Gtk.Label({
-            label: _("Icon Size"),
-            use_markup: true,
-            xalign: 0
-        }))
-        iconSizeRow.add(iconSizeSpinButton);
+        let iconSizeRow = new Adw.ActionRow({
+            title: _("Icon Size"),
+            activatable_widget: iconSizeSpinButton
+        });
+        iconSizeRow.add_suffix(iconSizeSpinButton);
         generalGroup.add(iconSizeRow);
 
         let desatureFactorSpinButton = new Gtk.SpinButton({
@@ -113,320 +84,311 @@ class azTaskbar_GeneralPage extends Gtk.ScrolledWindow {
             digits: 2,
             numeric: true,
             valign: Gtk.Align.CENTER,
-            halign: Gtk.Align.END,
-            hexpand: true
         });
         desatureFactorSpinButton.set_value(this._settings.get_double('desaturation-factor'));
         desatureFactorSpinButton.connect('value-changed', (widget) => {
             this._settings.set_double('desaturation-factor', widget.get_value());
         });
-        let desatureFactorRow = new FrameBoxRow();
-        desatureFactorRow.add(new Gtk.Label({
-            label: _("Icon Desaturate Factor"),
-            use_markup: true,
-            xalign: 0
-        }))
-        desatureFactorRow.add(desatureFactorSpinButton);
+        let desatureFactorRow = new Adw.ActionRow({
+            title: _("Icon Desaturate Factor"),
+            activatable_widget: desatureFactorSpinButton
+        });
+        desatureFactorRow.add_suffix(desatureFactorSpinButton);
         generalGroup.add(desatureFactorRow);
 
         let favoritesSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let favoritesRow = new FrameBoxRow();
-        favoritesRow.add(new Gtk.Label({
-            label: _("Favorites"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let favoritesRow = new Adw.ActionRow({
+            title: _("Favorites"),
+            activatable_widget: favoritesSwitch
+        });
         favoritesSwitch.set_active(this._settings.get_boolean('favorites'));
         favoritesSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('favorites', widget.get_active());
         });
-        favoritesRow.add(favoritesSwitch);
+        favoritesRow.add_suffix(favoritesSwitch);
         generalGroup.add(favoritesRow);
 
         let isolateWorkspacesSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let isolateWorkspacesRow = new FrameBoxRow();
-        isolateWorkspacesRow.add(new Gtk.Label({
-            label: _("Isolate Workspaces"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let isolateWorkspacesRow = new Adw.ActionRow({
+            title: _("Isolate Workspaces"),
+            activatable_widget: isolateWorkspacesSwitch
+        });
         isolateWorkspacesSwitch.set_active(this._settings.get_boolean('isolate-workspaces'));
         isolateWorkspacesSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('isolate-workspaces', widget.get_active());
         });
-        isolateWorkspacesRow.add(isolateWorkspacesSwitch);
+        isolateWorkspacesRow.add_suffix(isolateWorkspacesSwitch);
         generalGroup.add(isolateWorkspacesRow);
 
         let isolateMonitorsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let isolateMonitorsRow = new FrameBoxRow();
-        isolateMonitorsRow.add(new Gtk.Label({
-            label: _("Isolate Monitors"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let isolateMonitorsRow = new Adw.ActionRow({
+            title: _("Isolate Monitors"),
+            activatable_widget: isolateMonitorsSwitch
+        });
         isolateMonitorsSwitch.set_active(this._settings.get_boolean('isolate-monitors'));
         isolateMonitorsSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('isolate-monitors', widget.get_active());
         });
-        isolateMonitorsRow.add(isolateMonitorsSwitch);
+        isolateMonitorsRow.add_suffix(isolateMonitorsSwitch);
         generalGroup.add(isolateMonitorsRow);
 
-        this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("Indicator") + "</b>",
-            use_markup: true,
-            xalign: 0
-        }))
-        let indicatorsGroup = new FrameBox();
-        this.mainBox.append(indicatorsGroup);
+        let indicatorGroup = new Adw.PreferencesGroup({
+            title: _("Indicator")
+        });
+        this.add(indicatorGroup);
 
         let indicatorSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let indicatorRow = new FrameBoxRow();
-        indicatorRow.add(new Gtk.Label({
-            label: _("Indicators"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let indicatorRow = new Adw.ActionRow({
+            title: _("Indicators"),
+            activatable_widget: indicatorSwitch
+        });
         indicatorSwitch.set_active(this._settings.get_boolean('indicators'));
         indicatorSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('indicators', widget.get_active());
         });
-        indicatorRow.add(indicatorSwitch);
-        indicatorsGroup.add(indicatorRow);
+        indicatorRow.add_suffix(indicatorSwitch);
+        indicatorGroup.add(indicatorRow);
 
-        let indicatorLocationCombo = new Gtk.ComboBoxText({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+        let indicatorLocations = new Gtk.StringList();
+        indicatorLocations.append(_("Top"));
+        indicatorLocations.append(_("Bottom"));
+        let indicatorLocationRow = new Adw.ComboRow({
+            title: _("Indicator Location"),
+            model: indicatorLocations,
+            selected: this._settings.get_enum('indicator-location')
         });
-        indicatorLocationCombo.append_text(_('Top'));
-        indicatorLocationCombo.append_text(_('Bottom'));
-        indicatorLocationCombo.set_active(this._settings.get_enum('indicator-location'));
-        indicatorLocationCombo.connect('changed', (widget) => {
-            this._settings.set_enum('indicator-location', widget.get_active());
+        indicatorLocationRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('indicator-location', widget.selected);
         });
-        let indicatorLocationRow = new FrameBoxRow();
-        indicatorLocationRow.add(new Gtk.Label({
-            label: _("Indicator Location"),
-            use_markup: true,
-            xalign: 0
-        }))
-        indicatorLocationRow.add(indicatorLocationCombo);
-        indicatorsGroup.add(indicatorLocationRow);
+        indicatorGroup.add(indicatorLocationRow);
 
         let color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-running'));
         let indicatorRunningColorButton = new Gtk.ColorButton({
             rgba: color,
             use_alpha: true,
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
         indicatorRunningColorButton.connect('color-set', (widget) => {
             const color = widget.get_rgba().to_string();
             this._settings.set_string('indicator-color-running', color);
         });
-        let indicatorRunningRow = new FrameBoxRow();
-        indicatorRunningRow.add(new Gtk.Label({
-            label: _("Running Indicator Color"),
-            use_markup: true,
-            xalign: 0
-        }))
-        indicatorRunningRow.add(indicatorRunningColorButton);
-        indicatorsGroup.add(indicatorRunningRow);
+        let indicatorRunningRow = new Adw.ActionRow({
+            title: _("Running Indicator Color"),
+            activatable_widget: indicatorRunningColorButton
+        });
+        indicatorRunningRow.add_suffix(indicatorRunningColorButton);
+        indicatorGroup.add(indicatorRunningRow);
 
         color = new Gdk.RGBA();
         color.parse(this._settings.get_string('indicator-color-focused'));
         let indicatorFocusedColorButton = new Gtk.ColorButton({
             rgba: color,
             use_alpha: true,
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
         indicatorFocusedColorButton.connect('color-set', (widget) => {
             const color = widget.get_rgba().to_string();
             this._settings.set_string('indicator-color-focused', color);
         });
 
-        let indicatorFocusedRow = new FrameBoxRow();
-        indicatorFocusedRow.add(new Gtk.Label({
-            label: _("Focused Indicator Color"),
-            use_markup: true,
-            xalign: 0
-        }))
-        indicatorFocusedRow.add(indicatorFocusedColorButton);
-        indicatorsGroup.add(indicatorFocusedRow);
+        let indicatorFocusedRow = new Adw.ActionRow({
+            title: _("Focused Indicator Color"),
+            activatable_widget: indicatorFocusedColorButton
+        });
+        indicatorFocusedRow.add_suffix(indicatorFocusedColorButton);
+        indicatorGroup.add(indicatorFocusedRow);
     }
 });
 
 var ActionsPage = GObject.registerClass(
-class azTaskbar_ActionsPage extends Gtk.ScrolledWindow {
+class azTaskbar_ActionsPage extends Adw.PreferencesPage {
     _init(settings) {
-        super._init();
-        this.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-
-        this.mainBox = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 24,
-            margin_bottom: 24,
-            margin_start: 64,
-            margin_end: 64,
-            spacing: 20,
-            homogeneous: false
+        super._init({
+            title: _("Actions"),
+            icon_name: 'input-mouse-symbolic',
+            name: 'ActionsPage'
         });
-        this.set_child(this.mainBox);
-
         this._settings = settings;
 
-        this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("Click Actions") + "</b>",
-            use_markup: true,
-            xalign: 0
-        }))
-        let clickActionGroup = new FrameBox();
-        this.mainBox.append(clickActionGroup);
+        let clickActionGroup = new Adw.PreferencesGroup({
+            title: _("Click Actions")
+        });
+        this.add(clickActionGroup);
 
-        let clickOptionsCombo = new Gtk.ComboBoxText({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+        let clickOptions = new Gtk.StringList();
+        clickOptions.append(_("Toggle / Cycle"));
+        clickOptions.append(_("Toggle / Cycle + Minimize"));
+        clickOptions.append(_("Toggle / Preview"));
+        let clickOptionsRow = new Adw.ComboRow({
+            title: _("Left Click"),
+            subtitle: _("Modify Left Click Action of Running App Icons"),
+            model: clickOptions,
+            selected: this._settings.get_enum('click-action')
         });
-        clickOptionsCombo.append_text(_('Toggle / Cycle'));
-        clickOptionsCombo.append_text(_('Toggle / Cycle + Minimize'));
-        clickOptionsCombo.append_text(_('Toggle / Preview'));
-        clickOptionsCombo.set_active(this._settings.get_enum('click-action'));
-        clickOptionsCombo.connect('changed', (widget) => {
-            this._settings.set_enum('click-action', widget.get_active());
+        clickOptionsRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('click-action', widget.selected);
         });
-        let clickOptionsRow = new FrameBoxRow();
-        clickOptionsRow.add(new Gtk.Label({
-            label: _("Left Click") + '\n<span size="smaller">' + _("Modify Left Click Action of Running App Icons") + "</span>",
-            use_markup: true,
-            xalign: 0
-        }))
-        clickOptionsRow.add(clickOptionsCombo);
         clickActionGroup.add(clickOptionsRow);
 
-        this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("Scroll Actions") + "</b>",
-            use_markup: true,
-            xalign: 0
-        }))
-        let scrollOptionsGroup = new FrameBox();
-        this.mainBox.append(scrollOptionsGroup);
-
-        let scrollOptionsCombo = new Gtk.ComboBoxText({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+        let scrollActionGroup = new Adw.PreferencesGroup({
+            title: _("Scroll Actions")
         });
-        scrollOptionsCombo.append_text(_('Cycle Windows'));
-        scrollOptionsCombo.append_text(_('No Action'));
-        scrollOptionsCombo.set_active(this._settings.get_enum('scroll-action'));
-        scrollOptionsCombo.connect('changed', (widget) => {
-            this._settings.set_enum('scroll-action', widget.get_active());
-        });
-        let scrollOptionsRow = new FrameBoxRow();
-        scrollOptionsRow.add(new Gtk.Label({
-            label: _("Scroll Action"),
-            use_markup: true,
-            xalign: 0
-        }))
-        scrollOptionsRow.add(scrollOptionsCombo);
-        scrollOptionsGroup.add(scrollOptionsRow);
+        this.add(scrollActionGroup);
 
-        this.mainBox.append(new Gtk.Label({
-            label: "<b>" + _("Hover Actions") + "</b>",
-            use_markup: true,
-            xalign: 0
-        }))
-        let hoverActionGroup = new FrameBox();
-        this.mainBox.append(hoverActionGroup);
+        let scrollOptions = new Gtk.StringList();
+        scrollOptions.append(_("Cycle Windows"));
+        scrollOptions.append(_("No Action"));
+        let scrollOptionsRow = new Adw.ComboRow({
+            title: _("Scroll Action"),
+            model: scrollOptions,
+            selected: this._settings.get_enum('scroll-action')
+        });
+        scrollOptionsRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('scroll-action', widget.selected);
+        });
+        scrollActionGroup.add(scrollOptionsRow);
+
+        let hoverActionGroup = new Adw.PreferencesGroup({
+            title: _("Hover Actions")
+        });
+        this.add(hoverActionGroup);
 
         let toolTipsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let toolTipsRow = new FrameBoxRow();
-        toolTipsRow.add(new Gtk.Label({
-            label: _("Tool-Tips"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let toolTipsRow = new Adw.ActionRow({
+            title: _("Tool-Tips"),
+            activatable_widget: toolTipsSwitch
+        });
         toolTipsSwitch.set_active(this._settings.get_boolean('tool-tips'));
         toolTipsSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('tool-tips', widget.get_active());
         });
-        toolTipsRow.add(toolTipsSwitch);
+        toolTipsRow.add_suffix(toolTipsSwitch);
         hoverActionGroup.add(toolTipsRow);
 
         let windowPreviewsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-            hexpand: true,
-            halign: Gtk.Align.END
+            valign: Gtk.Align.CENTER
         });
-        let windowPreviewsRow = new FrameBoxRow();
-        windowPreviewsRow.add(new Gtk.Label({
-            label: _("Window Previews"),
-            use_markup: true,
-            xalign: 0
-        }))
+        let windowPreviewsOptionsButton = new Gtk.Button({
+            child: new Adw.ButtonContent({ icon_name: 'emblem-system-symbolic' }),
+            valign: Gtk.Align.CENTER
+        });
+        windowPreviewsOptionsButton.connect('clicked', () => {
+            let windowPreviewOptions = new WindowPreviewOptions(this.get_root(), this._settings);
+            windowPreviewOptions.show();
+        })
+        let windowPreviewsRow = new Adw.ActionRow({
+            title: _("Window Previews"),
+            activatable_widget: windowPreviewsSwitch
+        });
         windowPreviewsSwitch.set_active(this._settings.get_boolean('window-previews'));
         windowPreviewsSwitch.connect('notify::active', (widget) => {
             this._settings.set_boolean('window-previews', widget.get_active());
         });
-        windowPreviewsRow.add(windowPreviewsSwitch);
+        windowPreviewsRow.add_suffix(windowPreviewsOptionsButton);
+        windowPreviewsRow.add_suffix(windowPreviewsSwitch);
         hoverActionGroup.add(windowPreviewsRow);
     }
 });
 
-var AboutPage = GObject.registerClass(
-class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
-    _init() {
-        super._init();
-        this.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
-
-        this.mainBox = new Gtk.Box({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 24,
-            margin_bottom: 24,
-            margin_start: 64,
-            margin_end: 64,
-            spacing: 0,
-            homogeneous: false
+var WindowPreviewOptions = GObject.registerClass(
+class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
+    _init(parent, settings) {
+        super._init({
+            title: _("Window Preview Options"),
+            transient_for: parent,
+            default_height: 300
         });
-        this.set_child(this.mainBox);
 
-        let releaseVersion;
-        if(Me.metadata.version)
-            releaseVersion = Me.metadata.version;
-        else
-            releaseVersion = 'unknown';
+        this._settings = settings;
 
-        let commitVersion;
-        if(Me.metadata.commit)
-            commitVersion = Me.metadata.commit;
+        let mainPage = new Adw.PreferencesPage();
+        let mainGroup = new Adw.PreferencesGroup();
 
-        let projectUrl = Me.metadata.url;
+        mainPage.add(mainGroup);
+        this.add(mainPage);
 
+        let enablePeekSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let enablePeekRow = new Adw.ActionRow({
+            title: _("Window Peeking"),
+            subtitle: _("Hovering a window preview will focus desired window"),
+            activatable_widget: enablePeekSwitch
+        });
+        enablePeekSwitch.set_active(this._settings.get_boolean('peek-windows'));
+        enablePeekSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('peek-windows', widget.get_active());
+        });
+        enablePeekRow.add_suffix(enablePeekSwitch);
+        mainGroup.add(enablePeekRow);
+
+        let peekTimeoutSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0, upper: 800, step_increment: 100, page_increment: 100, page_size: 0,
+            }),
+            climb_rate: 100,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        peekTimeoutSpinButton.set_value(this._settings.get_int('peek-windows-timeout'));
+        peekTimeoutSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('peek-windows-timeout', widget.get_value());
+        });
+        let peekTimeoutSpinRow = new Adw.ActionRow({
+            title: _("Window Peeking Delay"),
+            subtitle: _("Time in ms to trigger window peek"),
+            activatable_widget: peekTimeoutSpinButton
+        });
+        peekTimeoutSpinRow.add_suffix(peekTimeoutSpinButton);
+        mainGroup.add(peekTimeoutSpinRow);
+
+        let peekOpacitySpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0, upper: 255, step_increment: 1, page_increment: 1, page_size: 0,
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        peekOpacitySpinButton.set_value(this._settings.get_int('peek-windows-opacity'));
+        peekOpacitySpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('peek-windows-opacity', widget.get_value());
+        });
+        let peekOpacityRow = new Adw.ActionRow({
+            title: _("Window Peeking Opacity"),
+            subtitle: _("Opacity of non-focused windows during a window peek"),
+            activatable_widget: peekOpacitySpinButton
+        });
+        peekOpacityRow.add_suffix(peekOpacitySpinButton);
+        mainGroup.add(peekOpacityRow);
+    }
+});
+
+
+var AboutPage = GObject.registerClass(
+class azTaskbar_AboutPage extends Adw.PreferencesPage {
+    _init() {
+        super._init({
+            title: _("About"),
+            icon_name: 'help-about-symbolic',
+            name: 'AboutPage'
+        });
+
+        //Logo and project description-------------------------------------
+        let azTaskbarLogoGroup = new Adw.PreferencesGroup();
         let azTaskbarImage = new Gtk.Image({
             margin_bottom: 5,
             icon_name: 'aztaskbar-logo',
@@ -434,92 +396,66 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
         });
         let azTaskbarImageBox = new Gtk.Box( {
             orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 10,
-            margin_bottom: 10,
             hexpand: false,
             vexpand: false
         });
         azTaskbarImageBox.append(azTaskbarImage);
-
-        let azTaskbarInfoBox = new Gtk.Box( {
-            orientation: Gtk.Orientation.VERTICAL,
-            hexpand: false,
-            vexpand: false
-        });
         let azTaskbarLabel = new Gtk.Label({
-            label: '<span size="large"><b>' + _('App Icons Taskbar') + '</b></span>',
+            label: '<span size="larger"><b>' + _('App Icons Taskbar') + '</b></span>',
             use_markup: true,
             vexpand: true,
             valign: Gtk.Align.FILL
         });
-
         let projectDescriptionLabel = new Gtk.Label({
             label: _('Show running apps and favorites on the main panel'),
             hexpand: false,
             vexpand: false,
-            margin_bottom: 5
         });
+        azTaskbarImageBox.append(azTaskbarLabel);
+        azTaskbarImageBox.append(projectDescriptionLabel);
+        azTaskbarLogoGroup.add(azTaskbarImageBox);
 
-        let extensionInfoFrame = new FrameBox();
+        this.add(azTaskbarLogoGroup);
+        //-----------------------------------------------------------------------
 
-        let azTaskbarVersionRow = new FrameBoxRow({
-            selectable: false,
-            activatable: false
+        //Extension/OS Info Group------------------------------------------------
+        let extensionInfoGroup = new Adw.PreferencesGroup();
+        let azTaskbarVersionRow = new Adw.ActionRow({
+            title: _("App Icons Taskbar Version"),
         });
-        let versionText = new Gtk.Label({
-            label: _('App Icons Taskbar Version'),
-        });
-        let versionInfo = new Gtk.Label({
-            label: releaseVersion + '',
-            hexpand: true,
-            sensitive: false,
-            halign: Gtk.Align.END
-        });
-        azTaskbarVersionRow.add(versionText);
-        azTaskbarVersionRow.add(versionInfo);
-        extensionInfoFrame.add(azTaskbarVersionRow);
+        let releaseVersion;
+        if(Me.metadata.version)
+            releaseVersion = Me.metadata.version;
+        else
+            releaseVersion = 'unknown';
+        azTaskbarVersionRow.add_suffix(new Gtk.Label({
+            label: releaseVersion + ''
+        }));
+        extensionInfoGroup.add(azTaskbarVersionRow);
 
-        let commitRow = new FrameBoxRow();
-        let commitText = new Gtk.Label({
-            label: _('Git Commit'),
+        let commitRow = new Adw.ActionRow({
+            title: _('Git Commit')
         });
-        let commitInfo = new Gtk.Label({
+        let commitVersion;
+        if(Me.metadata.commit)
+            commitVersion = Me.metadata.commit;
+        commitRow.add_suffix(new Gtk.Label({
             label: commitVersion ? commitVersion : '',
-            hexpand: true,
-            sensitive: false,
-            halign: Gtk.Align.END
-        });
-        commitRow.add(commitText);
-        commitRow.add(commitInfo);
+        }));
         if(commitVersion){
-            extensionInfoFrame.add(this.createSeparator());
-            extensionInfoFrame.add(commitRow);
+            extensionInfoGroup.add(commitRow);
         }
 
-        let gnomeVersionRow = new FrameBoxRow({
-            selectable: false,
-            activatable: false
+        let gnomeVersionRow = new Adw.ActionRow({
+            title: _('GNOME Version'),
         });
-        let gnomeVersionText = new Gtk.Label({
-            label: _('GNOME Version'),
-        });
-        let gnomeVersionInfo = new Gtk.Label({
+        gnomeVersionRow.add_suffix(new Gtk.Label({
             label: imports.misc.config.PACKAGE_VERSION + '',
-            hexpand: true,
-            sensitive: false,
-            halign: Gtk.Align.END
-        });
-        gnomeVersionRow.add(gnomeVersionText);
-        gnomeVersionRow.add(gnomeVersionInfo);
-        extensionInfoFrame.add(this.createSeparator());
-        extensionInfoFrame.add(gnomeVersionRow);
+        }));
+        extensionInfoGroup.add(gnomeVersionRow);
 
-        let osRow = new FrameBoxRow({
-            selectable: false,
-            activatable: false
-        });
-        let osText = new Gtk.Label({
-            label: _('OS'),
+        let osRow = new Adw.ActionRow({
+            title: _('OS'),
         });
         let osInfoText;
         let name = GLib.get_os_info("NAME");
@@ -534,76 +470,55 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
         let buildID = GLib.get_os_info("BUILD_ID");
         if(buildID)
             osInfoText += "; " + "Build ID: " +buildID;
-
-        let osInfo = new Gtk.Label({
+        osRow.add_suffix(new Gtk.Label({
             label: osInfoText,
-            hexpand: true,
-            sensitive: false,
-            halign: Gtk.Align.END
-        });
-        osRow.add(osText);
-        osRow.add(osInfo);
-        extensionInfoFrame.add(this.createSeparator());
-        extensionInfoFrame.add(osRow);
+            single_line_mode: false,
+            wrap: true,
+        }));
+        extensionInfoGroup.add(osRow);
 
-        let windowingRow = new FrameBoxRow({
-            selectable: false,
-            activatable: false
-        });
-        let windowingText = new Gtk.Label({
-            label: _('Session Type'),
+        let sessionTypeRow = new Adw.ActionRow({
+            title: _('Session Type'),
         });
         let windowingLabel;
         if(Me.metadata.isWayland)
             windowingLabel = "Wayland";
         else
             windowingLabel = "X11";
-
-        let windowingInfo = new Gtk.Label({
+        sessionTypeRow.add_suffix(new Gtk.Label({
             label: windowingLabel,
-            hexpand: true,
-            sensitive: false,
-            halign: Gtk.Align.END
-        });
-        windowingRow.add(windowingText);
-        windowingRow.add(windowingInfo);
-        extensionInfoFrame.add(this.createSeparator());
-        extensionInfoFrame.add(windowingRow);
+        }));
+        extensionInfoGroup.add(sessionTypeRow);
 
-        let linksBox = new Gtk.Box({
-            hexpand: false,
-            vexpand: false,
-            valign: Gtk.Align.END,
-            halign: Gtk.Align.CENTER,
-            margin_top: 0,
-            margin_bottom: 0,
-            margin_start: 0,
-            margin_end: 0,
-            spacing: 0,
-        });
+        this.add(extensionInfoGroup);
+        //-----------------------------------------------------------------------
 
-        let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(Me.path + '/media/donate-icon.svg', 150, 50);
+        let linksGroup = new Adw.PreferencesGroup();
+        let linksBox = new Adw.ActionRow();
+
+        let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/donate-icon.svg', -1, 50, true);
         let donateImage = Gtk.Picture.new_for_pixbuf(pixbuf);
         let donateLinkButton = new Gtk.LinkButton({
             child: donateImage,
             uri: 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Donate+to+support+my+work&currency_code=USD&source=url',
         });
 
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(Me.path + '/media/gitlab-icon.svg', 150, 50);
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/gitlab-icon.svg', -1, 50, true);
         let gitlabImage = Gtk.Picture.new_for_pixbuf(pixbuf);
+        let projectUrl = Me.metadata.url;
         let projectLinkButton = new Gtk.LinkButton({
             child: gitlabImage,
             uri: projectUrl,
         });
 
-        linksBox.append(projectLinkButton);
-        linksBox.append(donateLinkButton);
+        linksBox.add_prefix(projectLinkButton);
+        linksBox.add_suffix(donateLinkButton);
+        linksGroup.add(linksBox);
+        this.add(linksGroup);
 
-        azTaskbarImageBox.append(azTaskbarLabel);
-        azTaskbarImageBox.append(projectDescriptionLabel);
-
+        let gnuSoftwareGroup = new Adw.PreferencesGroup();
         let gnuSofwareLabel = new Gtk.Label({
-            label: _(GNU_SOFTWARE),
+            label: GNU_SOFTWARE,
             use_markup: true,
             justify: Gtk.Justification.CENTER
         });
@@ -611,86 +526,34 @@ class azTaskbar_AboutPage extends Gtk.ScrolledWindow {
             orientation: Gtk.Orientation.VERTICAL,
             valign: Gtk.Align.END,
             vexpand: true,
-            margin_top: 5,
-            margin_bottom: 10
         });
         gnuSofwareLabelBox.append(gnuSofwareLabel);
-
-        this.mainBox.append(azTaskbarImageBox);
-        this.mainBox.append(azTaskbarInfoBox);
-        this.mainBox.append(extensionInfoFrame);
-
-        this.mainBox.append(gnuSofwareLabelBox);
-        this.mainBox.append(linksBox);
-    }
-
-    createSeparator(){
-        let separatorRow = new Gtk.ListBoxRow({
-            selectable: false,
-            activatable: false
-        });
-        separatorRow.set_child(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL));
-        return separatorRow;
+        gnuSoftwareGroup.add(gnuSofwareLabelBox);
+        this.add(gnuSoftwareGroup);
     }
 });
+
+function init() {
+    ExtensionUtils.initTranslations();
+}
 
 function fillPreferencesWindow(window) {
     let iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
     if(!iconTheme.get_search_path().includes(Me.path + "/media"))
         iconTheme.add_search_path(Me.path + "/media");
 
-    const AdwPrefs = Me.imports.adwPrefs;
-
     const settings = ExtensionUtils.getSettings();
 
     window.set_search_enabled(true);
 
-    const generalPage = new AdwPrefs.GeneralPage(settings);
+    const generalPage = new GeneralPage(settings);
     window.add(generalPage);
 
-    const actionsPage = new AdwPrefs.ActionsPage(settings);
+    const actionsPage = new ActionsPage(settings);
     window.add(actionsPage);
 
-    const aboutPage = new AdwPrefs.AboutPage();
+    const aboutPage = new AboutPage();
     window.add(aboutPage);
-}
-
-function buildPrefsWidget(){
-    let iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
-    if(!iconTheme.get_search_path().includes(Me.path + "/media"))
-        iconTheme.add_search_path(Me.path + "/media");
-
-    const settings = ExtensionUtils.getSettings();
-
-    let notebook = new Gtk.Notebook();
-
-    notebook.append_page(new GeneralPage(settings), new Gtk.Label({
-        label: "<b>" + _("Settings") + "</b>",
-        use_markup: true,
-        xalign: 0
-    }));
-
-    notebook.append_page(new ActionsPage(settings), new Gtk.Label({
-        label: "<b>" + _("Actions") + "</b>",
-        use_markup: true,
-        xalign: 0
-    }));
-
-    notebook.append_page(new AboutPage(), new Gtk.Label({
-        label: "<b>" + _("About") + "</b>",
-        use_markup: true,
-        xalign: 0
-    }));
-
-    notebook.connect("realize", () => {
-        let window = notebook.get_root();
-
-        window.default_width = 650;
-        window.default_height = 600;
-    });
-
-    notebook.show();
-    return notebook;
 }
 
 var GNU_SOFTWARE = '<span size="small">' +
@@ -698,45 +561,3 @@ var GNU_SOFTWARE = '<span size="small">' +
     'See the <a href="https://gnu.org/licenses/old-licenses/gpl-2.0.html">' +
     'GNU General Public License, version 2 or later</a> for details.' +
     '</span>';
-
-var FrameBox = GObject.registerClass(class azTaskbar_FrameBox extends Gtk.Frame {
-    _init(params) {
-        super._init(params);
-        this._listBox = new Gtk.ListBox();
-        this._listBox.set_selection_mode(Gtk.SelectionMode.NONE);
-        Gtk.Frame.prototype.set_child.call(this, this._listBox);
-    }
-
-    add(boxRow) {
-        this._listBox.append(boxRow);
-    }
-
-    show() {
-        this._listBox.show();
-        super.show();
-    }
-});
-
-var FrameBoxRow = GObject.registerClass(class azTaskbar_FrameBoxRow extends Gtk.ListBoxRow {
-    _init(params) {
-        super._init(params);
-        this.selectable = false;
-        this.activatable = false;
-        this._grid = new Gtk.Grid({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            margin_top: 5,
-            margin_bottom: 5,
-            margin_start: 5,
-            margin_end: 5,
-            column_spacing: 20,
-            row_spacing: 20
-        });
-        this.x = 0;
-        Gtk.ListBoxRow.prototype.set_child.call(this, this._grid);
-    }
-
-    add(widget) {
-        this._grid.attach(widget, this.x, 0, 1, 1);
-        this.x++;
-    }
-});
