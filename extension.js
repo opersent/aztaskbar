@@ -259,7 +259,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
         if(this._windowPreviewCloseTimeoutId > 0)
             return;
 
-        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('window-previews-hide-timeout'), () => {
             let activePreview = this.menuManager.activeMenu;
             if(activePreview)
                 activePreview.close(BoxPointer.PopupAnimation.FULL);
@@ -728,7 +728,7 @@ class azTaskbar_AppIcon extends St.Button {
 
         this._removePreviewMenuTimeout();
 
-        this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 700, () => {
+        this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('window-previews-show-timeout'), () => {
             this._previewMenuTimeoutId = 0;
             this._windowPreviews();
             return GLib.SOURCE_REMOVE;

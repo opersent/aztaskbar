@@ -34,6 +34,16 @@
             <summary>Show window previews for running apps</summary>
             <description>Show window previews for running apps.</description>
         </key>
+        <key type="i" name="window-previews-show-timeout">
+            <default>600</default>
+            <summary>Delay for showing window previews (ms)</summary>
+            <description>Delay for showing window previews (ms).</description>
+        </key>
+        <key type="i" name="window-previews-hide-timeout">
+            <default>300</default>
+            <summary>Delay for hiding window previews (ms)</summary>
+            <description>Delay for hiding window previews (ms).</description>
+        </key>
         <key type="b" name="peek-windows">
             <default>true</default>
             <summary>Peek to window when mouse over a window previews</summary>

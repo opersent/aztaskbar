@@ -313,10 +313,59 @@ class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
         this._settings = settings;
 
         let mainPage = new Adw.PreferencesPage();
-        let mainGroup = new Adw.PreferencesGroup();
-
-        mainPage.add(mainGroup);
         this.add(mainPage);
+
+        let windowPreviewsGroup = new Adw.PreferencesGroup({
+            title: _("Window Previews")
+        });
+        mainPage.add(windowPreviewsGroup);
+
+        let showDelaySpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0, upper: 1200, step_increment: 100, page_increment: 100, page_size: 0,
+            }),
+            climb_rate: 100,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        showDelaySpinButton.set_value(this._settings.get_int('window-previews-show-timeout'));
+        showDelaySpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('window-previews-show-timeout', widget.get_value());
+        });
+        let showDelaySpinRow = new Adw.ActionRow({
+            title: _("Show Window Previews Delay"),
+            subtitle: _("Time in ms to show the window preview"),
+            activatable_widget: showDelaySpinButton
+        });
+        showDelaySpinRow.add_suffix(showDelaySpinButton);
+        windowPreviewsGroup.add(showDelaySpinRow);
+
+        let hideDelaySpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0, upper: 1200, step_increment: 100, page_increment: 100, page_size: 0,
+            }),
+            climb_rate: 100,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        hideDelaySpinButton.set_value(this._settings.get_int('window-previews-hide-timeout'));
+        hideDelaySpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('window-previews-hide-timeout', widget.get_value());
+        });
+        let hideDelaySpinRow = new Adw.ActionRow({
+            title: _("Hide Window Previews Delay"),
+            subtitle: _("Time in ms to hide the window preview"),
+            activatable_widget: hideDelaySpinButton
+        });
+        hideDelaySpinRow.add_suffix(hideDelaySpinButton);
+        windowPreviewsGroup.add(hideDelaySpinRow);
+
+        let windowPeekGroup = new Adw.PreferencesGroup({
+            title: _("Window Peeking")
+        });
+        mainPage.add(windowPeekGroup);
 
         let enablePeekSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -331,7 +380,7 @@ class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
             this._settings.set_boolean('peek-windows', widget.get_active());
         });
         enablePeekRow.add_suffix(enablePeekSwitch);
-        mainGroup.add(enablePeekRow);
+        windowPeekGroup.add(enablePeekRow);
 
         let peekTimeoutSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
@@ -352,7 +401,7 @@ class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
             activatable_widget: peekTimeoutSpinButton
         });
         peekTimeoutSpinRow.add_suffix(peekTimeoutSpinButton);
-        mainGroup.add(peekTimeoutSpinRow);
+        windowPeekGroup.add(peekTimeoutSpinRow);
 
         let peekOpacitySpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
@@ -373,7 +422,7 @@ class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
             activatable_widget: peekOpacitySpinButton
         });
         peekOpacityRow.add_suffix(peekOpacitySpinButton);
-        mainGroup.add(peekOpacityRow);
+        windowPeekGroup.add(peekOpacityRow);
     }
 });
 
