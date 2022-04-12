@@ -21,7 +21,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
     _init(settings) {
         super._init();
         this._settings = settings;
-        this.clip_to_allocation = true,
+        this.clip_to_allocation = true;
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this._appSystem = Shell.AppSystem.get_default();
