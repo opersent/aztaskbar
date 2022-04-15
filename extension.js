@@ -17,11 +17,22 @@ const INDICATOR_RUNNING_WIDTH = 7;
 const INDICATOR_FOCUSED_WIDTH = 13;
 
 var AppDisplayBox = GObject.registerClass(
-class azTaskbar_AppDisplayBox extends St.BoxLayout {
+class azTaskbar_AppDisplayBox extends St.ScrollView {
     _init(settings) {
-        super._init();
+        super._init({
+            style_class: 'hfade'
+        });
+        this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
+
         this._settings = settings;
+        this.mainBox = new St.BoxLayout({
+            x_expand: true,
+            y_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            y_align: Clutter.ActorAlign.FILL,
+        })
         this.clip_to_allocation = true;
+        this.add_actor(this.mainBox);
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this._appSystem = Shell.AppSystem.get_default();
@@ -54,7 +65,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
     _createAppItem(newApp, monitorIndex, positionIndex){
         const isFavorite = newApp.isFavorite;
         const app = newApp.app;
-        const appID = app.get_id() + ", " + monitorIndex;
+        const appID = `${app.get_id()} - ${monitorIndex}`;
 
         let item = this.oldAppIcons.get(appID);
 
@@ -105,7 +116,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
     _redisplay() {
         this.oldApps = [];
 
-        this.get_children().forEach(actor => {
+        this.mainBox.get_children().forEach(actor => {
             if(actor instanceof AppIcon){
                 actor.isSet = false;
                 this.oldApps.push({
@@ -114,7 +125,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
                 });
             }
             else{
-                this.remove_child(actor);
+                this.mainBox.remove_child(actor);
                 actor.destroy();
             }
         });
@@ -196,11 +207,11 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
                     if(parent && item.positionIndex !== positionIndex){
                         item.positionIndex = positionIndex;
                         item.stopAllAnimations();
-                        this.remove_child(item);
-                        this.insert_child_at_index(item, positionIndex);
+                        this.mainBox.remove_child(item);
+                        this.mainBox.insert_child_at_index(item, positionIndex);
                     }
                     else if(!parent) {
-                        this.insert_child_at_index(item, positionIndex);
+                        this.mainBox.insert_child_at_index(item, positionIndex);
                     }
 
                     positionIndex++;
@@ -220,7 +231,7 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
             }
         });
 
-        let children = this.get_children();
+        let children = this.mainBox.get_children();
         for(let i = 0; i < children.length; i++){
             const appicon = children[i];
             const previusAppicon = children[i - 1];
@@ -233,11 +244,11 @@ class azTaskbar_AppDisplayBox extends St.BoxLayout {
                     width: 1,
                     height: 15,
                 });
-                this.insert_child_at_index(separator, i);
+                this.mainBox.insert_child_at_index(separator, i);
             }
         }
 
-        this.queue_relayout();
+        this.mainBox.queue_relayout();
     }
 
     _updateIconGeometry(){
@@ -665,6 +676,7 @@ class azTaskbar_AppIcon extends St.Button {
                     if(windows.length > 1)
                         this.overlayWidget.show();
 
+                    ensureActorVisibleInScrollView(this.appDisplayBox, this);
                     this.appIcon.add_style_pseudo_class('active');
                     indicatorWidth = INDICATOR_FOCUSED_WIDTH;
                     indicatorColor = this._settings.get_string('indicator-color-focused');
@@ -940,6 +952,7 @@ class azTaskbar_AppIcon extends St.Button {
             }
             if(!this.menuManager.activeMenu)
                 this.showLabel();
+            ensureActorVisibleInScrollView(this.appDisplayBox, this);
         }
         else {
             this._removePreviewMenuTimeout();
@@ -1096,6 +1109,45 @@ function getInterestingWindows(settings, windows, monitorIndex) {
     }
 
     return windows.filter(w => !w.skipTaskbar);
+}
+
+/**
+ * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
+ */
+function ensureActorVisibleInScrollView(scrollView, actor) {
+    let adjustment = scrollView.hscroll.adjustment;
+    let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
+
+    let offset = 0;
+    let hfade = scrollView.get_effect("fade");
+    if (hfade)
+        offset = hfade.fade_margins.left;
+
+    let box = actor.get_allocation_box();
+    let x1 = box.x1, x2 = box.x2;
+
+    let parent = actor.get_parent();
+    while (parent != scrollView) {
+        if (!parent)
+            throw new Error("actor not in scroll view");
+
+        box = parent.get_allocation_box();
+        x1 += box.x1;
+        x2 += box.x1;
+        parent = parent.get_parent();
+    }
+
+    if (x1 < value + offset)
+        value = Math.max(0, x1 - offset);
+    else if (x2 > value + pageSize - offset)
+        value = Math.min(upper, x2 + offset - pageSize);
+    else
+        return;
+
+    adjustment.ease(value, {
+        mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        duration: 100,
+    });
 }
 
 var IndicatorLocation = {
