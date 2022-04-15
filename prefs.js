@@ -292,7 +292,9 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
             activatable_widget: windowPreviewsSwitch
         });
         windowPreviewsSwitch.set_active(this._settings.get_boolean('window-previews'));
+        windowPreviewsOptionsButton.set_sensitive(this._settings.get_boolean('window-previews'));
         windowPreviewsSwitch.connect('notify::active', (widget) => {
+            windowPreviewsOptionsButton.set_sensitive(widget.get_active());
             this._settings.set_boolean('window-previews', widget.get_active());
         });
         windowPreviewsRow.add_suffix(windowPreviewsOptionsButton);
@@ -302,18 +304,20 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
 });
 
 var WindowPreviewOptions = GObject.registerClass(
-class azTaskbar_WindowPreviewOptions extends Adw.PreferencesWindow {
+class azTaskbar_WindowPreviewOptions extends Gtk.Window {
     _init(parent, settings) {
         super._init({
             title: _("Window Preview Options"),
             transient_for: parent,
-            default_height: 300
+            modal: true,
+            default_width: 600,
+            default_height: 425
         });
 
         this._settings = settings;
 
         let mainPage = new Adw.PreferencesPage();
-        this.add(mainPage);
+        this.set_child(mainPage);
 
         let windowPreviewsGroup = new Adw.PreferencesGroup({
             title: _("Window Previews")
