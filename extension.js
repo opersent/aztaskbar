@@ -371,7 +371,7 @@ class azTaskbar_AppIcon extends St.Button {
         });
         box.add_child(this.indicatorBottom);
 
-        this.overlayWidget = new St.Icon({
+        this.multiWindowIndicator = new St.Icon({
             icon_name: 'list-add-symbolic',
             icon_size: 8,
             style_class: 'azTaskbar-multi-window-indicator',
@@ -380,7 +380,7 @@ class azTaskbar_AppIcon extends St.Button {
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.START,
         });
-        this.overlayWidget.hide();
+        this.multiWindowIndicator.hide();
 
         let overlayGroup = new Clutter.Actor({
             layout_manager: new Clutter.BinLayout(),
@@ -388,7 +388,7 @@ class azTaskbar_AppIcon extends St.Button {
             y_align: Clutter.ActorAlign.FILL,
         });
         overlayGroup.add_actor(box);
-        overlayGroup.add_actor(this.overlayWidget);
+        overlayGroup.add_actor(this.multiWindowIndicator);
 
         this.set_child(overlayGroup);
 
@@ -662,7 +662,9 @@ class azTaskbar_AppIcon extends St.Button {
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
-        this.overlayWidget.hide();
+        this.appIconState = AppIconState.NOT_RUNNING;
+        this.multiWindowIndicator.remove_all_transitions();
+        this._hideMultiWindowIndicator();
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
         let indicatorColor = 'transparent';
@@ -670,11 +672,13 @@ class azTaskbar_AppIcon extends St.Button {
 
         let windows = this.getInterestingWindows();
         if(windows.length >= 1){
+            this.appIconState = AppIconState.RUNNING;
             indicatorColor = this._settings.get_string('indicator-color-running');
             windows.forEach(window => {
                 if(window.has_focus()){
+                    this.appIconState = AppIconState.FOCUSED;
                     if(windows.length > 1)
-                        this.overlayWidget.show();
+                        this._showMultiWindowIndicator();
 
                     ensureActorVisibleInScrollView(this.appDisplayBox, this);
                     this.appIcon.add_style_pseudo_class('active');
@@ -947,14 +951,19 @@ class azTaskbar_AppIcon extends St.Button {
 
     _onHover() {
         if (this.hover) {
-            if(this.getInterestingWindows().length >= 1){
+            let windowCount = this.getInterestingWindows().length;
+            if(windowCount >= 1){
                 this._setPreviewPopupTimeout();
+                if(windowCount > 1)
+                    this._showMultiWindowIndicator();
             }
             if(!this.menuManager.activeMenu)
                 this.showLabel();
             ensureActorVisibleInScrollView(this.appDisplayBox, this);
         }
         else {
+            if(this.appIconState === AppIconState.RUNNING)
+                this._hideMultiWindowIndicator();
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -979,6 +988,25 @@ class azTaskbar_AppIcon extends St.Button {
 
             this._previewMenu?.popup();
         }
+    }
+
+    _showMultiWindowIndicator(){
+        this.multiWindowIndicator.opacity = 0;
+        this.multiWindowIndicator.show();
+        this.multiWindowIndicator.ease({
+            opacity: 255,
+            duration: 300,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
+    }
+
+    _hideMultiWindowIndicator() {
+        this.multiWindowIndicator.ease({
+            opacity: 0,
+            duration: 100,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => this.multiWindowIndicator.hide(),
+        });
     }
 
     showLabel() {
@@ -1170,4 +1198,10 @@ var PanelPosition = {
     LEFT: 0,
     CENTER: 1,
     RIGHT: 2,
+}
+
+var AppIconState = {
+    RUNNING: 0,
+    FOCUSED: 1,
+    NOT_RUNNING: 2,
 }

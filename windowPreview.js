@@ -131,26 +131,14 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
             enable_mouse_scrolling: true
         });
         this.actor.connect('scroll-event', this._onScrollEvent.bind(this));
-
-        let position = St.Side.TOP;
-        this.isHorizontal = position == St.Side.BOTTOM || position == St.Side.TOP;
-        this.box.set_vertical(!this.isHorizontal);
         this.actor.add_actor(this.box);
+        this.box.set_vertical(false);
         this.actor._delegate = this;
 
         this._shownInitially = false;
 
         this._source = source;
         this.app = source.app;
-
-        this._redisplayId = Main.initializeDeferredWork(this.actor, this.redisplay.bind(this));
-
-        this.actor.connect('destroy', this._onDestroy.bind(this));
-        this._stateChangedId = this.app.connect('windows-changed', this._queueRedisplay.bind(this));
-    }
-
-    _queueRedisplay () {
-        Main.queueDeferredWork(this._redisplayId);
     }
 
     _onScrollEvent(actor, event) {
@@ -170,13 +158,8 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         if (event.is_pointer_emulated())
             return Clutter.EVENT_STOP;
 
-        let adjustment, delta;
-
-        if (this.isHorizontal)
-            adjustment = this.actor.get_hscroll_bar().get_adjustment();
-        else
-            adjustment = this.actor.get_vscroll_bar().get_adjustment();
-
+        let delta;
+        let adjustment = this.actor.get_hscroll_bar().get_adjustment();
         let increment = adjustment.step_increment;
 
         switch ( event.get_scroll_direction() ) {
@@ -199,123 +182,30 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         return Clutter.EVENT_STOP;
     }
 
-    _onDestroy() {
-        this.app.disconnect(this._stateChangedId);
-        this._stateChangedId = 0;
-    }
-
     _createPreviewItem(window, app) {
         let preview = new WindowPreviewMenuItem(this._source, window, app);
         return preview;
     }
 
     redisplay () {
-        let children = this._getMenuItems().filter(function(actor) {
-            return actor._window;
-        });
-
-        // Windows currently on the menu
-        let oldWin = children.map(function(actor) {
-            return actor._window;
-        });
-
-        // All app windows with a static order
-        let newWin = this._source.getInterestingWindows().sort(function(a, b) {
+        let newWin = this._source.getInterestingWindows().sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
 
-        let addedItems = [];
-        let removedActors = [];
+        newWin.forEach(window => {
+            let previewMenuItem = this._createPreviewItem(window, this.app);
+            this.addMenuItem(previewMenuItem);
+        });
 
-        let newIndex = 0;
-        let oldIndex = 0;
-
-        while (newIndex < newWin.length || oldIndex < oldWin.length) {
-            // No change at oldIndex/newIndex
-            if (oldWin[oldIndex] &&
-                oldWin[oldIndex] == newWin[newIndex]) {
-                oldIndex++;
-                newIndex++;
-                continue;
-            }
-
-            // Window removed at oldIndex
-            if (oldWin[oldIndex] &&
-                newWin.indexOf(oldWin[oldIndex]) == -1) {
-                removedActors.push(children[oldIndex]);
-                oldIndex++;
-                continue;
-            }
-
-            // Window added at newIndex
-            if (newWin[newIndex] &&
-                oldWin.indexOf(newWin[newIndex]) == -1) {
-                addedItems.push({ item: this._createPreviewItem(newWin[newIndex], this.app),
-                                  pos: newIndex });
-                newIndex++;
-                continue;
-            }
-
-            // Window moved
-            let insertHere = newWin[newIndex + 1] &&
-                             newWin[newIndex + 1] == oldWin[oldIndex];
-            let alreadyRemoved = removedActors.reduce(function(result, actor) {
-                let removedWin = actor._window;
-                return result || removedWin == newWin[newIndex];
-            }, false);
-
-            if (insertHere || alreadyRemoved) {
-                addedItems.push({ item: this._createPreviewItem(newWin[newIndex], this.app),
-                                  pos: newIndex + removedActors.length });
-                newIndex++;
-            } else {
-                removedActors.push(children[oldIndex]);
-                oldIndex++;
-            }
-        }
-
-        for (let i = 0; i < addedItems.length; i++)
-            this.addMenuItem(addedItems[i].item,
-                             addedItems[i].pos);
-
-        for (let i = 0; i < removedActors.length; i++) {
-            let item = removedActors[i];
-            if (this._shownInitially)
-                item._animateOutAndDestroy();
-            else
-                item.actor.destroy();
-        }
-
-        // Skip animations on first run when adding the initial set
-        // of items, to avoid all items zooming in at once
-        let animate = this._shownInitially;
-
-        if (!this._shownInitially)
-            this._shownInitially = true;
-
-        for (let i = 0; i < addedItems.length; i++)
-            addedItems[i].item.show(animate);
-
-        // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
-        // Without it, StBoxLayout may use a stale size cache
         this.box.queue_relayout();
 
         if (newWin.length < 1)
             this._getTopMenu().close(~0);
 
-        // As for upstream:
-        // St.ScrollView always requests space horizontally for a possible vertical
-        // scrollbar if in AUTOMATIC mode. Doing better would require implementation
-        // of width-for-height in St.BoxLayout and St.ScrollView. This looks bad
-        // when we *don't* need it, so turn off the scrollbar when that's true.
-        // Dynamic changes in whether we need it aren't handled properly.
         let needsScrollbar = this._needsScrollbar();
         let scrollbar_policy = needsScrollbar ?
             St.PolicyType.AUTOMATIC : St.PolicyType.NEVER;
-        if (this.isHorizontal)
-            this.actor.hscrollbar_policy =  scrollbar_policy;
-        else
-            this.actor.vscrollbar_policy =  scrollbar_policy;
+        this.actor.hscrollbar_policy =  scrollbar_policy;
 
         if (needsScrollbar)
             this.actor.add_style_pseudo_class('scrolled');
@@ -326,22 +216,15 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
     _needsScrollbar() {
         let topMenu = this._getTopMenu();
         let topThemeNode = topMenu.actor.get_theme_node();
-        if (this.isHorizontal) {
-            let [topMinWidth, topNaturalWidth] = topMenu.actor.get_preferred_width(-1);
-            let topMaxWidth = topThemeNode.get_max_width();
-            return topMaxWidth >= 0 && topNaturalWidth >= topMaxWidth;
-        } else {
-            let [topMinHeight, topNaturalHeight] = topMenu.actor.get_preferred_height(-1);
-            let topMaxHeight = topThemeNode.get_max_height();
-            return topMaxHeight >= 0 && topNaturalHeight >= topMaxHeight;
-        }
-
+        let [topMinWidth, topNaturalWidth] = topMenu.actor.get_preferred_width(-1);
+        let topMaxWidth = topThemeNode.get_max_width();
+        return topMaxWidth >= 0 && topNaturalWidth >= topMaxWidth;
     }
 
     isAnimatingOut() {
-        return this.actor.get_children().reduce(function(result, actor) {
+        return this.actor.get_children().reduce((result, actor) => {
                    return result || actor.animatingOut;
-               }, false);
+        }, false);
     }
 };
 
@@ -554,9 +437,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
     _hasAttachedDialogs() {
         // count trasient windows
-        let n=0;
-        this._window.foreach_transient(function(){n++;});
-        return n>0;
+        let n = 0;
+        this._window.foreach_transient(() => {
+            n++;
+        });
+        return n > 0;
     }
 
     _onHover(){
@@ -775,8 +660,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     activate() {
-
-        
         this.activateTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5, () => {
             this._getTopMenu().close();
             this._endPeek(true);
@@ -784,7 +667,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             this.activateTimeoutId = 0;
             return GLib.SOURCE_REMOVE;
         });
-        
     }
 
     _onDestroy() {
