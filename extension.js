@@ -954,7 +954,7 @@ class azTaskbar_AppIcon extends St.Button {
             let windowCount = this.getInterestingWindows().length;
             if(windowCount >= 1){
                 this._setPreviewPopupTimeout();
-                if(windowCount > 1)
+                if(windowCount > 1 && !this.multiWindowIndicator.visible)
                     this._showMultiWindowIndicator();
             }
             if(!this.menuManager.activeMenu)
