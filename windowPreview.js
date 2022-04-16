@@ -1,13 +1,12 @@
 /**
  * Credits:
  *
- * This file is largely a copy of windowPreview.js from Dash to Dock.
+ * This file is based on windowPreview.js from Dash to Dock
  * See https://github.com/micheleg/dash-to-dock/blob/master/windowPreview.js
  * for more details.
  *
- * This file is also based on code from Dash to Panel
+ * Window peeking feature based on code from Dash to Panel
  * https://github.com/home-sweet-gnome/dash-to-panel/blob/master/windowPreview.js
- * and code from the Taskbar extension by Zorin OS.
  *
  * Some code was also adapted from the upstream Gnome Shell source code.
  *
