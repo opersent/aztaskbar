@@ -28,16 +28,6 @@ App Icons Taskbar is provided free of charge. If you enjoy using this extension 
 
 [![Donate via Paypal](https://gitlab.com/arcmenu/arcmenu-assets/raw/master/images/paypal_donate.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Donate+to+support+my+work&currency_code=USD&source=url)
 
-
------
-
-
-### Bugs
-
-Bugs should be reported [here](https://gitlab.com/AndrewZaech/aztaskbar/issues) on the GitLab issues page.
-
-When reporting a bug, please provide as much information as you can about the issue and make sure to include your Linux distribution, GNOME Shell version, and App Icons Taskbar version.
-
 -----
 
 ### Credits:
