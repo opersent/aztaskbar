@@ -663,8 +663,6 @@ class azTaskbar_AppIcon extends St.Button {
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
         this.appIconState = AppIconState.NOT_RUNNING;
-        this.multiWindowIndicator.remove_all_transitions();
-        this._hideMultiWindowIndicator();
         this.appIcon.style = null;
         this.appIcon.set_style_pseudo_class(null);
         let indicatorColor = 'transparent';
@@ -677,7 +675,7 @@ class azTaskbar_AppIcon extends St.Button {
             windows.forEach(window => {
                 if(window.has_focus()){
                     this.appIconState = AppIconState.FOCUSED;
-                    if(windows.length > 1)
+                    if(windows.length > 1 && !this.multiWindowIndicator.visible)
                         this._showMultiWindowIndicator();
 
                     ensureActorVisibleInScrollView(this.appDisplayBox, this);
@@ -686,6 +684,12 @@ class azTaskbar_AppIcon extends St.Button {
                     indicatorColor = this._settings.get_string('indicator-color-focused');
                 }
             });
+        }
+        //hide the multiwindow indicator if app icon no longer focused,
+        //or app has 1 or 0 windows.
+        if(this.appIconState !== AppIconState.FOCUSED || windows.length <= 1){
+            this.multiWindowIndicator.remove_all_transitions();
+            this._hideMultiWindowIndicator();
         }
 
         if(!this._settings.get_boolean('indicators'))
