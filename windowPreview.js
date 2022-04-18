@@ -5,7 +5,7 @@
  * See https://github.com/micheleg/dash-to-dock/blob/master/windowPreview.js
  * for more details.
  *
- * Window peeking feature based on code from Dash to Panel
+ * Window peeking and other parts of code based on code from Dash to Panel
  * https://github.com/home-sweet-gnome/dash-to-panel/blob/master/windowPreview.js
  *
  * Some code was also adapted from the upstream Gnome Shell source code.
@@ -41,7 +41,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
         let monitorIndex = this._source.monitorIndex;
         this.appDisplayBox = source.appDisplayBox;
         this.menuManager = menuManager;
-        this._hasPointer = false;
         this.actor.set_style('max-width: '  + (Main.layoutManager.monitors[monitorIndex].width  - 22) + 'px;' +
                              'max-height: ' + (Main.layoutManager.monitors[monitorIndex].height - 22) + 'px;');
         this.actor.hide();
@@ -60,11 +59,10 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     redisplay() {
-        if (this._previewBox)
-            this._previewBox.destroy();
-
-        this._previewBox = new WindowPreviewList(this._source);
-        this.addMenuItem(this._previewBox);
+        if (!this._previewBox){
+            this._previewBox = new WindowPreviewList(this._source);
+            this.addMenuItem(this._previewBox);
+        }
 
         this._previewBox.redisplay();
     }
@@ -90,10 +88,9 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     _previewMenuCapturedEvent(actor, event){
-        let menu = actor._delegate;
         const targetActor = global.stage.get_event_actor(event);
         const hasPointer = this._source.has_pointer || this.actor.has_pointer || this.box.has_pointer
-                            || this._previewBox.box.get_children().some(a => a._hasPointer || a.has_pointer);
+                            || this._previewBox.box.get_children().some(a => a.has_pointer);
 
         if (event.type() === Clutter.EventType.ENTER &&
                 (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
@@ -105,7 +102,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
         }
         else if (event.type() === Clutter.EventType.LEAVE &&
                 (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
-
             let hoveredMenu = this.menuManager._findMenuForSource(targetActor);
 
             if((!hoveredMenu || !hoveredMenu.shouldOpen) && !hasPointer){
@@ -133,7 +129,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         this.actor.add_actor(this.box);
         this.box.set_vertical(false);
         this.actor._delegate = this;
-
+        this.oldWindowsMap = new Map();
         this._shownInitially = false;
 
         this._source = source;
@@ -182,24 +178,62 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
     }
 
     _createPreviewItem(window, app) {
+        const windID = window.get_id();
+        let item = this.oldWindowsMap.get(windID);
+
+        if(item){
+            item.redisplay();
+            return item;
+        }
+
         let preview = new WindowPreviewMenuItem(this._source, window, app);
+        this.oldWindowsMap.set(windID, preview);
         return preview;
     }
 
     redisplay () {
-        let newWin = this._source.getInterestingWindows().sort((a, b) => {
+        let oldWindows = [];
+
+        this.box.get_children().forEach(actor => {
+            actor.isSet = false;
+            oldWindows.push(actor._window);
+        });
+
+        let newWindows = [];
+
+        let openWindows = this._source.getInterestingWindows().sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
 
-        newWin.forEach(window => {
+        oldWindows.forEach(oldWindow => {
+            const window = oldWindow;
+            const index = openWindows.indexOf(window);
+            if (index > -1) {
+                const [window] = openWindows.splice(index, 1);
+                newWindows.push(window);
+            }
+            else{
+                const winID = window.get_id();
+                let item = this.oldWindowsMap.get(winID);
+                if(item){
+                    this.oldWindowsMap.delete(winID);
+                    item.destroy();
+                }
+            }
+        });
+
+        openWindows.forEach(window => {
+            newWindows.push(window);
+        });
+
+        newWindows.forEach(window => {
             let previewMenuItem = this._createPreviewItem(window, this.app);
-            this.addMenuItem(previewMenuItem);
+            const parent = previewMenuItem.get_parent();
+            if(!parent)
+                this.addMenuItem(previewMenuItem);
         });
 
         this.box.queue_relayout();
-
-        if (newWin.length < 1)
-            this._getTopMenu().close(~0);
 
         let needsScrollbar = this._needsScrollbar();
         let scrollbar_policy = needsScrollbar ?
@@ -218,12 +252,6 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         let [topMinWidth, topNaturalWidth] = topMenu.actor.get_preferred_width(-1);
         let topMaxWidth = topThemeNode.get_max_width();
         return topMaxWidth >= 0 && topNaturalWidth >= topMaxWidth;
-    }
-
-    isAnimatingOut() {
-        return this.actor.get_children().reduce((result, actor) => {
-                   return result || actor.animatingOut;
-        }, false);
     }
 };
 
@@ -319,6 +347,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         this.connect('destroy', this._onDestroy.bind(this));
         this.connect('notify::hover', () => this._onHover());
+    }
+
+    redisplay(){
+        [this._width, this._height] = this._getWindowPreviewSize();
+        this._cloneBin.style = `width: ${this._width}px; height: ${this._height}px;`;
     }
 
     _getWindowPreviewSize() {
@@ -444,24 +477,17 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _onHover(){
-        //this.hover changes on mouse movement even though
-        //the mouse has never left this actor. use has_pointer instead.
-        const hasPointer = this.has_pointer || this.closeButton.has_pointer || this._getTopMenu().has_pointer;
-        if(this._hasPointer === hasPointer)
-            return;
-
-        if(hasPointer){
+        if(this.hover){
             this._showCloseButton();
             if(this._settings.get_boolean('peek-windows'))
                 this._startPeek();
-            this._hasPointer = true;
         }
         else{
             this._hideCloseButton();
             if(!this.get_parent().get_children().some(a => a.has_pointer))
                 this._endPeek();
-            this._hasPointer = false;
         }
+        return;
     }
 
     _idleToggleCloseButton() {
@@ -471,7 +497,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         return GLib.SOURCE_REMOVE;
     }
-
 
     _startPeek(){
         if(this._source.peekTimeoutId > 0){
