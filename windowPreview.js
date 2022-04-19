@@ -90,7 +90,7 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     _previewMenuCapturedEvent(actor, event){
         const targetActor = global.stage.get_event_actor(event);
         const hasPointer = this._source.has_pointer || this.actor.has_pointer || this.box.has_pointer
-                            || this._previewBox.box.get_children().some(a => a.has_pointer);
+                            || this._previewBox.box.get_children().some(a => a._hasPointer || a.has_pointer);
 
         if (event.type() === Clutter.EventType.ENTER &&
                 (event.get_flags() & Clutter.EventFlags.FLAG_GRAB_NOTIFY) === 0) {
@@ -258,7 +258,7 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
 var WindowPreviewMenuItem = GObject.registerClass(
 class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     _init(source, window, app, params) {
-        super._init(params);
+        super._init();
         this.add_style_class_name('azTaskbar-window-preview-menu-item');
         this.x_align = Clutter.ActorAlign.FILL;
         this.x_expand = true;
@@ -346,10 +346,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._cloneTexture(window);
 
         this.connect('destroy', this._onDestroy.bind(this));
-        this.connect('notify::hover', () => this._onHover());
+        this.connect('notify::hover', this._onHover.bind(this));
     }
 
     redisplay(){
+        this._hasPointer = false;
         [this._width, this._height] = this._getWindowPreviewSize();
         this._cloneBin.style = `width: ${this._width}px; height: ${this._height}px;`;
     }
@@ -477,15 +478,21 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _onHover(){
-        if(this.hover){
+        const hasPointer = this.has_pointer || this.closeButton.has_pointer || this._getTopMenu().has_pointer;
+        if(this._hasPointer === hasPointer)
+            return;
+
+        if (this.hover) {
             this._showCloseButton();
             if(this._settings.get_boolean('peek-windows'))
                 this._startPeek();
+            this._hasPointer = true;
         }
-        else{
+        else if (!this.hover && !hasPointer) {
             this._hideCloseButton();
             if(!this.get_parent().get_children().some(a => a.has_pointer))
                 this._endPeek();
+            this._hasPointer = false;
         }
         return;
     }
@@ -573,7 +580,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         }
 
         if(this._source.peekedWindow){
-            let immediate = !stayHere && this._source.peekInitialWorkspaceIndex != global.workspace_manager.get_active_workspace_index();
+            let immediate = !stayHere && this._source.peekInitialWorkspaceIndex !== global.workspace_manager.get_active_workspace_index();
 
             this._restorePeekedWindowStack();
             this._focusMetaWindow(255, this._source.peekedWindow, immediate, true);
@@ -618,7 +625,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     animateWindowOpacity(metaWindow, windowActor, opacity, immediate) {
         windowActor = windowActor || metaWindow.get_compositor_private();
 
-        if (windowActor && !metaWindow.minimized) {
+        if (windowActor) {
             let duration = 255;
 
             if (immediate && !metaWindow.is_on_all_workspaces())
@@ -684,9 +691,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     activate() {
-        this.activateTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5, () => {
-            this._getTopMenu().close();
-            this._endPeek(true);
+        this._getTopMenu().close();
+        this._endPeek(true);
+        Main.activateWindow(this._window);
+
+        this.activateTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
             Main.activateWindow(this._window);
             this.activateTimeoutId = 0;
             return GLib.SOURCE_REMOVE;

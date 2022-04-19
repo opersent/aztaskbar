@@ -373,7 +373,7 @@ class azTaskbar_AppIcon extends St.Button {
 
         this.multiWindowIndicator = new St.Icon({
             icon_name: 'list-add-symbolic',
-            icon_size: 8,
+            icon_size: 5,
             style_class: 'azTaskbar-multi-window-indicator',
             x_expand: true,
             y_expand: true,
@@ -408,6 +408,7 @@ class azTaskbar_AppIcon extends St.Button {
         this._setIndicatorLocation();
 
         this._connections = new Map();
+        this._connections.set(this._settings.connect('changed::multi-window-indicator', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-location', () => this._setIndicatorLocation()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
@@ -673,11 +674,10 @@ class azTaskbar_AppIcon extends St.Button {
             this.appIconState = AppIconState.RUNNING;
             indicatorColor = this._settings.get_string('indicator-color-running');
             windows.forEach(window => {
+                if(windows.length > 1 && !this.multiWindowIndicator.visible)
+                    this._showMultiWindowIndicator();
                 if(window.has_focus()){
                     this.appIconState = AppIconState.FOCUSED;
-                    if(windows.length > 1 && !this.multiWindowIndicator.visible)
-                        this._showMultiWindowIndicator();
-
                     ensureActorVisibleInScrollView(this.appDisplayBox, this);
                     this.appIcon.add_style_pseudo_class('active');
                     indicatorWidth = INDICATOR_FOCUSED_WIDTH;
@@ -687,10 +687,11 @@ class azTaskbar_AppIcon extends St.Button {
         }
         //hide the multiwindow indicator if app icon no longer focused,
         //or app has 1 or 0 windows.
-        if(this.appIconState !== AppIconState.FOCUSED || windows.length <= 1){
-            this.multiWindowIndicator.remove_all_transitions();
+        if(windows.length <= 1 && this.multiWindowIndicator.visible)
             this._hideMultiWindowIndicator();
-        }
+
+        if(!this._settings.get_boolean('multi-window-indicator') && this.multiWindowIndicator.visible)
+            this._hideMultiWindowIndicator();
 
         if(!this._settings.get_boolean('indicators'))
             indicatorColor = 'transparent';
@@ -956,18 +957,13 @@ class azTaskbar_AppIcon extends St.Button {
     _onHover() {
         if (this.hover) {
             let windowCount = this.getInterestingWindows().length;
-            if(windowCount >= 1){
+            if(windowCount >= 1)
                 this._setPreviewPopupTimeout();
-                if(windowCount > 1 && !this.multiWindowIndicator.visible)
-                    this._showMultiWindowIndicator();
-            }
             if(!this.menuManager.activeMenu)
                 this.showLabel();
             ensureActorVisibleInScrollView(this.appDisplayBox, this);
         }
         else {
-            if(this.appIconState === AppIconState.RUNNING)
-                this._hideMultiWindowIndicator();
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -995,8 +991,12 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _showMultiWindowIndicator(){
+        if(!this._settings.get_boolean('multi-window-indicator'))
+            return;
+
         this.multiWindowIndicator.opacity = 0;
         this.multiWindowIndicator.show();
+        this.multiWindowIndicator.remove_all_transitions()
         this.multiWindowIndicator.ease({
             opacity: 255,
             duration: 300,
@@ -1005,6 +1005,7 @@ class azTaskbar_AppIcon extends St.Button {
     }
 
     _hideMultiWindowIndicator() {
+        this.multiWindowIndicator.remove_all_transitions()
         this.multiWindowIndicator.ease({
             opacity: 0,
             duration: 100,

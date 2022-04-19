@@ -59,6 +59,11 @@
             <summary>Peek to window - opacity of inactive windows. 0 - 255</summary>
             <description>Peek to window - opacity of inactive windows. 0 - 255</description>
         </key>
+        <key type="b" name="multi-window-indicator">
+            <default>true</default>
+            <summary>Show an indicator when app has multiple windows</summary>
+            <description>Show an indicator when app has multiple windows.</description>
+        </key>
         <key type="b" name="indicators">
             <default>true</default>
             <summary>Show running app indicators</summary>

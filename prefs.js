@@ -143,6 +143,20 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(indicatorGroup);
 
+        let multiWindowIndicatorSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let multiWindowIndicatorRow = new Adw.ActionRow({
+            title: _("Multi-Window Indicator"),
+            activatable_widget: multiWindowIndicatorSwitch
+        });
+        multiWindowIndicatorSwitch.set_active(this._settings.get_boolean('multi-window-indicator'));
+        multiWindowIndicatorSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('multi-window-indicator', widget.get_active());
+        });
+        multiWindowIndicatorRow.add_suffix(multiWindowIndicatorSwitch);
+        indicatorGroup.add(multiWindowIndicatorRow);
+
         let indicatorSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });

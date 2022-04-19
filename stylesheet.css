@@ -32,11 +32,12 @@
 }
 
 .azTaskbar-multi-window-indicator{
-  margin: 2px 0px 0px 2px;
-  padding: 2px;
+  margin: 5px 0px 0px 5px;
+  padding: 1px;
   border-radius: 99px;
-  background-color: rgba(14, 14, 14, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(48, 48, 48, 0.96);
+  border: 1px solid rgba(204, 204, 204, 0.1);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
   color: white;
   transition-duration: 300ms;
 }
