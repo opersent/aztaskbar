@@ -1080,9 +1080,11 @@ function enable() {
     extensionConnections = new Map();
     extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel(true)), settings);
     extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel(true)), settings);
+    extensionConnections.set(settings.connect('changed::main-panel-height', () => setMainPanelHeight()), settings);
 
     appDisplayBox = new AppDisplayBox(settings);
     addAppBoxToPanel();
+    setMainPanelHeight()
 
     Main.panel.statusArea.appMenu.container.hide();
 }
@@ -1090,6 +1092,8 @@ function enable() {
 function disable() {
     if (!Main.overview.visible && !Main.sessionMode.isLocked)
         Main.panel.statusArea.appMenu.container.show();
+
+    Main.panel.style = null;
 
     extensionConnections.forEach((object, id) => {
         object.disconnect(id);
@@ -1124,6 +1128,17 @@ function addAppBoxToPanel(redisplay){
         const order = Math.clamp(nChildren - offset, 0, nChildren);
         Main.panel._rightBox.insert_child_at_index(appDisplayBox, order);
     }
+}
+
+function setMainPanelHeight(){
+    let [enabled, height] = settings.get_value('main-panel-height').deep_unpack();
+
+    if(!enabled){
+        Main.panel.style = null;
+        return;
+    }
+
+    Main.panel.style = `height: ${height}px;`;
 }
 
 function getInterestingWindows(settings, windows, monitorIndex) {

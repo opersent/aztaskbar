@@ -56,6 +56,51 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         positionOffsetRow.add_suffix(positionOffsetSpinButton);
         generalGroup.add(positionOffsetRow);
 
+        let [panelHeightOverride, panelHeight] = this._settings.get_value('main-panel-height').deep_unpack();
+
+        let panelHeightSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+        });
+        panelHeightSwitch.connect('notify::active', (widget) => {
+            let [oldEnabled_, oldValue] = this._settings.get_value('main-panel-height').deep_unpack();
+            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
+            if(widget.get_active())
+                panelHeightSpinButton.set_sensitive(true);
+            else
+                panelHeightSpinButton.set_sensitive(false);
+        });
+        let panelHeightSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 5,
+                upper: 60,
+                step_increment: 1
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+            value: panelHeight,
+            sensitive: panelHeightOverride
+        });
+        panelHeightSpinButton.connect('value-changed', (widget) => {
+            let [oldEnabled, oldValue_] = this._settings.get_value('main-panel-height').deep_unpack();
+            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [oldEnabled, widget.get_value()]));
+        });
+
+        let panelHeightRow = new Adw.ActionRow({
+            title: _('Panel Height'),
+            activatable_widget: panelHeightSwitch
+        });
+        panelHeightRow.add_suffix(panelHeightSwitch);
+        panelHeightRow.add_suffix(new Gtk.Separator({
+            orientation: Gtk.Orientation.VERTICAL,
+            margin_top: 10,
+            margin_bottom: 10
+        }));
+        panelHeightRow.add_suffix(panelHeightSpinButton);
+        panelHeightSwitch.set_active(panelHeightOverride);
+        generalGroup.add(panelHeightRow);
+
         let iconSizeSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
                 lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,

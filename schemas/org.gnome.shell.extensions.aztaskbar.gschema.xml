@@ -29,6 +29,11 @@
             <summary>Isolate running apps by current monitors</summary>
             <description>Isolate running apps by current monitors.</description>
         </key>
+        <key type="(bi)" name="main-panel-height">
+            <default>(false, 40)</default>
+            <summary>Change the height of GNOME top panel</summary>
+            <description>Change the height of GNOME top panel.</description>
+        </key>
         <key type="b" name="window-previews">
             <default>true</default>
             <summary>Show window previews for running apps</summary>
