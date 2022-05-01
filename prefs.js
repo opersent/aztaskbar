@@ -146,6 +146,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         iconStyles.append(_("Symbolic"));
         let iconStyleRow = new Adw.ComboRow({
             title: _("Icon Style"),
+            subtitle: _("Icon themes may not have a symbolic icon for every app"),
             model: iconStyles,
             selected: this._settings.get_enum('icon-style')
         });

@@ -44,6 +44,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::icon-style', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
         this._connections.set(this._appSystem.connect('installed-changed', () => {
