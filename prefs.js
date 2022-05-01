@@ -141,6 +141,19 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         desatureFactorRow.add_suffix(desatureFactorSpinButton);
         generalGroup.add(desatureFactorRow);
 
+        let iconStyles = new Gtk.StringList();
+        iconStyles.append(_("Regular"));
+        iconStyles.append(_("Symbolic"));
+        let iconStyleRow = new Adw.ComboRow({
+            title: _("Icon Style"),
+            model: iconStyles,
+            selected: this._settings.get_enum('icon-style')
+        });
+        iconStyleRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('icon-style', widget.selected);
+        });
+        generalGroup.add(iconStyleRow);
+
         let favoritesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });

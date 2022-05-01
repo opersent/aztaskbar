@@ -18,6 +18,10 @@
         <value value='1' nick='CENTER'/>
         <value value='2' nick='RIGHT'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.icon-style'>
+        <value value='0' nick='REGULAR'/>
+        <value value='1' nick='SYMBOLIC'/>
+    </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
             <default>true</default>
@@ -128,6 +132,11 @@
             <default>0.0</default>
             <summary>Desaturate effect for AppIcons. 0.0 - 1.0</summary>
             <description>Desaturate effect for AppIcons. 0.0 - 1.0, 0 = off</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.icon-style" name="icon-style">
+            <default>'REGULAR'</default>
+            <summary>AppIcon icon style. REGULAR or SYMBOLIC</summary>
+            <description>AppIcon icon style. REGULAR or SYMBOLIC.</description>
         </key>
     </schema>
 </schemalist>

@@ -1,4 +1,4 @@
-const { Clutter, GLib, GObject, Meta, Shell, St } = imports.gi;
+const { Clutter, Gio, GLib, GObject, Meta, Shell, St } = imports.gi;
 
 const { AppMenu } = imports.ui.appMenu;
 const AppFavorites = imports.ui.appFavorites;
@@ -1071,29 +1071,37 @@ class azTaskbar_AppIcon extends St.Button {
 });
 
 function enable() {
-    if(imports.gi.Meta.is_wayland_compositor())
+    if(Meta.is_wayland_compositor())
         Me.metadata.isWayland = true;
     else
         Me.metadata.isWayland = false;
 
     settings = ExtensionUtils.getSettings();
+
+    Me.customStylesheet = getStylesheetFile();
+    updateStylesheet();
+
     extensionConnections = new Map();
     extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel(true)), settings);
     extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel(true)), settings);
-    extensionConnections.set(settings.connect('changed::main-panel-height', () => setMainPanelHeight()), settings);
+    extensionConnections.set(settings.connect('changed::main-panel-height', () => updateStylesheet()), settings);
+    extensionConnections.set(settings.connect('changed::icon-style', () => updateStylesheet()), settings);
 
     appDisplayBox = new AppDisplayBox(settings);
     addAppBoxToPanel();
-    setMainPanelHeight()
 
     Main.panel.statusArea.appMenu.container.hide();
+    Main.panel.add_style_class_name("azTaskbar-panel");
 }
 
 function disable() {
     if (!Main.overview.visible && !Main.sessionMode.isLocked)
         Main.panel.statusArea.appMenu.container.show();
 
-    Main.panel.style = null;
+    Main.panel.remove_style_class_name("azTaskbar-panel");
+
+    unloadStylesheet();
+    delete Me.customStylesheet;
 
     extensionConnections.forEach((object, id) => {
         object.disconnect(id);
@@ -1130,15 +1138,72 @@ function addAppBoxToPanel(redisplay){
     }
 }
 
-function setMainPanelHeight(){
-    let [enabled, height] = settings.get_value('main-panel-height').deep_unpack();
+function updateStylesheet(){
+    let [overridePanelHeight, panelHeight] = settings.get_value('main-panel-height').deep_unpack();
 
-    if(!enabled){
-        Main.panel.style = null;
+    let appIconStyle = settings.get_enum('icon-style');
+    if(appIconStyle === AppIconStyle.REGULAR)
+        appIconStyle = 'regular';
+    else if(appIconStyle === AppIconStyle.SYMBOLIC)
+        appIconStyle = 'symbolic';
+
+    let stylesheet = Me.customStylesheet;
+
+    if(!stylesheet){
+        log("azTaskbar - Custom stylesheet error!");
         return;
     }
 
-    Main.panel.style = `height: ${height}px;`;
+    let customStylesheetCSS = `.azTaskbar-AppButton{
+                                    -st-icon-style: ${appIconStyle};
+                                }`;
+
+    if(overridePanelHeight){
+        customStylesheetCSS += `.azTaskbar-panel{
+                                    height: ${panelHeight}px;
+                                }`;
+    }
+
+    try{
+        let bytes = new GLib.Bytes(customStylesheetCSS);
+
+        stylesheet.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null, (stylesheet, res) => {
+            if(!stylesheet.replace_contents_finish(res))
+                throw new Error("azTaskbar - Error replacing contents of custom stylesheet file.");
+
+            let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+
+            unloadStylesheet();
+            Me.customStylesheet = stylesheet;
+            theme.load_stylesheet(Me.customStylesheet);
+
+            return true;
+        });
+    }
+    catch(e){
+        log("azTaskbar - Error updating custom stylesheet. " + e.message);
+        return false;
+    }
+}
+
+function getStylesheetFile(){
+    let stylesheet = Gio.File.new_for_path(GLib.get_home_dir() + "/.local/share/azTaskbar/stylesheet.css");
+
+    if(!stylesheet.query_exists(null)){
+        GLib.spawn_command_line_sync("mkdir " + GLib.get_home_dir() + "/.local/share/azTaskbar");
+        GLib.spawn_command_line_sync("touch " + GLib.get_home_dir() + "/.local/share/azTaskbar/stylesheet.css");
+        stylesheet = Gio.File.new_for_path(GLib.get_home_dir() + "/.local/share/azTaskbar/stylesheet.css");
+    }
+
+    return stylesheet;
+}
+
+function unloadStylesheet(){
+    if(!Me.customStylesheet)
+        return;
+
+    let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+    theme.unload_stylesheet(Me.customStylesheet);
 }
 
 function getInterestingWindows(settings, windows, monitorIndex) {
@@ -1224,4 +1289,9 @@ var AppIconState = {
     RUNNING: 0,
     FOCUSED: 1,
     NOT_RUNNING: 2,
+}
+
+var AppIconStyle = {
+    REGULAR: 0,
+    SYMBOLIC: 1,
 }
