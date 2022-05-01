@@ -44,7 +44,6 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::icon-style', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
         this._connections.set(this._appSystem.connect('installed-changed', () => {
@@ -349,7 +348,7 @@ class azTaskbar_AppIcon extends St.Button {
             reactive: true,
             can_focus: true,
             track_hover: true,
-            style_class: 'azTaskbar-AppButton',
+            style_class: 'azTaskbar-AppButton azTaskbar-icon-style',
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
@@ -1155,7 +1154,7 @@ function updateStylesheet(){
         return;
     }
 
-    let customStylesheetCSS = `.azTaskbar-AppButton{
+    let customStylesheetCSS = `.azTaskbar-icon-style{
                                     -st-icon-style: ${appIconStyle};
                                 }`;
 
