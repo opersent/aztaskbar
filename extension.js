@@ -251,6 +251,14 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.mainBox.queue_relayout();
     }
 
+    updateIcon(){
+        this.oldAppIcons.forEach((appIcon, appID) => {
+            if(appIcon.isSet){
+                appIcon.updateIcon();
+            }
+        });
+    }
+
     _updateIconGeometry(){
         this.oldAppIcons.forEach((appIcon, appID) => {
             if(appIcon.isSet){
@@ -343,16 +351,14 @@ class azTaskbar_AppIcon extends St.Button {
         });
         box.add_child(this.indicatorTop);
 
-        let iconSize = this._settings.get_int('icon-size');
         this.appIcon = new St.Bin({
             reactive: true,
             can_focus: true,
             track_hover: true,
-            style_class: 'azTaskbar-AppButton azTaskbar-icon-style',
+            style_class: 'azTaskbar-AppButton',
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
-            y_align: Clutter.ActorAlign.FILL,
-            child: app.create_icon_texture(iconSize)
+            y_align: Clutter.ActorAlign.FILL
         });
         this.bind_property('hover', this.appIcon, 'hover', GObject.BindingFlags.SYNC_CREATE);
         box.add_child(this.appIcon);
@@ -406,6 +412,7 @@ class azTaskbar_AppIcon extends St.Button {
         this.menuManager.addMenu(this._previewMenu);
 
         this._setIndicatorLocation();
+        this.updateIcon();
 
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::multi-window-indicator', () => this.setActiveState()), this._settings);
@@ -513,6 +520,16 @@ class azTaskbar_AppIcon extends St.Button {
         this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.hide();
         this.tooltipLabel.destroy();
+    }
+
+    updateIcon(){
+        let iconSize = this._settings.get_int('icon-size');
+        this.appIcon.remove_style_class_name('azTaskbar-symbolic-icon');
+        let appIconStyle = this._settings.get_enum('icon-style');
+        if(appIconStyle === AppIconStyle.SYMBOLIC)
+            this.appIcon.add_style_class_name('azTaskbar-symbolic-icon');
+        
+        this.appIcon.set_child(this.app.create_icon_texture(iconSize))
     }
 
     animateLaunch(){
@@ -1085,11 +1102,11 @@ function enable() {
     extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel(true)), settings);
     extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel(true)), settings);
     extensionConnections.set(settings.connect('changed::main-panel-height', () => updateStylesheet()), settings);
-    extensionConnections.set(settings.connect('changed::icon-style', () => updateStylesheet()), settings);
 
     appDisplayBox = new AppDisplayBox(settings);
     addAppBoxToPanel();
 
+    extensionConnections.set(settings.connect('changed::icon-style', () => appDisplayBox.updateIcon()), settings);
     Main.panel.statusArea.appMenu.container.hide();
     Main.panel.add_style_class_name("azTaskbar-panel");
 }
@@ -1140,13 +1157,6 @@ function addAppBoxToPanel(redisplay){
 
 function updateStylesheet(){
     let [overridePanelHeight, panelHeight] = settings.get_value('main-panel-height').deep_unpack();
-
-    let appIconStyle = settings.get_enum('icon-style');
-    if(appIconStyle === AppIconStyle.REGULAR)
-        appIconStyle = 'regular';
-    else if(appIconStyle === AppIconStyle.SYMBOLIC)
-        appIconStyle = 'symbolic';
-
     let stylesheet = Me.customStylesheet;
 
     if(!stylesheet){
@@ -1154,14 +1164,15 @@ function updateStylesheet(){
         return;
     }
 
-    let customStylesheetCSS = `.azTaskbar-icon-style{
-                                    -st-icon-style: ${appIconStyle};
-                                }`;
-
-    if(overridePanelHeight){
-        customStylesheetCSS += `.azTaskbar-panel{
+    let customStylesheetCSS = overridePanelHeight ?
+                                `.azTaskbar-panel{
                                     height: ${panelHeight}px;
-                                }`;
+                                }`
+                            : null;
+
+    if(!customStylesheetCSS){
+        unloadStylesheet();
+        return;
     }
 
     try{

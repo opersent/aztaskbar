@@ -31,6 +31,10 @@
   background-color: rgba(211, 211, 211, 0.25);
 }
 
+.azTaskbar-symbolic-icon{
+  -st-icon-style: symbolic;
+}
+
 .azTaskbar-multi-window-indicator{
   margin: 5px 0px 0px 5px;
   padding: 1px;
