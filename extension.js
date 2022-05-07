@@ -223,7 +223,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             if(appIcon.isSet){
                 appIcon.updateIconGeometry();
                 appIcon.setActiveState();
-                appIcon.setIconSize(this._settings.get_int('icon-size'));
+                appIcon.updateIcon();
             }
             else{
                 this.oldAppIcons.delete(appID);
@@ -379,7 +379,6 @@ class azTaskbar_AppIcon extends St.Button {
 
         this.multiWindowIndicator = new St.Icon({
             icon_name: 'list-add-symbolic',
-            icon_size: 5,
             style_class: 'azTaskbar-multi-window-indicator',
             x_expand: true,
             y_expand: true,
@@ -529,7 +528,14 @@ class azTaskbar_AppIcon extends St.Button {
         if(appIconStyle === AppIconStyle.SYMBOLIC)
             this.appIcon.add_style_class_name('azTaskbar-symbolic-icon');
         
-        this.appIcon.set_child(this.app.create_icon_texture(iconSize))
+        this.appIcon.set_child(this.app.create_icon_texture(iconSize));
+
+        let indicatorSize = Math.max(5, Math.round(iconSize / 3));
+
+        if(indicatorSize % 2 === 0) 
+            indicatorSize++;
+
+        this.multiWindowIndicator.icon_size = indicatorSize;
     }
 
     animateLaunch(){
@@ -668,10 +674,6 @@ class azTaskbar_AppIcon extends St.Button {
             scale_y: 1.0,
             opacity: 255,
         });
-    }
-
-    setIconSize(size){
-        this.appIcon.child = this.app.create_icon_texture(size);
     }
 
     setActiveState(){
