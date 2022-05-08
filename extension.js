@@ -530,7 +530,7 @@ class azTaskbar_AppIcon extends St.Button {
         
         this.appIcon.set_child(this.app.create_icon_texture(iconSize));
 
-        let indicatorSize = Math.max(5, Math.round(iconSize / 3));
+        let indicatorSize = Math.max(5, Math.round(iconSize / 4));
 
         if(indicatorSize % 2 === 0) 
             indicatorSize++;
