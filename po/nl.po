@@ -1,79 +1,268 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+# Heimen Stoffels <vistausss@fastmail.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-29 09:01-0400\n"
-"PO-Revision-Date: 2022-03-30 18:16+0200\n"
+"POT-Creation-Date: 2022-05-01 09:19-0400\n"
+"PO-Revision-Date: 2022-05-09 13:33+0200\n"
 "Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
-"Language-Team: \n"
+"Language-Team: Dutch <kde-i18n-nl@kde.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Lokalize 22.04.0\n"
 
-#: prefs.js:17
+#: prefs.js:12
 msgid "Settings"
 msgstr "Voorkeuren"
 
-#: prefs.js:25
-msgid "General Settings"
-msgstr "Algemene voorkeuren"
+#: prefs.js:20
+#| msgid "General Settings"
+msgid "General"
+msgstr "Algemeen"
 
-#: prefs.js:33
+#: prefs.js:25
+msgid "Left"
+msgstr "Links"
+
+#: prefs.js:26
+msgid "Center"
+msgstr "Midden"
+
+#: prefs.js:27
+msgid "Right"
+msgstr "Rechts"
+
+#: prefs.js:29
+msgid "Position in Panel"
+msgstr "Locatie op paneel"
+
+#: prefs.js:52
+msgid "Position Offset"
+msgstr "Verschuiving"
+
+#: prefs.js:53
+msgid "Offset the position within the above selected box"
+msgstr "Verschuif de positie met behulp van bovenstaand vak"
+
+#: prefs.js:91
+msgid "Panel Height"
+msgstr "Bovenbalkhoogte"
+
+#: prefs.js:118
+msgid "Icon Size"
+msgstr "Pictogramgrootte"
+
+#: prefs.js:138
+msgid "Icon Desaturate Factor"
+msgstr "Pictogramverzadiging"
+
+#: prefs.js:145
+msgid "Regular"
+msgstr "Standaard"
+
+#: prefs.js:146
+msgid "Symbolic"
+msgstr "Symbolisch"
+
+#: prefs.js:148
+msgid "Icon Style"
+msgstr "Pictogramstijl"
+
+#: prefs.js:149
+msgid "Icon themes may not have a symbolic icon for every app"
+msgstr ""
+"Let op: pictogramthema's bevatten mogelijk niet altijd een symbolisch"
+" pictogram"
+
+#: prefs.js:162
 msgid "Favorites"
 msgstr "Favorieten"
 
-#: prefs.js:47
-msgid "Tool-Tips"
-msgstr "Hulpballonnen"
-
-#: prefs.js:58
-msgid "Running Apps Settings"
-msgstr "Voorkeuren omtrent actieve toepassingen"
-
-#: prefs.js:66
+#: prefs.js:176
 msgid "Isolate Workspaces"
 msgstr "Werkbladen onafhankelijk bedienen"
 
-#: prefs.js:81
+#: prefs.js:190
 msgid "Isolate Monitors"
 msgstr "Beeldschermen onafhankelijk bedienen"
 
-#: prefs.js:95
-msgid "Window Previews"
-msgstr "Vensters voorvertonen"
+#: prefs.js:201
+#| msgid "Indicators"
+msgid "Indicator"
+msgstr "Indicator"
 
-#: prefs.js:109
+#: prefs.js:209
+msgid "Multi-Window Indicator"
+msgstr "Vensterindicator"
+
+#: prefs.js:223
 msgid "Indicators"
 msgstr "Indicators"
 
-#: prefs.js:125
+#: prefs.js:234
+msgid "Top"
+msgstr "Bovenaan"
+
+#: prefs.js:235
+msgid "Bottom"
+msgstr "Onderaan"
+
+#: prefs.js:237
+#| msgid "Indicators"
+msgid "Indicator Location"
+msgstr "Indicatorlocatie"
+
+#: prefs.js:258
+msgid "Running Indicator Color"
+msgstr "Kleur van actieve indicator"
+
+#: prefs.js:277
+msgid "Focused Indicator Color"
+msgstr "Kleur van focusindicator"
+
+#: prefs.js:289
+msgid "Actions"
+msgstr "Acties"
+
+#: prefs.js:296
+msgid "Click Actions"
+msgstr "Klikacties"
+
+#: prefs.js:301
+msgid "Toggle / Cycle"
+msgstr "Schakelen"
+
+#: prefs.js:302
+msgid "Toggle / Cycle + Minimize"
+msgstr "Schakelen en minimaliseren"
+
+#: prefs.js:303
+msgid "Toggle / Preview"
+msgstr "Schakelen/Voorvertonen"
+
+#: prefs.js:305
+msgid "Left Click"
+msgstr "Linkermuisknop"
+
+#: prefs.js:306
+msgid "Modify Left Click Action of Running App Icons"
+msgstr "Pas de actie van de linkermuisknop aan"
+
+#: prefs.js:316
+msgid "Scroll Actions"
+msgstr "Scrolacties"
+
+#: prefs.js:321
+msgid "Cycle Windows"
+msgstr "Schakelen tussen vensters"
+
+#: prefs.js:322
+msgid "No Action"
+msgstr "Geen actie"
+
+#: prefs.js:324
+msgid "Scroll Action"
+msgstr "Scrolactie"
+
+#: prefs.js:334
+msgid "Hover Actions"
+msgstr "Aanwijsactie"
+
+#: prefs.js:342
+msgid "Tool-Tips"
+msgstr "Hulpballonnen"
+
+#: prefs.js:364 prefs.js:396
+msgid "Window Previews"
+msgstr "Vensters voorvertonen"
+
+#: prefs.js:383
+#| msgid "Window Previews"
+msgid "Window Preview Options"
+msgstr "Voorvertoningsopties"
+
+#: prefs.js:414
+#| msgid "Window Previews"
+msgid "Show Window Previews Delay"
+msgstr "Voorvertoningsvertraging"
+
+#: prefs.js:415
+msgid "Time in ms to show the window preview"
+msgstr "De tijd in ms alvorens een venster voor te vertonen"
+
+#: prefs.js:435
+#| msgid "Window Previews"
+msgid "Hide Window Previews Delay"
+msgstr "Verbergvertraging"
+
+#: prefs.js:436
+msgid "Time in ms to hide the window preview"
+msgstr "De tijd in ms alvorens een voorvertoning te sluiten"
+
+#: prefs.js:443 prefs.js:451
+#| msgid "Window Previews"
+msgid "Window Peeking"
+msgstr "Vensterbegluring"
+
+#: prefs.js:452
+msgid "Hovering a window preview will focus desired window"
+msgstr ""
+"Houd de cursor boven een voorvertoning om het venster in kwestie te focussen"
+
+#: prefs.js:476
+#| msgid "Window Previews"
+msgid "Window Peeking Delay"
+msgstr "Gluurvertraging"
+
+#: prefs.js:477
+msgid "Time in ms to trigger window peek"
+msgstr "De tijd in ms alvorens te gluren"
+
+#: prefs.js:497
+msgid "Window Peeking Opacity"
+msgstr "Doorzichtigheid van vensterbegluring"
+
+#: prefs.js:498
+msgid "Opacity of non-focused windows during a window peek"
+msgstr "De doorzichtigheid van ongefocuste vensters tijdens het begluren"
+
+#: prefs.js:511
 msgid "About"
 msgstr "Over"
 
-#: prefs.js:139
+#: prefs.js:530
 msgid "App Icons Taskbar"
 msgstr "Pictogrammentaakbalk"
 
-#: prefs.js:153
+#: prefs.js:536
+msgid "Show running apps and favorites on the main panel"
+msgstr "Actieve toepassingen en favorieten tonen op hoofdbalk"
+
+#: prefs.js:550
 msgid "App Icons Taskbar Version"
 msgstr "Pictogrammentaakbalk-versie"
 
-#: prefs.js:166
+#: prefs.js:563
 msgid "Git Commit"
 msgstr "Git-commit"
 
-#: prefs.js:179
+#: prefs.js:576
 msgid "GNOME Version"
 msgstr "GNOME-versie"
 
-#: prefs.js:187
+#: prefs.js:584
 msgid "OS"
 msgstr "Besturingssyteem"
+
+#: prefs.js:607
+msgid "Session Type"
+msgstr "Sessietype"
+
+#~ msgid "Running Apps Settings"
+#~ msgstr "Voorkeuren omtrent actieve toepassingen"
