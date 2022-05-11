@@ -328,8 +328,7 @@ class azTaskbar_ShowAppsIcon extends St.Button {
             reactive: true,
             can_focus: true,
             track_hover: true,
-            button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
-            toggle_mode: true,
+            button_mask: St.ButtonMask.ONE | St.ButtonMask.THREE,
             style_class: 'azTaskbar-AppButton',
             style: 'padding: 3px 8px; margin: 3px 1px;',
         });
@@ -348,7 +347,14 @@ class azTaskbar_ShowAppsIcon extends St.Button {
         this.connect('destroy', () => this._onDestroy());
         this.connect('clicked', () => {
             this.hideLabel();
-            if(!Main.overview.visible){
+            if(Main.overview.visible && this.checked){
+                this.checked = false;
+                Main.overview.toggle();
+            }
+            else if(Main.overview.visible && !this.checked){
+                this.checked = true;
+            }
+            else{
                 Main.overview.toggle();
                 this.checked = true;
             }
