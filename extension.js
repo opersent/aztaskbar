@@ -25,6 +25,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
 
         this._settings = settings;
+        this.showAppsIcon = new ShowAppsIcon(this._settings);
         this.mainBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
@@ -44,6 +45,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::show-apps-button', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
         this._connections.set(this._appSystem.connect('installed-changed', () => {
@@ -123,6 +125,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                     monitorIndex: actor.monitorIndex,
                     app: actor.app,
                 });
+            }
+            else if(actor instanceof ShowAppsIcon){
+                this.mainBox.remove_child(actor);
             }
             else{
                 this.mainBox.remove_child(actor);
@@ -248,6 +253,15 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             }
         }
 
+        let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
+        if(showAppsButton){
+            if(showAppsButtonPosition === ShowAppsButtonPosition.LEFT)
+                this.mainBox.insert_child_at_index(this.showAppsIcon, 0);
+            else
+                this.mainBox.add_child(this.showAppsIcon);
+            this.showAppsIcon.updateIcon();
+        }
+
         this.mainBox.queue_relayout();
     }
 
@@ -297,13 +311,129 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
 
         this._connections = null;
-
+        this.showAppsIcon.destroy();
         this.oldAppIcons.forEach((appIcon, appID) => {
             appIcon.stopAllAnimations();
             appIcon.destroy();
             this.oldAppIcons.delete(appID);
         });
         this.oldAppIcons = null;
+    }
+});
+
+var ShowAppsIcon = GObject.registerClass(
+class azTaskbar_ShowAppsIcon extends St.Button {
+    _init(settings) {
+        super._init({
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+            toggle_mode: true,
+            style_class: 'azTaskbar-AppButton',
+            style: 'padding: 3px 8px; margin: 3px 1px;',
+        });
+        this._settings = settings;
+
+        this.tooltipLabel = new St.Label({
+            style_class: 'dash-label azTaskbar-Tooltip',
+            text: _('Show Applications')
+        });
+        this.tooltipLabel.hide();
+        Main.layoutManager.addChrome(this.tooltipLabel);
+
+        this.bind_property('checked', Main.overview.dash.showAppsButton, 'checked', GObject.BindingFlags.BIDIRECTIONAL);
+
+        this.connect('notify::hover', () => this._onHover());
+        this.connect('destroy', () => this._onDestroy());
+        this.connect('clicked', () => {
+            this.hideLabel();
+            if(!Main.overview.visible){
+                Main.overview.toggle();
+                this.checked = true;
+            }
+        });
+        this.updateIcon();
+    }
+
+    _onDestroy(){
+        this.tooltipLabel.remove_all_transitions();
+        this.tooltipLabel.hide();
+        this.tooltipLabel.destroy();
+    }
+
+    updateIcon(){
+        let iconSize = this._settings.get_int('icon-size');
+        
+        this.set_child(new St.Icon({
+            icon_name: 'view-app-grid-symbolic',
+            icon_size: iconSize,
+            track_hover: true,
+        }));
+    }
+
+    _onHover() {
+        if (this.hover) {
+            this.showLabel();
+        }
+        else {
+            this.hideLabel();
+        }
+    }
+
+    showLabel() {
+        if(!this._settings.get_boolean('tool-tips'))
+            return;
+
+        this.tooltipLabel.opacity = 0;
+        this.tooltipLabel.show();
+
+        let [stageX, stageY] = this.get_transformed_position();
+
+        const itemWidth = this.allocation.get_width();
+        const itemHeight = this.allocation.get_height();
+
+        const labelWidth = this.tooltipLabel.get_width();
+        const labelHeight = this.tooltipLabel.get_height();
+        const xOffset = Math.floor((itemWidth - labelWidth) / 2);
+        const x = Math.clamp(stageX + xOffset, 0, global.stage.width - labelWidth);
+
+        const offset = 6;
+        let y;
+
+        //Check if should place tool-tip above or below app icon
+        //Needed in case user has moved the panel to bottom of screen
+        let labelBelowIconRect = new Meta.Rectangle({
+            x,
+            y: stageY + itemHeight + offset,
+            width: labelWidth,
+            height: labelHeight
+        });
+
+        let monitorIndex = Main.layoutManager.findIndexForActor(this);
+        let workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
+
+        if(workArea.contains_rect(labelBelowIconRect))
+            y = labelBelowIconRect.y;
+        else
+            y = stageY - labelHeight - offset;
+
+        this.tooltipLabel.remove_all_transitions();
+        this.tooltipLabel.set_position(x, y);
+        this.tooltipLabel.ease({
+            opacity: 255,
+            duration: 250,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+        });
+    }
+
+    hideLabel() {
+        this.tooltipLabel.ease({
+            opacity: 0,
+            duration: 100,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => this.tooltipLabel.hide(),
+        });
     }
 });
 
@@ -1307,4 +1437,9 @@ var AppIconState = {
 var AppIconStyle = {
     REGULAR: 0,
     SYMBOLIC: 1,
+}
+
+var ShowAppsButtonPosition = {
+    LEFT: 0,
+    RIGHT: 1,
 }

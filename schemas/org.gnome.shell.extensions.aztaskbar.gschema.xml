@@ -38,6 +38,11 @@
             <summary>Change the height of GNOME top panel</summary>
             <description>Change the height of GNOME top panel.</description>
         </key>
+        <key type="(bi)" name="show-apps-button">
+            <default>(false, 0)</default>
+            <summary>Enable a Show Apps Button. 0 = left, 1 = right</summary>
+            <description>Enable a Show Apps Button. 0 = left, 1 = right.</description>
+        </key>
         <key type="b" name="window-previews">
             <default>true</default>
             <summary>Show window previews for running apps</summary>

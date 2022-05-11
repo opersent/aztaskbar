@@ -101,6 +101,45 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         panelHeightSwitch.set_active(panelHeightOverride);
         generalGroup.add(panelHeightRow);
 
+        let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
+
+        let showAppsButtonSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+        });
+        showAppsButtonSwitch.connect('notify::active', (widget) => {
+            let [oldEnabled_, oldValue] = this._settings.get_value('show-apps-button').deep_unpack();
+            this._settings.set_value('show-apps-button', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
+            if(widget.get_active())
+                showAppsButtonCombo.set_sensitive(true);
+            else
+                showAppsButtonCombo.set_sensitive(false);
+        });
+        let showAppsButtonCombo = new Gtk.ComboBoxText({
+            valign: Gtk.Align.CENTER,
+            sensitive: showAppsButton
+        });
+        showAppsButtonCombo.append_text(_("Left"));
+        showAppsButtonCombo.append_text(_("Right"));
+        showAppsButtonCombo.set_active(showAppsButtonPosition);
+        showAppsButtonCombo.connect('changed', (widget) => {
+            let [oldEnabled, oldValue_] = this._settings.get_value('show-apps-button').deep_unpack();
+            this._settings.set_value('show-apps-button', new GLib.Variant('(bi)', [oldEnabled, widget.get_active()]));
+        });
+
+        let showAppsButtonRow = new Adw.ActionRow({
+            title: _('Show Apps Button'),
+            activatable_widget: showAppsButtonSwitch
+        });
+        showAppsButtonRow.add_suffix(showAppsButtonSwitch);
+        showAppsButtonRow.add_suffix(new Gtk.Separator({
+            orientation: Gtk.Orientation.VERTICAL,
+            margin_top: 10,
+            margin_bottom: 10
+        }));
+        showAppsButtonRow.add_suffix(showAppsButtonCombo);
+        showAppsButtonSwitch.set_active(showAppsButton);
+        generalGroup.add(showAppsButtonRow);
+
         let iconSizeSpinButton = new Gtk.SpinButton({
             adjustment: new Gtk.Adjustment({
                 lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,

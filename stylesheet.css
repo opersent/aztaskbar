@@ -23,11 +23,11 @@
   transition-duration: 300ms;
 }
 
-.azTaskbar-AppButton:hover, .azTaskbar-AppButton:focus, .azTaskbar-AppButton:checked {
+.azTaskbar-AppButton:hover, .azTaskbar-AppButton:focus{
   background-color: rgba(211, 211, 211, 0.20);
 }
 
-.azTaskbar-AppButton:active{
+.azTaskbar-AppButton:active, .azTaskbar-AppButton:checked{
   background-color: rgba(211, 211, 211, 0.25);
 }
 
