@@ -136,9 +136,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
-        let boxesCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
+        let monitorsCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
         let positionIndex = 0;
-        for(let i = 0; i < boxesCount; i++){
+        for(let i = 0; i < monitorsCount; i++){
             let monitorIndex = i;
 
             let oldApps = this.oldApps.filter(oldApp => {
