@@ -54,7 +54,7 @@ Created by **@[AndyC](https://gitlab.com/LinxGem33)** and licensed under [CC BY-
 
 #### Translators:
 
-**@[daPhipz](https://gitlab.com/daPhipz) - German** | **@[Vistaus](https://gitlab.com/Vistaus) - Dutch**
+**@[daPhipz](https://gitlab.com/daPhipz), @[Etamuk](https://gitlab.com/Etamuk) - German** | **@[Vistaus](https://gitlab.com/Vistaus) - Dutch**
 
 
 -----
