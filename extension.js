@@ -115,6 +115,14 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         Main.queueDeferredWork(this._workId);
     }
 
+    _sortMonitors(){
+        let sortedMonitors = [...Main.layoutManager.monitors];
+        sortedMonitors.sort((a, b) => {
+            return a.x > b.x;
+        });
+        return sortedMonitors;
+    }
+
     _redisplay() {
         this.oldApps = [];
 
@@ -137,9 +145,10 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
         let monitorsCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
+        let sortedMonitors = this._sortMonitors();
         let positionIndex = 0;
         for(let i = 0; i < monitorsCount; i++){
-            let monitorIndex = i;
+            let monitorIndex = sortedMonitors[i].index;
 
             let oldApps = this.oldApps.filter(oldApp => {
                 if(oldApp.monitorIndex === monitorIndex)
@@ -150,9 +159,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             let appFavorites = AppFavorites.getAppFavorites();
             let favorites = appFavorites.getFavoriteMap();
 
-            //if both Favorites and Isolate Monitors enabled, only show favs in primary monitor section
+            //if both Favorites and Isolate Monitors enabled, show favorites first.
             let showFavorites = this._settings.get_boolean('favorites') &&
-                (isolateMonitors ? monitorIndex === Main.layoutManager.primaryIndex : true);
+                (isolateMonitors ? i === 0 : true);
 
             let running = this._getRunningApps();
 
