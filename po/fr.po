@@ -1,0 +1,257 @@
+# French translations for aztaskbar
+# Copyright (C) 2022 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Céleri <celestin.bouchet@gmail.com>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-05-01 09:19-0400\n"
+"PO-Revision-Date: 2022-07-21 14:19+0200\n"
+"Last-Translator: Celeri <celestin.bouchet@gmail.com>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: prefs.js:12
+msgid "Settings"
+msgstr "Paramètres"
+
+#: prefs.js:20
+msgid "General"
+msgstr "Général"
+
+#: prefs.js:25
+msgid "Left"
+msgstr "Gauche"
+
+#: prefs.js:26
+msgid "Center"
+msgstr "Centre"
+
+#: prefs.js:27
+msgid "Right"
+msgstr "Droite"
+
+#: prefs.js:29
+msgid "Position in Panel"
+msgstr "Position dans le Panneau"
+
+#: prefs.js:52
+msgid "Position Offset"
+msgstr "Décalage de la Position"
+
+#: prefs.js:53
+msgid "Offset the position within the above selected box"
+msgstr "Décale la position dans la boite choisie au-dessus"
+
+#: prefs.js:91
+msgid "Panel Height"
+msgstr "Hauteur du Panneau"
+
+#: prefs.js:118
+msgid "Icon Size"
+msgstr "Taille des Icônes"
+
+#: prefs.js:138
+msgid "Icon Desaturate Factor"
+msgstr "Facteur de Désaturation des Icônes"
+
+#: prefs.js:145
+msgid "Regular"
+msgstr "Normal"
+
+#: prefs.js:146
+msgid "Symbolic"
+msgstr "Symbolique"
+
+#: prefs.js:148
+msgid "Icon Style"
+msgstr "Style des Icônes"
+
+#: prefs.js:149
+msgid "Icon themes may not have a symbolic icon for every app"
+msgstr "Le thème d'icônes peut ne pas avoir une icône symbolic "
+"pour chaque application"
+
+#: prefs.js:162
+msgid "Favorites"
+msgstr "Favoris"
+
+#: prefs.js:176
+msgid "Isolate Workspaces"
+msgstr "Isoler les Espaces de Travail"
+
+#: prefs.js:190
+msgid "Isolate Monitors"
+msgstr "Isoler les Écrans"
+
+#: prefs.js:201
+msgid "Indicator"
+msgstr "Indicateur"
+
+#: prefs.js:209
+msgid "Multi-Window Indicator"
+msgstr "Indicateurs Multi-Fenêtres"
+
+#: prefs.js:223
+msgid "Indicators"
+msgstr "Indicateurs"
+
+#: prefs.js:234
+msgid "Top"
+msgstr "En Haut"
+
+#: prefs.js:235
+msgid "Bottom"
+msgstr "En Bas"
+
+#: prefs.js:237
+msgid "Indicator Location"
+msgstr "Localisation de l'Indicateur"
+
+#: prefs.js:258
+msgid "Running Indicator Color"
+msgstr "Couleur des Indicateurs d'applications en cours"
+
+#: prefs.js:277
+msgid "Focused Indicator Color"
+msgstr "Couleur de l'Indicateur de l'application active"
+
+#: prefs.js:289
+msgid "Actions"
+msgstr "Actions"
+
+#: prefs.js:296
+msgid "Click Actions"
+msgstr "Actions de Clic"
+
+#: prefs.js:301
+msgid "Toggle / Cycle"
+msgstr "Afficher/Réduire / Faire Défiler"
+
+#: prefs.js:302
+msgid "Toggle / Cycle + Minimize"
+msgstr "Afficher/Réduire / Faire Défiler + Réduire"
+
+#: prefs.js:303
+msgid "Toggle / Preview"
+msgstr "Afficher/Réduire / Aperçu des Fenêtres"
+
+#: prefs.js:305
+msgid "Left Click"
+msgstr "Clic Gauche"
+
+#: prefs.js:306
+msgid "Modify Left Click Action of Running App Icons"
+msgstr "Modifier l'Action du Clic Gauche sur les Icônes "
+"des Applications en cours"
+
+#: prefs.js:316
+msgid "Scroll Actions"
+msgstr "Actions du Scroll"
+
+#: prefs.js:321
+msgid "Cycle Windows"
+msgstr "Faire Défiler les Fenêtres"
+
+#: prefs.js:322
+msgid "No Action"
+msgstr "Pas d'Action"
+
+#: prefs.js:324
+msgid "Scroll Action"
+msgstr "Action du Scroll"
+
+#: prefs.js:334
+msgid "Hover Actions"
+msgstr "Actions du Survol"
+
+#: prefs.js:342
+msgid "Tool-Tips"
+msgstr "Info-Bulles"
+
+#: prefs.js:364 prefs.js:396
+msgid "Window Previews"
+msgstr "Aperçu des Fenêtres"
+
+#: prefs.js:383
+msgid "Window Preview Options"
+msgstr "Options de l'Aperçu des Fenêtres"
+
+#: prefs.js:414
+msgid "Show Window Previews Delay"
+msgstr "Délai d'Affichage de l'Aperçu des Fenêtres"
+
+#: prefs.js:415
+msgid "Time in ms to show the window preview"
+msgstr "Temps en ms d'affichage de l'aperçu des fenêtres"
+
+#: prefs.js:435
+msgid "Hide Window Previews Delay"
+msgstr "Délai de Disparition de l'Aperçu des Fenêtres"
+
+#: prefs.js:436
+msgid "Time in ms to hide the window preview"
+msgstr "Temps en ms pour cacher l'aperçu des fenêtres"
+
+#: prefs.js:443 prefs.js:451
+msgid "Window Peeking"
+msgstr "Jeter un Coup d'Oeil"
+
+#: prefs.js:452
+msgid "Hovering a window preview will focus desired window"
+msgstr "Survoler l'aperçu d'une fenêtre l'affichera en premier plan sur l'écran"
+
+#: prefs.js:476
+msgid "Window Peeking Delay"
+msgstr "Délai du Coup d'Oeil"
+
+#: prefs.js:477
+msgid "Time in ms to trigger window peek"
+msgstr "Temps en ms pour activer le coup d'oeil"
+
+#: prefs.js:497
+msgid "Window Peeking Opacity"
+msgstr "Opacité du Coup d'Oeil"
+
+#: prefs.js:498
+msgid "Opacity of non-focused windows during a window peek"
+msgstr "Opacité des autres applications pendant le coup d'oeil"
+
+#: prefs.js:511
+msgid "About"
+msgstr "À Propos"
+
+#: prefs.js:530
+msgid "App Icons Taskbar"
+msgstr "App Icons Taskbar"
+
+#: prefs.js:536
+msgid "Show running apps and favorites on the main panel"
+msgstr "Affiche les applications en cours et les favoris "
+"dans le panneau principal"
+
+#: prefs.js:550
+msgid "App Icons Taskbar Version"
+msgstr "Version de App Icons Taskbar"
+
+#: prefs.js:563
+msgid "Git Commit"
+msgstr "Commit Git"
+
+#: prefs.js:576
+msgid "GNOME Version"
+msgstr "Version de GNOME"
+
+#: prefs.js:584
+msgid "OS"
+msgstr "Système d'Exploitation"
+
+#: prefs.js:607
+msgid "Session Type"
+msgstr "Type de Session"
