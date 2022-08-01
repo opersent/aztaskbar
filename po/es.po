@@ -1,0 +1,253 @@
+# Spanish translation for the aztaskbar GNOME Extension.
+# Copyright (C) 2022
+# This file is distributed under the same license as the PACKAGE package.
+# Martin Torres <emtorres@opensuse.org>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-07-31 09:19-0300\n"
+"PO-Revision-Date: 2022-07-31 09:19-0300\n"
+"Last-Translator: Martin Torres <emtorres@opensuse.org>\n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: prefs.js:12
+msgid "Settings"
+msgstr "Configuración"
+
+#: prefs.js:20
+msgid "General"
+msgstr "General"
+
+#: prefs.js:25
+msgid "Left"
+msgstr "A la izquierda"
+
+#: prefs.js:26
+msgid "Center"
+msgstr "En el medio"
+
+#: prefs.js:27
+msgid "Right"
+msgstr "A la derecha"
+
+#: prefs.js:29
+msgid "Position in Panel"
+msgstr "Posición en el Panel"
+
+#: prefs.js:52
+msgid "Position Offset"
+msgstr "Desplazamiento de Posición"
+
+#: prefs.js:53
+msgid "Offset the position within the above selected box"
+msgstr "Desplazamiento según la posición seleccionada arriba"
+
+#: prefs.js:91
+msgid "Panel Height"
+msgstr "Altura del panel"
+
+#: prefs.js:118
+msgid "Icon Size"
+msgstr "Tamaño de iconos"
+
+#: prefs.js:138
+msgid "Icon Desaturate Factor"
+msgstr "Factor de desaturación de iconos"
+
+#: prefs.js:145
+msgid "Regular"
+msgstr "Regular"
+
+#: prefs.js:146
+msgid "Symbolic"
+msgstr "Simbólico"
+
+#: prefs.js:148
+msgid "Icon Style"
+msgstr "Estilo de iconos"
+
+#: prefs.js:149
+msgid "Icon themes may not have a symbolic icon for every app"
+msgstr "El tema de iconos podría no tener un icono simbólico para cada aplicación"
+
+#: prefs.js:162
+msgid "Favorites"
+msgstr "Favoritos"
+
+#: prefs.js:176
+msgid "Isolate Workspaces"
+msgstr "Aislar espacios de trabajo"
+
+#: prefs.js:190
+msgid "Isolate Monitors"
+msgstr "Aislar monitores"
+
+#: prefs.js:201
+msgid "Indicator"
+msgstr "Indicador"
+
+#: prefs.js:209
+msgid "Multi-Window Indicator"
+msgstr "Indicador multi-ventana"
+
+#: prefs.js:223
+msgid "Indicators"
+msgstr "Indicadores"
+
+#: prefs.js:234
+msgid "Top"
+msgstr "Arriba"
+
+#: prefs.js:235
+msgid "Bottom"
+msgstr "Abajo"
+
+#: prefs.js:237
+msgid "Indicator Location"
+msgstr "Posición del indicador"
+
+#: prefs.js:258
+msgid "Running Indicator Color"
+msgstr "Color del indicador de aplicaciones en ejecución"
+
+#: prefs.js:277
+msgid "Focused Indicator Color"
+msgstr "Color del indicador de aplicaciones enfocadas"
+
+#: prefs.js:289
+msgid "Actions"
+msgstr "Acciones"
+
+#: prefs.js:296
+msgid "Click Actions"
+msgstr "Acciones al hacer clic"
+
+#: prefs.js:301
+msgid "Toggle / Cycle"
+msgstr "Alternar / Cambiar"
+
+#: prefs.js:302
+msgid "Alternar / Cambiar + Minimizar"
+msgstr ""
+
+#: prefs.js:303
+msgid "Toggle / Preview"
+msgstr "Alternar / Vista previa"
+
+#: prefs.js:305
+msgid "Left Click"
+msgstr "Clic izquierdo"
+
+#: prefs.js:306
+msgid "Modify Left Click Action of Running App Icons"
+msgstr "Modificar la acción del clic izquierdo en iconos de aplicaciones en ejecución"
+
+#: prefs.js:316
+msgid "Scroll Actions"
+msgstr "Acciones de deplazamiento"
+
+#: prefs.js:321
+msgid "Cycle Windows"
+msgstr "Alternar ventanas"
+
+#: prefs.js:322
+msgid "No Action"
+msgstr "Sin acción"
+
+#: prefs.js:324
+msgid "Scroll Action"
+msgstr "Acción de desplazamiento"
+
+#: prefs.js:334
+msgid "Hover Actions"
+msgstr "Acciones al pasar el ratón"
+
+#: prefs.js:342
+msgid "Tool-Tips"
+msgstr "Descripción emergente"
+
+#: prefs.js:364 prefs.js:396
+msgid "Window Previews"
+msgstr "Vista previa de ventanas"
+
+#: prefs.js:383
+msgid "Window Preview Options"
+msgstr "Opciones de previsualización de ventanas"
+
+#: prefs.js:414
+msgid "Show Window Previews Delay"
+msgstr "Retraso en mostrar la vista previa de ventanas"
+
+#: prefs.js:415
+msgid "Time in ms to show the window preview"
+msgstr "Tiempo en ms para mostrar la vista previa de la ventana"
+
+#: prefs.js:435
+msgid "Hide Window Previews Delay"
+msgstr "Retraso en ocultar la vista previa de ventanas"
+
+#: prefs.js:436
+msgid "Time in ms to hide the window preview"
+msgstr "Tiempo en ms para ocultar la vista previa de la ventana"
+
+#: prefs.js:443 prefs.js:451
+msgid "Window Peeking"
+msgstr "Ojeada rápida de ventana"
+
+#: prefs.js:452
+msgid "Hovering a window preview will focus desired window"
+msgstr "Al desplazar el ratón sobre una vista previa de una ventana, esta será resaltada"
+
+#: prefs.js:476
+msgid "Window Peeking Delay"
+msgstr "Retraso para la ojeada rápida de ventana"
+
+#: prefs.js:477
+msgid "Time in ms to trigger window peek"
+msgstr "Tiempo en ms para activar la ojeada rápida de ventana"
+
+#: prefs.js:497
+msgid "Window Peeking Opacity"
+msgstr "Opacidad de la ojeada rápida de ventana"
+
+#: prefs.js:498
+msgid "Opacity of non-focused windows during a window peek"
+msgstr "Opacidad de las ventanas no seleccioandas durante una ojeada rápida de ventana"
+
+#: prefs.js:511
+msgid "About"
+msgstr "Acerca de"
+
+#: prefs.js:530
+msgid "App Icons Taskbar"
+msgstr ""
+
+#: prefs.js:536
+msgid "Show running apps and favorites on the main panel"
+msgstr "Mostrar aplicaciones en ejecución y favoritas en el panel principal"
+
+#: prefs.js:550
+msgid "App Icons Taskbar Version"
+msgstr "Versión de App Icons Taskbar"
+
+#: prefs.js:563
+msgid "Git Commit"
+msgstr ""
+
+#: prefs.js:576
+msgid "GNOME Version"
+msgstr "Versión de GNOME"
+
+#: prefs.js:584
+msgid "OS"
+msgstr "Sistema Operativo"
+
+#: prefs.js:607
+msgid "Session Type"
+msgstr "Tipo de sesión"
