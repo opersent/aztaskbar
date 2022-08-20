@@ -22,6 +22,11 @@
         <value value='0' nick='REGULAR'/>
         <value value='1' nick='SYMBOLIC'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.multi-window-indicator-style'>
+        <value value='0' nick='INDICATOR'/>
+        <value value='1' nick='MULTI_DASH'/>
+        <value value='2' nick='NONE'/>
+    </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
             <default>true</default>
@@ -78,6 +83,11 @@
             <summary>Show an indicator when app has multiple windows</summary>
             <description>Show an indicator when app has multiple windows.</description>
         </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.multi-window-indicator-style" name="multi-window-indicator-style">
+            <default>'INDICATOR'</default>
+            <summary>Multiple window indicator style</summary>
+            <description>Multiple window indicator style.</description>
+        </key>
         <key type="b" name="indicators">
             <default>true</default>
             <summary>Show running app indicators</summary>
@@ -107,6 +117,11 @@
             <default>true</default>
             <summary>Show tool-tips for AppIcons</summary>
             <description>Show tool-tips for AppIcons.</description>
+        </key>
+        <key type="b" name="show-window-titles">
+            <default>false</default>
+            <summary>Show window titles on AppIcons</summary>
+            <description>Show window titles on AppIcons.</description>
         </key>
         <key type="i" name="icon-size">
             <default>20</default>

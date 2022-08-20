@@ -16,19 +16,29 @@
   transition-duration: 300ms;
 }
 
-.azTaskbar-AppButton{
-  padding: 0px 8px;
+.azTaskbar-BaseIcon{
+  padding: 3px 8px;
+  margin: 3px 1px;
   border-radius: 99px;
-  margin: 0px 1px;
   transition-duration: 300ms;
+  spacing: 6px;
 }
 
-.azTaskbar-AppButton:hover, .azTaskbar-AppButton:focus{
+.azTaskbar-BaseIcon:hover, .azTaskbar-BaseIcon:focus{
   background-color: rgba(211, 211, 211, 0.20);
 }
 
-.azTaskbar-AppButton:active, .azTaskbar-AppButton:checked{
+.azTaskbar-BaseIcon:active, .azTaskbar-BaseIcon:checked{
   background-color: rgba(211, 211, 211, 0.25);
+}
+
+.azTaskbar-BaseIconText{
+  -st-natural-width: 14.75em;
+  max-width: 14.75em;
+}
+
+.azTaskbar-favorite{
+  background-color: rgba(1, 102, 196, 0.493);
 }
 
 .azTaskbar-symbolic-icon{

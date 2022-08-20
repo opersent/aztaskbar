@@ -5,6 +5,10 @@ const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
+const PROJECT_TITLE = _('App Icons Taskbar');
+const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
+const PROJECT_IMAGE = 'aztaskbar-logo';
+
 var GeneralPage = GObject.registerClass(
 class azTaskbar_GeneralPage extends Adw.PreferencesPage {
     _init(settings) {
@@ -194,6 +198,20 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         generalGroup.add(iconStyleRow);
 
+        let windowTitleSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let windowTitleRow = new Adw.ActionRow({
+            title: _("Show Window Title"),
+            activatable_widget: windowTitleSwitch
+        });
+        windowTitleSwitch.set_active(this._settings.get_boolean('show-window-titles'));
+        windowTitleSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('show-window-titles', widget.get_active());
+        });
+        windowTitleRow.add_suffix(windowTitleSwitch);
+        generalGroup.add(windowTitleRow);
+    
         let favoritesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });
@@ -241,18 +259,18 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(indicatorGroup);
 
-        let multiWindowIndicatorSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
+        let multiWindowIndicatorStyles = new Gtk.StringList();
+        multiWindowIndicatorStyles.append(_("Indicator"));
+        multiWindowIndicatorStyles.append(_("Multi-Dashes"));
+        multiWindowIndicatorStyles.append(_("None"));
+        let multiWindowIndicatorRow = new Adw.ComboRow({
+            title: _("Indicator Location"),
+            model: multiWindowIndicatorStyles,
+            selected: this._settings.get_enum('multi-window-indicator-style')
         });
-        let multiWindowIndicatorRow = new Adw.ActionRow({
-            title: _("Multi-Window Indicator"),
-            activatable_widget: multiWindowIndicatorSwitch
+        multiWindowIndicatorRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('multi-window-indicator-style', widget.selected);
         });
-        multiWindowIndicatorSwitch.set_active(this._settings.get_boolean('multi-window-indicator'));
-        multiWindowIndicatorSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('multi-window-indicator', widget.get_active());
-        });
-        multiWindowIndicatorRow.add_suffix(multiWindowIndicatorSwitch);
         indicatorGroup.add(multiWindowIndicatorRow);
 
         let indicatorSwitch = new Gtk.Switch({
@@ -542,120 +560,109 @@ class azTaskbar_WindowPreviewOptions extends Gtk.Window {
     }
 });
 
-
 var AboutPage = GObject.registerClass(
 class azTaskbar_AboutPage extends Adw.PreferencesPage {
-    _init() {
+    _init(settings) {
         super._init({
-            title: _("About"),
+            title: _('About'),
             icon_name: 'help-about-symbolic',
             name: 'AboutPage'
         });
+        this._settings = settings;
 
-        //Logo and project description-------------------------------------
-        let azTaskbarLogoGroup = new Adw.PreferencesGroup();
-        let azTaskbarImage = new Gtk.Image({
-            margin_bottom: 5,
-            icon_name: 'aztaskbar-logo',
-            pixel_size: 100,
-        });
-        let azTaskbarImageBox = new Gtk.Box( {
+        //Project Logo, title, description-------------------------------------
+        let projectHeaderGroup = new Adw.PreferencesGroup();
+        let projectHeaderBox = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,
             hexpand: false,
             vexpand: false
         });
-        azTaskbarImageBox.append(azTaskbarImage);
-        let azTaskbarLabel = new Gtk.Label({
-            label: '<span size="larger"><b>' + _('App Icons Taskbar') + '</b></span>',
-            use_markup: true,
+
+        let projectImage = new Gtk.Image({
+            margin_bottom: 5,
+            icon_name: PROJECT_IMAGE,
+            pixel_size: 100,
+        });
+
+        let projectTitleLabel = new Gtk.Label({
+            label: PROJECT_TITLE,
+            css_classes: ['title-1'],
             vexpand: true,
             valign: Gtk.Align.FILL
         });
+
         let projectDescriptionLabel = new Gtk.Label({
-            label: _('Show running apps and favorites on the main panel'),
+            label: PROJECT_DESCRIPTION,
             hexpand: false,
             vexpand: false,
         });
-        azTaskbarImageBox.append(azTaskbarLabel);
-        azTaskbarImageBox.append(projectDescriptionLabel);
-        azTaskbarLogoGroup.add(azTaskbarImageBox);
+        projectHeaderBox.append(projectImage);
+        projectHeaderBox.append(projectTitleLabel);
+        projectHeaderBox.append(projectDescriptionLabel);
+        projectHeaderGroup.add(projectHeaderBox);
 
-        this.add(azTaskbarLogoGroup);
+        this.add(projectHeaderGroup);
         //-----------------------------------------------------------------------
 
         //Extension/OS Info Group------------------------------------------------
-        let extensionInfoGroup = new Adw.PreferencesGroup();
-        let azTaskbarVersionRow = new Adw.ActionRow({
-            title: _("App Icons Taskbar Version"),
-        });
-        let releaseVersion;
-        if(Me.metadata.version)
-            releaseVersion = Me.metadata.version;
-        else
-            releaseVersion = 'unknown';
-        azTaskbarVersionRow.add_suffix(new Gtk.Label({
-            label: releaseVersion + ''
-        }));
-        extensionInfoGroup.add(azTaskbarVersionRow);
+        let infoGroup = new Adw.PreferencesGroup();
 
-        let commitRow = new Adw.ActionRow({
-            title: _('Git Commit')
+        let projectVersionRow = new Adw.ActionRow({
+            title: `${PROJECT_TITLE} ${_('Version')}`,
         });
-        let commitVersion;
-        if(Me.metadata.commit)
-            commitVersion = Me.metadata.commit;
-        commitRow.add_suffix(new Gtk.Label({
-            label: commitVersion ? commitVersion : '',
+        projectVersionRow.add_suffix(new Gtk.Label({
+            label: Me.metadata.version.toString()
         }));
-        if(commitVersion){
-            extensionInfoGroup.add(commitRow);
+        infoGroup.add(projectVersionRow);
+
+        if(Me.metadata.commit){
+            let commitRow = new Adw.ActionRow({
+                title: _('Git Commit')
+            });
+            commitRow.add_suffix(new Gtk.Label({
+                label: Me.metadata.commit.toString(),
+            }));
+            infoGroup.add(commitRow);
         }
 
         let gnomeVersionRow = new Adw.ActionRow({
             title: _('GNOME Version'),
         });
         gnomeVersionRow.add_suffix(new Gtk.Label({
-            label: imports.misc.config.PACKAGE_VERSION + '',
+            label: imports.misc.config.PACKAGE_VERSION.toString(),
         }));
-        extensionInfoGroup.add(gnomeVersionRow);
+        infoGroup.add(gnomeVersionRow);
 
         let osRow = new Adw.ActionRow({
             title: _('OS'),
         });
-        let osInfoText;
+
         let name = GLib.get_os_info("NAME");
         let prettyName = GLib.get_os_info("PRETTY_NAME");
-        if(prettyName)
-            osInfoText = prettyName;
-        else
-            osInfoText = name;
-        let versionID = GLib.get_os_info("VERSION_ID");
-        if(versionID)
-            osInfoText += "; Version ID: " + versionID;
         let buildID = GLib.get_os_info("BUILD_ID");
+        let versionID = GLib.get_os_info("VERSION_ID");
+
+        let osInfoText = prettyName ? prettyName : name;
+        if(versionID)
+            osInfoText += `; Version ID: ${versionID}`;
         if(buildID)
-            osInfoText += "; " + "Build ID: " +buildID;
+            osInfoText += `; Build ID: ${buildID}`;
+
         osRow.add_suffix(new Gtk.Label({
             label: osInfoText,
             single_line_mode: false,
             wrap: true,
         }));
-        extensionInfoGroup.add(osRow);
+        infoGroup.add(osRow);
 
         let sessionTypeRow = new Adw.ActionRow({
             title: _('Session Type'),
         });
-        let windowingLabel;
-        if(Me.metadata.isWayland)
-            windowingLabel = "Wayland";
-        else
-            windowingLabel = "X11";
         sessionTypeRow.add_suffix(new Gtk.Label({
-            label: windowingLabel,
+            label: GLib.getenv('XDG_SESSION_TYPE') === "wayland" ? 'Wayland' : 'X11',
         }));
-        extensionInfoGroup.add(sessionTypeRow);
-
-        this.add(extensionInfoGroup);
+        infoGroup.add(sessionTypeRow);
+        this.add(infoGroup);
         //-----------------------------------------------------------------------
 
         let linksGroup = new Adw.PreferencesGroup();
@@ -683,7 +690,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
 
         let gnuSoftwareGroup = new Adw.PreferencesGroup();
         let gnuSofwareLabel = new Gtk.Label({
-            label: GNU_SOFTWARE,
+            label: _(GNU_SOFTWARE),
             use_markup: true,
             justify: Gtk.Justification.CENTER
         });

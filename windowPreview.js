@@ -59,11 +59,10 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
     }
 
     redisplay() {
-        if (!this._previewBox){
-            this._previewBox = new WindowPreviewList(this._source);
-            this.addMenuItem(this._previewBox);
-        }
+        this._previewBox?.destroy();
 
+        this._previewBox = new WindowPreviewList(this._source);
+        this.addMenuItem(this._previewBox);
         this._previewBox.redisplay();
     }
 
@@ -75,7 +74,6 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
         if (this.shouldOpen) {
             this.redisplay();
             super.open(animate);
-            this.actor.navigate_focus(null, St.DirectionType.TAB_FORWARD, false);
         }
     }
 
@@ -177,68 +175,20 @@ var WindowPreviewList = class azTaskbar_WindowPreviewList extends PopupMenu.Popu
         return Clutter.EVENT_STOP;
     }
 
-    _createPreviewItem(window, app) {
-        const windID = window.get_id();
-        let item = this.oldWindowsMap.get(windID);
-
-        if(item){
-            item.redisplay();
-            return item;
-        }
-
-        let preview = new WindowPreviewMenuItem(this._source, window, app);
-        this.oldWindowsMap.set(windID, preview);
-        return preview;
-    }
-
-    redisplay () {
-        let oldWindows = [];
-
-        this.box.get_children().forEach(actor => {
-            actor.isSet = false;
-            oldWindows.push(actor._window);
-        });
-
-        let newWindows = [];
-
+    redisplay() {
         let openWindows = this._source.getInterestingWindows().sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
 
-        oldWindows.forEach(oldWindow => {
-            const window = oldWindow;
-            const index = openWindows.indexOf(window);
-            if (index > -1) {
-                const [window] = openWindows.splice(index, 1);
-                newWindows.push(window);
-            }
-            else{
-                const winID = window.get_id();
-                let item = this.oldWindowsMap.get(winID);
-                if(item){
-                    this.oldWindowsMap.delete(winID);
-                    item.destroy();
-                }
-            }
-        });
-
         openWindows.forEach(window => {
-            newWindows.push(window);
+            let previewMenuItem = new WindowPreviewMenuItem(this._source, window, this.app);
+            this.addMenuItem(previewMenuItem);
         });
-
-        newWindows.forEach(window => {
-            let previewMenuItem = this._createPreviewItem(window, this.app);
-            const parent = previewMenuItem.get_parent();
-            if(!parent)
-                this.addMenuItem(previewMenuItem);
-        });
-
-        this.box.queue_relayout();
 
         let needsScrollbar = this._needsScrollbar();
         let scrollbar_policy = needsScrollbar ?
             St.PolicyType.AUTOMATIC : St.PolicyType.NEVER;
-        this.actor.hscrollbar_policy =  scrollbar_policy;
+        this.actor.hscrollbar_policy = scrollbar_policy;
 
         if (needsScrollbar)
             this.actor.add_style_pseudo_class('scrolled');

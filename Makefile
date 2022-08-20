@@ -1,7 +1,7 @@
 # Basic Makefile
 
 UUID = aztaskbar@aztaskbar.gitlab.com
-BASE_MODULES = extension.js LICENSE metadata.json README.md stylesheet.css windowPreview.js
+BASE_MODULES = extension.js LICENSE metadata.json README.md stylesheet.css theming.js windowPreview.js
 TRANSLATABLE_MODULES = prefs.js
 
 TOLOCALIZE = $(TRANSLATABLE_MODULES)
