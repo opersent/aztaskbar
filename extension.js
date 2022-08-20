@@ -784,13 +784,14 @@ class azTaskbar_AppIcon extends BaseButton {
         let color = Clutter.color_from_string((this._indicatorColor ?? 'transparent'))[1];
 
         let [areaWidth, areaHeight] = area.get_surface_size();
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
         let cr = area.get_context();
-        let aspect = 1;
-        let cornerRadius = 1.5;
-        let radius = cornerRadius / aspect;
+
+        let cornerRadius = 1.5 * scaleFactor;
+        let radius = cornerRadius;
         let degrees = Math.PI / 180;
-        let spacing = 7;
+        let spacing = 7 * scaleFactor;
         let x = 0;
         let y = ((this._indicatorLocation === IndicatorLocation.TOP) ? 0 : (areaHeight - (radius * 2)) / 2);
 
@@ -947,6 +948,8 @@ class azTaskbar_AppIcon extends BaseButton {
         }
         else
             this._label.text = this.app.get_name();
+        
+        this.setActiveState();
     }
 
     _onClicked() {
