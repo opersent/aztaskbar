@@ -856,7 +856,7 @@ class azTaskbar_AppIcon extends BaseButton {
                 this._box.set_style_pseudo_class(null);
         }
         else{
-            this._box.set_style_pseudo_class(null);``
+            this._box.set_style_pseudo_class(null);
             this.appIconState = AppIconState.NOT_RUNNING;
         }
 
