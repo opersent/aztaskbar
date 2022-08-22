@@ -1450,8 +1450,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
         const clickActionSetting = this._settings.get_enum('click-action');
         const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
-        const cycle = clickActionSetting === ClickAction.CYCLE;
-        if(!scrollDirection && clickActionSetting === ClickAction.NO_TOGGLE_CYCLE)
+        if(!scrollDirection && clickActionSetting === ClickAction.NO_TOGGLE_CYCLE || clickActionSetting === ClickAction.CYCLE)
             scrollDirection = true;
         if(scrollDirection){
             //mouse scroll cycle window logic borrowed from Dash to Panel
@@ -1469,7 +1468,7 @@ class azTaskbar_AppIcon extends BaseButton {
                 Main.activateWindow(windows[nextWindowIndex]);
             return true;
         }
-        else if(cycleMinimize || cycle){
+        else if(cycleMinimize){
             //start a timer that clears cycle state after x amount of time
             this._setCylceWindowsTimeout();
 
@@ -1482,12 +1481,10 @@ class azTaskbar_AppIcon extends BaseButton {
             });
             if(cycled.length === this._cycleWindowList.length){
                 this._cycleWindowList.forEach(window => {
-                    if(cycleMinimize)
-                        window.minimize();
+                    window.minimize();
                     window.cycled = false;
                 });
-                if(cycleMinimize)
-                    return true;
+                return true;
             }
             for(let i = 0; i < this._cycleWindowList.length; i++){
                 let window = this._cycleWindowList[i];
@@ -1533,7 +1530,9 @@ class azTaskbar_AppIcon extends BaseButton {
             }
             else if(windows.length === 1){
                 const window = windows[0];
-                if(window.minimized || !window.has_focus())
+                if(this._settings.get_enum('click-action') === ClickAction.NO_TOGGLE_CYCLE)
+                    Main.activateWindow(window);
+                else if(window.minimized || !window.has_focus())
                     Main.activateWindow(window);
                 else
                     window.minimize();
