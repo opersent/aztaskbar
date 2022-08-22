@@ -8,6 +8,7 @@
         <value value='0' nick='CYCLE'/>
         <value value='1' nick='CYCLE_MINIMIZE'/>
         <value value='2' nick='PREVIEW'/>
+        <value value='3' nick='NO_TOGGLE_CYCLE'/>
     </enum>
     <enum id='org.gnome.shell.extensions.aztaskbar.scroll-action'>
         <value value='0' nick='CYCLE'/>

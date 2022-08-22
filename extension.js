@@ -1451,6 +1451,8 @@ class azTaskbar_AppIcon extends BaseButton {
         const clickActionSetting = this._settings.get_enum('click-action');
         const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
         const cycle = clickActionSetting === ClickAction.CYCLE;
+        if(!scrollDirection && clickActionSetting === ClickAction.NO_TOGGLE_CYCLE)
+            scrollDirection = true;
         if(scrollDirection){
             //mouse scroll cycle window logic borrowed from Dash to Panel
             //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
@@ -1735,7 +1737,8 @@ var IndicatorLocation = {
 var ClickAction = {
     CYCLE: 0,
     CYCLE_MINIMIZE: 1,
-    PREVIEW: 2
+    PREVIEW: 2,
+    NO_TOGGLE_CYCLE: 3,
 }
 
 var ScrollAction = {

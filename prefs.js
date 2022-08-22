@@ -358,6 +358,7 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
         clickOptions.append(_("Toggle / Cycle"));
         clickOptions.append(_("Toggle / Cycle + Minimize"));
         clickOptions.append(_("Toggle / Preview"));
+        clickOptions.append(_("Cycle"));
         let clickOptionsRow = new Adw.ComboRow({
             title: _("Left Click"),
             subtitle: _("Modify Left Click Action of Running App Icons"),
