@@ -554,6 +554,7 @@ class azTaskbar_BaseButton extends St.Button {
             y_align: Clutter.ActorAlign.CENTER
         });
         this._box.add_child(this._label);
+        this._label.hide();
 
         this._overlayGroup = new Clutter.Actor({
             layout_manager: new Clutter.BinLayout(),
@@ -573,18 +574,6 @@ class azTaskbar_BaseButton extends St.Button {
         });
         this.tooltipLabel.hide();
         Main.layoutManager.addChrome(this.tooltipLabel);
-        this._showWindowTitleId = this._settings.connect('changed::show-window-titles', () => this.updateLabel());
-    }
-
-    updateLabel(){
-        const showLabels = this._settings.get_boolean('show-window-titles');
-        this._box.remove_style_class_name('azTaskbar-BaseIconText');
-        if(showLabels){
-            this._label.show();
-            this._box.add_style_class_name('azTaskbar-BaseIconText');
-        }
-        else
-            this._label.hide();
     }
 
     updateIcon(){
@@ -694,7 +683,7 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
         const icon_size = this._settings.get_int('icon-size');
         let icon = new St.Icon({
             icon_name: 'view-app-grid-symbolic',
-            icon_size,
+            icon_size: icon_size,
         });
         this._iconBin.set_child(icon);
     }
@@ -721,7 +710,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this.isFavorite = isFavorite;
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
         this._indicatorColor = 'transparent';
-        this._endIndicatorWidth = 1;
+        this._indicatorWidth = 1;
         this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
         this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
         this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
@@ -768,6 +757,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-location', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
@@ -780,31 +770,40 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _drawRunningIndicator(area){
-        let width = this._startIndicatorWidth ?? this._endIndicatorWidth;
+        let width = this._indicatorGrowWidth ?? this._indicatorWidth;
         let color = Clutter.color_from_string((this._indicatorColor ?? 'transparent'))[1];
 
         let [areaWidth, areaHeight] = area.get_surface_size();
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
         let cr = area.get_context();
 
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         let cornerRadius = 1.5 * scaleFactor;
         let radius = cornerRadius;
         let degrees = Math.PI / 180;
-        let spacing = 7 * scaleFactor;
+
         let x = 0;
         let y = ((this._indicatorLocation === IndicatorLocation.TOP) ? 0 : (areaHeight - (radius * 2)) / 2);
 
         Clutter.cairo_set_source_color(cr, color);
 
-        if(this._showMultiDashIndicator){
-            let totalWidth = (this._nWindows * width) + ((this._nWindows - 1) * spacing);
+        if(this._animateGrow || this._showMultiDashIndicator){
+            let totalWidth = this._startIndicatorWidth;
             cr.translate((areaWidth - totalWidth) / 2, y);
-            for(let i = 0; i < this._nWindows; i++){
+            //draw the previous visible indicators
+            for(let i = 0; i < this._indicatorCount; i++){
                 cr.newSubPath();
-                x = i * width + i * spacing;
+                x = i * this._indicatorWidth + i * this._indicatorSpacing;
                 cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-                cr.arc(x + width, y + radius, radius, -90 * degrees, 90 * degrees);
+                cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
+                cr.closePath();
+            }
+            //draw the new indicator
+            for(let i = 0; i < this._toDrawCount; i++){
+                cr.newSubPath();
+                x = totalWidth - this._indicatorWidth;
+                cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
+                cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
                 cr.closePath();
             }
         }
@@ -821,6 +820,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
     setActiveState(){
         this.previousAppIconState = this.appIconState;
+        this._previousNWindows = this._nWindows;
         this._indicatorLocation = this._settings.get_enum('indicator-location');
 
         if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
@@ -838,7 +838,7 @@ class azTaskbar_AppIcon extends BaseButton {
             if(windows.length > 1)
                 showMultiWindowIndicator = true;
             windows.forEach(window => {
-                if(window.has_focus()){
+                if(window.has_focus() || this._previewMenu?.isOpen || this._menu?.isOpen){
                     this.appIconState = AppIconState.FOCUSED;
                     ensureActorVisibleInScrollView(this.appDisplayBox, this);
                     this._box.add_style_pseudo_class('active');
@@ -848,88 +848,161 @@ class azTaskbar_AppIcon extends BaseButton {
         else
             this.appIconState = AppIconState.NOT_RUNNING;
 
-        //debugLog(this.app.get_name(), `is ${this.appIconState}`);
-        //debugLog(this.app.get_name(), `was ${this.previousAppIconState}`);
+        this.updateLabel();
 
-        this._showMultiDashIndicator = this._settings.get_enum('multi-window-indicator-style') === MultiWindowIndicatorStyle.MULTI_DASH && this._nWindows > 1;
+        if(this._previousNWindows === undefined)
+            this._previousNWindows = this._nWindows;
 
-        const needsAnimate = this.previousAppIconState != null && this.previousAppIconState !== this.appIconState && this._nWindows <= 1;
-        if(this.appIconState === AppIconState.NOT_RUNNING){
-            this._indicatorColor = 'transparent';
-            this._endIndicatorWidth = 1;
-        }
-        else if(this.appIconState === AppIconState.RUNNING){
-            this._indicatorColor = this._settings.get_string('indicator-color-running');
-            this._endIndicatorWidth = this.width / 9;
-        }
-        else if(this.appIconState === AppIconState.FOCUSED && this._showMultiDashIndicator){
-            this._indicatorColor = this._settings.get_string('indicator-color-focused');
-            this._endIndicatorWidth = this.width / 9;
-        }
-        else if(this.appIconState === AppIconState.FOCUSED){
-            this._indicatorColor = this._settings.get_string('indicator-color-focused');
-            this._endIndicatorWidth = this.width / 4;
-        }
+        this._showMultiDashIndicator = this._settings.get_enum('multi-window-indicator-style') === MultiWindowIndicatorStyle.MULTI_DASH && (this._nWindows > 1 || this._nWindows < this._previousNWindows);
+
+        const needsAnimate = this.appIconState !== AppIconState.NOT_RUNNING && (this.previousAppIconState !== this.appIconState || 
+                            (this.previousAppIconState === this.appIconState && this._previousNWindows !== windows.length));
+
+        this._setIndicatorColor();
 
         if(this._settings.get_enum('multi-window-indicator-style') !== MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
             this._hideMultiWindowIndicator();
         else if(showMultiWindowIndicator && !this.multiWindowIndicator.visible)
             this._showMultiWindowIndicator();
 
-        if(!this._settings.get_boolean('indicators'))
-            this._indicatorColor = 'transparent';
-
         if(needsAnimate){
             this._animateIndicatorsComplete = false;
-            //debugLog(this.app.get_name(), `needs animate.`)
-            const numTicks = 30;
+            this._endAnimateIndicator();
 
-            if(this._animateIndicatorsID){
-                GLib.Source.remove(this._animateIndicatorsID);
-                this._animateIndicatorsID = null;
-            }
-            if(this.previousAppIconState === AppIconState.NOT_RUNNING)
-                this._startIndicatorWidth = 1;
-            else if(this.previousAppIconState === AppIconState.RUNNING)
-                this._startIndicatorWidth = this.width / 9;
-            else if(this.previousAppIconState === AppIconState.FOCUSED)
-                this._startIndicatorWidth = this.width / 4;
-
-            this._widthDiff = (this._endIndicatorWidth - this._startIndicatorWidth) / numTicks;
-            //debugLog(this.app.get_name(), `start width. ${this._startIndicatorWidth}.`);
-            //debugLog(this.app.get_name(), `set width diff. ${this._widthDiff}.`);
+            if(this._showMultiDashIndicator)
+                this._startanimateIndicatorGrow();
+            else
+                this._startAnimateIndicatorWidth();
 
             this._animateIndicatorsID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
                 this._runningIndicator.queue_repaint();
-                this._startIndicatorWidth += this._widthDiff;
-                //debugLog(this.app.get_name(), this._startIndicatorWidth);
-                if(this._widthDiff > 0 && this._startIndicatorWidth >= this._endIndicatorWidth)
-                    this._animateIndicatorsComplete = true;
-                else if(this._widthDiff < 0 && this._startIndicatorWidth <= this._endIndicatorWidth)
-                    this._animateIndicatorsComplete = true;
-
-                if(this._animateIndicatorsComplete) {
-                    //debugLog(this.app.get_name(), 'animation complete!');
-                    this._animateIndicatorsID = null;
-                    this._startIndicatorWidth = null;
-                    this._runningIndicator.queue_repaint();
-                    return GLib.SOURCE_REMOVE;
-                }
-                //debugLog(this.app.get_name(), 'animation continue...');
-                return GLib.SOURCE_CONTINUE;
+                if(this._animateGrow)
+                    return this._animateIndicatorGrow();
+                else
+                    return this._animateIndicatorWidth();
             });
         }
         else{
-            //debugLog(this.app.get_name(), 'no animation needed');
-            if(this._animateIndicatorsComplete)
-                this._startIndicatorWidth = null;
-
+            if(this._animateIndicatorsComplete){
+                this._indicatorGrowWidth = null;
+            }
             this._runningIndicator.queue_repaint();
         }
     }
 
+    _startanimateIndicatorGrow(){
+        this._animateGrow = true;
+        const numTicks = 30;
+        const multiDashWidth = this.width / 9;
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        this._indicatorSpacing = 7 * scaleFactor;
+        this._toDrawCount = this._nWindows - this._previousNWindows;
+        const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
+        if(this._toDrawCount < 0)
+            this._indicatorCount = this._previousNWindows + this._toDrawCount;
+        else
+            this._indicatorCount = this._previousNWindows;
+
+        this._toDrawCount = Math.abs(this._toDrawCount);
+
+        if(this.appIconState === AppIconState.FOCUSED && singleWindowRemains)
+            this._indicatorWidth = this.width / 4;
+        else
+            this._indicatorWidth = multiDashWidth;
+
+        this._totalIndicatorWidth = (this._nWindows * this._indicatorWidth) + ((this._nWindows - 1) * this._indicatorSpacing);
+        this._startIndicatorWidth = (this._previousNWindows * multiDashWidth) + ((this._previousNWindows - 1) * this._indicatorSpacing);
+        this._widthDiff = (this._totalIndicatorWidth - this._startIndicatorWidth) / numTicks;
+    }
+
+    _animateIndicatorGrow(){
+        this._startIndicatorWidth += this._widthDiff;
+        let animateDone = false;
+        if(this._widthDiff > 0 && this._startIndicatorWidth >= this._totalIndicatorWidth)
+            animateDone = true;
+        else if(this._widthDiff < 0 && this._startIndicatorWidth <= this._totalIndicatorWidth)
+            animateDone = true;
+        else if(this._widthDiff === 0)
+            animateDone = true;
+
+        if(animateDone) {
+            this._animateIndicatorsID = null;
+            this._startIndicatorWidth = this._totalIndicatorWidth;
+            this._runningIndicator.queue_repaint();
+            this._animateGrow = false;
+            this._animateIndicatorsComplete = true;
+            return GLib.SOURCE_REMOVE;
+        }
+        return GLib.SOURCE_CONTINUE;
+    }
+
+    _startAnimateIndicatorWidth(){
+        const numTicks = 30;
+        if(this.appIconState === AppIconState.NOT_RUNNING)
+            this._indicatorWidth = 0;
+        else if(this.appIconState === AppIconState.RUNNING)
+            this._indicatorWidth = this.width / 9;
+        else if(this.appIconState === AppIconState.FOCUSED)
+            this._indicatorWidth = this.width / 4;
+
+        if(this.previousAppIconState === undefined || this.previousAppIconState === AppIconState.NOT_RUNNING)
+            this._indicatorGrowWidth = 0;
+        else if(this.previousAppIconState === AppIconState.RUNNING)
+            this._indicatorGrowWidth = this.width / 9;
+        else if(this.previousAppIconState === AppIconState.FOCUSED)
+            this._indicatorGrowWidth = this.width / 4;
+
+        this._widthDiff = (this._indicatorWidth - this._indicatorGrowWidth) / numTicks;
+    }
+
+    _animateIndicatorWidth(){
+        let animateDone = false;
+        this._indicatorGrowWidth += this._widthDiff;
+        if(this._widthDiff > 0 && this._indicatorGrowWidth >= this._indicatorWidth)
+            animateDone = true;
+        else if(this._widthDiff < 0 && this._indicatorGrowWidth <= this._indicatorWidth)
+            animateDone = true;
+        else if(this._widthDiff === 0)
+            animateDone = true;
+
+        if(animateDone) {
+            this._animateIndicatorsID = null;
+            this._indicatorGrowWidth = null;
+            this._runningIndicator.queue_repaint();
+            this._animateIndicatorsComplete = true;
+            return GLib.SOURCE_REMOVE;
+        }
+        return GLib.SOURCE_CONTINUE;
+    }
+
+    _endAnimateIndicator(){
+        if(this._animateIndicatorsID){
+            GLib.Source.remove(this._animateIndicatorsID);
+            this._animateIndicatorsID = null;
+            this._indicatorGrowWidth = null;
+        }
+    }
+
+    _setIndicatorColor(){
+        if(this.appIconState === AppIconState.NOT_RUNNING || !this._settings.get_boolean('indicators'))
+            this._indicatorColor = 'transparent';
+        else if(this.appIconState === AppIconState.RUNNING)
+            this._indicatorColor = this._settings.get_string('indicator-color-running');
+        else if(this.appIconState === AppIconState.FOCUSED)
+            this._indicatorColor = this._settings.get_string('indicator-color-focused');
+    }
+
     updateLabel(){
-        super.updateLabel();
+        const showLabels = this._settings.get_boolean('show-window-titles');
+
+        this._box.remove_style_class_name('azTaskbar-BaseIconText');
+
+        if(showLabels){
+            this._label.show();
+            this._box.add_style_class_name('azTaskbar-BaseIconText');
+        }
+        else
+            this._label.hide();
 
         let windows = this.getInterestingWindows();
         const showWindowTitle = windows.length === 1;
@@ -948,8 +1021,6 @@ class azTaskbar_AppIcon extends BaseButton {
         }
         else
             this._label.text = this.app.get_name();
-        
-        this.setActiveState();
     }
 
     _onClicked() {
@@ -1019,11 +1090,7 @@ class azTaskbar_AppIcon extends BaseButton {
             this._scrollTimeOutId = null;
         }
 
-        if(this._animateIndicatorsID){
-            GLib.Source.remove(this._animateIndicatorsID);
-            this._animateIndicatorsID = null;
-            this._startIndicatorWidth = null;
-        }
+        this._endAnimateIndicator();
 
         if(this._notifyTitleId){
             this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
@@ -1077,7 +1144,6 @@ class azTaskbar_AppIcon extends BaseButton {
         this.setActiveState();
         this.updateIcon();
         this.updateIconGeometry();
-        this.updateLabel();
     }
 
     animateLaunch(){
@@ -1109,11 +1175,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._box.style = 'transition-duration: 0ms;';
         this._box.remove_all_transitions();
 
-        if(this._animateIndicatorsID){
-            GLib.Source.remove(this._animateIndicatorsID);
-            this._animateIndicatorsID = null;
-            this._startIndicatorWidth = null;
-        }
+        this._endAnimateIndicator();
     }
 
     getDragActor() {
