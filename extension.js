@@ -827,7 +827,6 @@ class azTaskbar_AppIcon extends BaseButton {
             return;
 
         this._box.style = null;
-        this._box.set_style_pseudo_class(null);
 
         let showMultiWindowIndicator;
 
@@ -844,9 +843,13 @@ class azTaskbar_AppIcon extends BaseButton {
                     this._box.add_style_pseudo_class('active');
                 }
             });
+            if(this.appIconState === AppIconState.RUNNING)
+                this._box.set_style_pseudo_class(null);
         }
-        else
+        else{
+            this._box.set_style_pseudo_class(null);
             this.appIconState = AppIconState.NOT_RUNNING;
+        }
 
         this.updateLabel();
 
@@ -893,11 +896,12 @@ class azTaskbar_AppIcon extends BaseButton {
     _startanimateIndicatorGrow(){
         this._animateGrow = true;
         const numTicks = 30;
-        const multiDashWidth = this.width / 9;
+        let multiDashWidth = this.width / 9;
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         this._indicatorSpacing = 7 * scaleFactor;
         this._toDrawCount = this._nWindows - this._previousNWindows;
         const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
+        const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
         if(this._toDrawCount < 0)
             this._indicatorCount = this._previousNWindows + this._toDrawCount;
         else
@@ -907,6 +911,12 @@ class azTaskbar_AppIcon extends BaseButton {
 
         if(this.appIconState === AppIconState.FOCUSED && singleWindowRemains)
             this._indicatorWidth = this.width / 4;
+        else if(this.previousAppIconState === AppIconState.RUNNING && singleWindowStart)
+            this._indicatorWidth = multiDashWidth;
+        else if(this.appIconState === AppIconState.FOCUSED && singleWindowStart){
+            this._indicatorWidth = multiDashWidth;
+            multiDashWidth = this.width / 4;
+        }
         else
             this._indicatorWidth = multiDashWidth;
 
