@@ -906,8 +906,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._animateGrow = true;
         const numTicks = 30;
         let multiDashWidth = this.width / 9;
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        this._indicatorSpacing = 7 * scaleFactor;
+        this._indicatorSpacing = this.width / 6.3;
         this._toDrawCount = this._nWindows - this._previousNWindows;
         const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
         const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
@@ -1012,7 +1011,7 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     updateLabel(){
-        const showLabels = this._settings.get_boolean('show-window-titles');
+        const showLabels = this._settings.get_boolean('show-window-titles') && this.appIconState === AppIconState.FOCUSED;
 
         this._box.remove_style_class_name('azTaskbar-BaseIconText');
 
