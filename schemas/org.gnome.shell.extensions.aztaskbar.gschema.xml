@@ -85,7 +85,7 @@
             <description>Show an indicator when app has multiple windows.</description>
         </key>
         <key enum="org.gnome.shell.extensions.aztaskbar.multi-window-indicator-style" name="multi-window-indicator-style">
-            <default>'INDICATOR'</default>
+            <default>'MULTI_DASH'</default>
             <summary>Multiple window indicator style</summary>
             <description>Multiple window indicator style.</description>
         </key>
