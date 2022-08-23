@@ -202,7 +202,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             valign: Gtk.Align.CENTER
         });
         let windowTitleRow = new Adw.ActionRow({
-            title: _("Show Window Title"),
+            title: _("Show Focused Window Title"),
             activatable_widget: windowTitleSwitch
         });
         windowTitleSwitch.set_active(this._settings.get_boolean('show-window-titles'));

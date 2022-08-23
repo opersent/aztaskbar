@@ -825,7 +825,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
     setActiveState(){
         this.previousAppIconState = this.appIconState;
-        this._previousFocusApp = this._focusApp ?? this._previousFocusApp;
+        this._previousFocusApp = tracker.focus_app ?? this._previousFocusApp;
         this._previousNWindows = this._nWindows;
         this._indicatorLocation = this._settings.get_enum('indicator-location');
 
@@ -835,7 +835,6 @@ class azTaskbar_AppIcon extends BaseButton {
         this._box.style = null;
 
         let showMultiWindowIndicator;
-        this._focusApp = tracker.focus_app;
 
         let windows = this.getInterestingWindows();
         if(windows.length >= 1){
@@ -906,7 +905,11 @@ class azTaskbar_AppIcon extends BaseButton {
         this._animateGrow = true;
         const numTicks = 30;
         let multiDashWidth = this.width / 9;
-        this._indicatorSpacing = this.width / 6.3;
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        if(this.appIconState === AppIconState.FOCUSED && this._settings.get_boolean('show-window-titles'))
+            this._indicatorSpacing = 16 * scaleFactor;
+        else
+            this._indicatorSpacing = 7 * scaleFactor;
         this._toDrawCount = this._nWindows - this._previousNWindows;
         const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
         const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;

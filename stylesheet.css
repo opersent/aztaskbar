@@ -33,6 +33,7 @@
 }
 
 .azTaskbar-BaseIconText{
+  padding: 3px 12px;
   -st-natural-width: 14.75em;
   max-width: 14.75em;
 }
