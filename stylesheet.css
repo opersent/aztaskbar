@@ -32,6 +32,10 @@
   background-color: rgba(211, 211, 211, 0.25);
 }
 
+.azTaskbar-BaseIcon.pressed{
+  background-color: rgba(211, 211, 211, 0.35);
+}
+
 .azTaskbar-BaseIconText{
   padding: 3px 12px;
   -st-natural-width: 14.75em;

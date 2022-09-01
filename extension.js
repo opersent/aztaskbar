@@ -172,6 +172,12 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
             this._dragPlaceholder = new imports.ui.dash.DragPlaceholderItem();
             this._dragPlaceholder.add_style_class_name('azTaskbar-favorite');
+
+            let x = source.dragPos === firstFavIndex ? 1 : 0
+            this._dragPlaceholder.pivot_point = new imports.gi.Graphene.Point({ x, y: .5 });
+
+            this._dragPlaceholder.scale_y = 1;
+            this._dragPlaceholder.opacity = 255;
             let iconSize = this._settings.get_int('icon-size');
             this._dragPlaceholder.child.set_width(iconSize + 10);
             this._dragPlaceholder.child.set_height(iconSize / 2);
@@ -184,7 +190,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         if (!this._dragPlaceholder)
             return DND.DragMotionResult.NO_DROP;
 
-        let srcIsFavorite = source.dragPos < firstFavIndex - 1 || source.dragPos > lastFavIndex + 1;
+        let srcIsFavorite = source.dragPos < firstFavIndex - 1 || source.dragPos > lastFavIndex + 1 || source.isFavorite;
 
         if (srcIsFavorite)
             return DND.DragMotionResult.MOVE_DROP;
@@ -564,6 +570,7 @@ class azTaskbar_BaseButton extends St.Button {
         this.set_child(this._overlayGroup);
 
         this.connect('notify::hover', () => this._onHover());
+        this.connect('notify::pressed', () => this._onPressed());
         this.connect('clicked', () => this._onClicked());
         this.connect('destroy', () => this._onDestroy());
 
@@ -580,6 +587,15 @@ class azTaskbar_BaseButton extends St.Button {
 
     _onHover()  {
         throw new GObject.NotImplementedError();
+    }
+
+    _onPressed()  {
+        if(this.pressed){
+            this._box.add_style_class_name('pressed');
+        }
+        else{
+            this._box.remove_style_class_name('pressed');
+        }
     }
 
     _onClicked() {
@@ -907,9 +923,9 @@ class azTaskbar_AppIcon extends BaseButton {
         let multiDashWidth = this.width / 9;
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         if(this.appIconState === AppIconState.FOCUSED && this._settings.get_boolean('show-window-titles'))
-            this._indicatorSpacing = 16 * scaleFactor;
+            this._indicatorSpacing = 17 * scaleFactor;
         else
-            this._indicatorSpacing = 7 * scaleFactor;
+            this._indicatorSpacing = 5 * scaleFactor;
         this._toDrawCount = this._nWindows - this._previousNWindows;
         const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
         const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
