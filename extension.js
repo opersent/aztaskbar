@@ -18,13 +18,11 @@ let tracker = Shell.WindowTracker.get_default();
 const MAX_MULTI_DASHES = 3;
 
 function getDropTarget(box, x){
-    const hSpacing = 1;
     const visibleItems = box.get_children();
     for (const item of visibleItems) {
         const childBox = item.allocation.copy();
         childBox.set_origin(childBox.x1 % box.width, childBox.y1);
-        if (x < childBox.x1 - hSpacing ||
-            x > childBox.x2 + hSpacing)
+        if (x < childBox.x1 || x > childBox.x2)
             continue;
 
         return { item: item, index: visibleItems.indexOf(item) };
@@ -67,7 +65,6 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::icon-size', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::show-apps-button', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
         this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
@@ -77,6 +74,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         }), this._appSystem);
         this._connections.set(global.window_manager.connect('switch-workspace', () => this._queueRedisplay()), global.window_manager);
         this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-left-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-marked-urgent', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-demands-attention', this._queueRedisplay.bind(this)), global.display);
@@ -85,178 +83,6 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         //If appDisplayBox position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
         this.connect("destroy", () => this._destroy());
-
-        this._dragPlaceholder = null;
-        this._dragPlaceholderPos = -1;
-        this._animatingPlaceholdersCount = 0;
-    }
-
-    getAppFromSource(source) {
-        if (source instanceof AppIcon)
-            return source.app;
-        else
-            return null;
-    }
-
-    getFavoritesIndicies(){
-        const children = this.mainBox.get_children();
-        let appFavoritesIdicies = [];
-        children.map(child => {
-            if(child.isFavorite)
-                appFavoritesIdicies.push(children.indexOf(child));
-        });
-        return appFavoritesIdicies;
-    }
-
-    handleDragOver(source, actor, x, _y, _time){
-        const indexRange = this.getFavoritesIndicies();
-        const firstFavIndex = indexRange[0];
-        const lastFavIndex = indexRange[indexRange.length - 1];
-
-        let app = this.getAppFromSource(source);
-
-        // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed())
-            return DND.DragMotionResult.NO_DROP;
-
-        if (!global.settings.is_writable('favorite-apps'))
-            return DND.DragMotionResult.NO_DROP;
-
-        let favorites = AppFavorites.getAppFavorites().getFavorites();
-
-        let favPos = favorites.indexOf(app);
-
-        let children = this.mainBox.get_children();
-        let numChildren = children.length;
-        let boxWidth = this.mainBox.width;
-
-        // Keep the placeholder out of the index calculation; assuming that
-        // the remove target has the same size as "normal" items, we don't
-        // need to do the same adjustment there.
-        if (this._hasPlaceHolder) {
-            boxWidth -= this._dragPlaceholder.width;
-            numChildren--;
-        }
-
-        let pos;
-        if (this._emptyDropTarget)
-            pos = firstFavIndex;
-        else
-            pos = Math.max(Math.floor(x * numChildren / boxWidth), firstFavIndex - 1)
-
-        // Put the placeholder after the last favorite if we are not
-        // in the favorites zone
-        if (pos > lastFavIndex)
-            pos = lastFavIndex + 1;
-
-        if (pos !== this._dragPlaceholderPos && this._animatingPlaceholdersCount === 0) {
-            this._dragPlaceholderPos = pos;
-
-            // Don't allow positioning before or after self
-            if (favPos != -1 && (pos == favPos || pos == favPos + 1)) {
-                this.clearDragPlaceholder();
-                return DND.DragMotionResult.CONTINUE;
-            }
-
-            // If the placeholder already exists, we just move
-            // it, but if we are adding it, expand its size in
-            // an animation
-            let fadeIn;
-            if (this._dragPlaceholder) {
-                this._hasPlaceHolder = false;
-                this._dragPlaceholder.destroy();
-                fadeIn = false;
-            } else {
-                fadeIn = true;
-            }
-
-            this._dragPlaceholder = new imports.ui.dash.DragPlaceholderItem();
-            this._dragPlaceholder.add_style_class_name('azTaskbar-favorite');
-
-            let x = source.dragPos === firstFavIndex ? 1 : 0
-            this._dragPlaceholder.pivot_point = new imports.gi.Graphene.Point({ x, y: .5 });
-
-            this._dragPlaceholder.scale_y = 1;
-            this._dragPlaceholder.opacity = 255;
-            let iconSize = this._settings.get_int('icon-size');
-            this._dragPlaceholder.child.set_width(iconSize + 10);
-            this._dragPlaceholder.child.set_height(iconSize / 2);
-            this.mainBox.insert_child_at_index(this._dragPlaceholder,
-                                            this._dragPlaceholderPos);
-            this._dragPlaceholder.show(fadeIn);
-            this._hasPlaceHolder = true;
-        }
-
-        if (!this._dragPlaceholder)
-            return DND.DragMotionResult.NO_DROP;
-
-        let srcIsFavorite = source.dragPos < firstFavIndex - 1 || source.dragPos > lastFavIndex + 1 || source.isFavorite;
-
-        if (srcIsFavorite)
-            return DND.DragMotionResult.MOVE_DROP;
-
-        return DND.DragMotionResult.COPY_DROP;
-    }
-
-    clearDragPlaceholder() {
-        this._hasPlaceHolder = false;
-        if (this._dragPlaceholder) {
-            this._animatingPlaceholdersCount++;
-            this._dragPlaceholder.animateOutAndDestroy();
-            this._dragPlaceholder.connect('destroy', () => {
-                this._animatingPlaceholdersCount--;
-            });
-            this._dragPlaceholder = null;
-        }
-        this._dragPlaceholderPos = -1;
-    }
-
-    acceptDrop(source, _actor, x, _y, _time){
-        let app = this.getAppFromSource(source);
-
-        source.opacity = 255;
-        // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed())
-            return false;
-
-        if (!global.settings.is_writable('favorite-apps'))
-            return false;
-
-        let id = app.get_id();
-
-        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
-
-        let srcIsFavorite = id in favorites;
-
-        let favPos = 0;
-        let children = this.mainBox.get_children();
-
-        for (let i = 0; i < this._dragPlaceholderPos; i++) {
-            if (this._dragPlaceholder &&
-                children[i] == this._dragPlaceholder)
-                continue;
-
-            let childId = children[i]._delegate.app?.get_id();
-            if (childId == id)
-                continue;
-            if (childId in favorites)
-                favPos++;
-        }
-
-        if (getDropTarget(this.mainBox, x).index !== this._dragPlaceholderPos)
-            return true;
-
-        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
-            let appFavorites = AppFavorites.getAppFavorites();
-            if (srcIsFavorite)
-                appFavorites.moveFavoriteToPos(id, favPos);
-            else
-                appFavorites.addFavoriteAtPos(id, favPos);
-
-            return false;
-        });
-
-        return true;
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex){
@@ -284,6 +110,64 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         appIcon.isSet = true;
         this.oldAppIcons.set(appID, appIcon);
         return appIcon;
+    }
+
+    handleDragOver(source, actor, x, _y, _time){
+        let dropTarget = getDropTarget(this.mainBox, x);
+        let dropTargetItem = dropTarget.item;
+        let index = dropTarget.index;
+
+        if(!dropTargetItem)
+            return DND.DragMotionResult.NO_DROP;
+
+        source.dragMonitorIndex = dropTargetItem.monitorIndex ?? -1;
+        source.dragPos = index;
+
+        if(dropTargetItem instanceof AppIcon){
+            if(dropTargetItem.monitorIndex !== source.monitorIndex)
+                return DND.DragMotionResult.NO_DROP;
+            this.mainBox.remove_child(source);
+            this.mainBox.insert_child_at_index(source, index);
+        }
+    
+        let inFavoriteRange = source.dragPos < source._firstFavIndex - 1 || source.dragPos > source._lastFavIndex;
+        let srcIsFavorite = inFavoriteRange || source.isFavorite;
+
+        if(!inFavoriteRange)
+            source.add_style_class_name('azTaskbar-favorite');
+        else
+            source.remove_style_class_name('azTaskbar-favorite');
+    
+        if (srcIsFavorite)
+            return DND.DragMotionResult.NO_DROP;
+
+        return DND.DragMotionResult.COPY_DROP;
+    }
+
+    acceptDrop(source, _actor, x, _y, _time){
+        if(source.monitorIndex !== 0)
+            return true;
+
+        let id = source.app.get_id();
+        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+        let srcIsFavorite = id in favorites;
+        let favPos = source.dragPos - source._firstFavIndex;
+        let inFavoriteRange = source.dragPos >= (source._firstFavIndex - 1) && source.dragPos <= source._lastFavIndex;
+        source.positionIndex = source.dragPos;
+        if(source.isFavorite){
+            if(source.dragPos > source._lastFavIndex || source.dragPos < source._firstFavIndex - 1)
+                AppFavorites.getAppFavorites().removeFavorite(id);
+            else
+                AppFavorites.getAppFavorites().moveFavoriteToPos(id, favPos);
+        }
+        else if(inFavoriteRange){
+            if (srcIsFavorite)
+                AppFavorites.getAppFavorites().moveFavoriteToPos(id, favPos);
+            else
+                AppFavorites.getAppFavorites().addFavoriteAtPos(id, favPos);
+        }
+
+        return true;
     }
 
     /**
@@ -574,6 +458,8 @@ class azTaskbar_BaseButton extends St.Button {
         this.connect('clicked', () => this._onClicked());
         this.connect('destroy', () => this._onDestroy());
 
+        this._iconSizeChangeId = this._settings.connect('changed::icon-size', () => this.updateIcon());
+
         this.tooltipLabel = new St.Label({
             style_class: 'dash-label azTaskbar-Tooltip',
         });
@@ -596,6 +482,12 @@ class azTaskbar_BaseButton extends St.Button {
         else{
             this._box.remove_style_class_name('pressed');
         }
+
+        this.icon?.ease({
+            duration: 150,
+            scale_x: this.pressed ? .85 : 1,
+            scale_y: this.pressed ? .85 : 1,
+        });
     }
 
     _onClicked() {
@@ -661,11 +553,43 @@ class azTaskbar_BaseButton extends St.Button {
         this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.hide();
         this.tooltipLabel.destroy();
+        this._settings.disconnect(this._iconSizeChangeId);
+        this._iconSizeChangeId = null;
 
         if(this._showWindowTitleId){
             this._settings.disconnect(this._showWindowTitleId);
             this._showWindowTitleId = null;
         }
+    }
+
+    _minimizeAppIcon(){
+        this.icon?.ease({
+            duration: 150,
+            translation_y: -3,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                this.icon?.ease({
+                    translation_y: 0,
+                    duration: 150,
+                    mode: Clutter.AnimationMode.EASE_IN_QUAD,
+                });
+            },
+        });
+    }
+
+    _maximizeAppIcon(){
+        this.icon?.ease({
+            duration: 150,
+            translation_y: 3,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                this.icon?.ease({
+                    translation_y: 0,
+                    duration: 150,
+                    mode: Clutter.AnimationMode.EASE_IN_QUAD,
+                });
+            },
+        });
     }
 });
 
@@ -676,7 +600,15 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
 
         this.tooltipLabel.text = _('Show Applications');
         this.bind_property('checked', Main.overview.dash.showAppsButton, 'checked', GObject.BindingFlags.BIDIRECTIONAL);
+        this.connect("notify::checked", () => this._onChecked());
         this.updateIcon();
+    }
+
+    _onChecked(){
+        if(this.checked)
+            this._box.add_style_pseudo_class('checked');
+        else
+            this._box.remove_style_pseudo_class('checked');
     }
 
     _onClicked() {
@@ -695,11 +627,12 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
 
     updateIcon(){
         const icon_size = this._settings.get_int('icon-size');
-        let icon = new St.Icon({
+        this.icon = new St.Icon({
             icon_name: 'view-app-grid-symbolic',
             icon_size: icon_size,
         });
-        this._iconBin.set_child(icon);
+        this.icon.pivot_point = new imports.gi.Graphene.Point({ x: 0.5, y: 0.5 });
+        this._iconBin.set_child(this.icon);
     }
 
     _onHover() {
@@ -724,11 +657,12 @@ class azTaskbar_AppIcon extends BaseButton {
         this.isFavorite = isFavorite;
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
         this._indicatorColor = 'transparent';
-        this._indicatorWidth = 1;
+        this._desiredIndicatorWidth = 1;
+        this._startIndicatorWidth = 0;
         this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
-        this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
-        this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
-        this._draggable.connect('drag-end', this._onDragEnd.bind(this));
+        this._dragBeginId = this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
+        this._dragCancelledId = this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
+        this._dragEndId = this._draggable.connect('drag-end', this._onDragEnd.bind(this));
         this._animateIndicatorsComplete = true;
         this._runningIndicator = new St.DrawingArea({
             x_expand: true,
@@ -784,7 +718,8 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _drawRunningIndicator(area){
-        let width = this._indicatorGrowWidth ?? this._indicatorWidth;
+        let width = this._startIndicatorWidth ?? this._desiredIndicatorWidth;
+
         let color = Clutter.color_from_string((this._indicatorColor ?? 'transparent'))[1];
 
         let [areaWidth, areaHeight] = area.get_surface_size();
@@ -796,28 +731,31 @@ class azTaskbar_AppIcon extends BaseButton {
         let radius = cornerRadius;
         let degrees = Math.PI / 180;
 
+        if(width <= -radius)
+            return;
+
         let x = 0;
         let y = ((this._indicatorLocation === IndicatorLocation.TOP) ? 0 : (areaHeight - (radius * 2)) / 2);
 
         Clutter.cairo_set_source_color(cr, color);
 
         if(this._animateGrow || this._showMultiDashIndicator){
-            let totalWidth = this._startIndicatorWidth;
+            let totalWidth = this._previousIndicatorWidth;
             cr.translate((areaWidth - totalWidth) / 2, y);
             //draw the previous visible indicators
             for(let i = 0; i < this._indicatorCount; i++){
                 cr.newSubPath();
-                x = i * this._indicatorWidth + i * this._indicatorSpacing;
+                x = i * this._desiredIndicatorWidth + i * this._indicatorSpacing;
                 cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-                cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
+                cr.arc(x + this._desiredIndicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
                 cr.closePath();
             }
             //draw the new indicator
             for(let i = 0; i < this._toDrawCount; i++){
                 cr.newSubPath();
-                x = totalWidth - this._indicatorWidth;
+                x = totalWidth - this._desiredIndicatorWidth;
                 cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-                cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
+                cr.arc(x + this._desiredIndicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
                 cr.closePath();
             }
         }
@@ -882,7 +820,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
         this._showMultiDashIndicator = this._settings.get_enum('multi-window-indicator-style') === MultiWindowIndicatorStyle.MULTI_DASH && (this._nWindows > 1 || this._nWindows < this._previousNWindows);
 
-        const needsAnimate = this.appIconState !== AppIconState.NOT_RUNNING && (this.previousAppIconState !== this.appIconState ||
+        const needsAnimate = (this.previousAppIconState !== this.appIconState ||
                             (this.previousAppIconState === this.appIconState && this._previousNWindows !== this._nWindows));
 
         this._setIndicatorColor();
@@ -911,24 +849,28 @@ class azTaskbar_AppIcon extends BaseButton {
         }
         else{
             if(this._animateIndicatorsComplete){
-                this._indicatorGrowWidth = null;
                 this._runningIndicator.queue_repaint();
             }
         }
     }
 
     _startanimateIndicatorGrow(){
+        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const numTicks = 15;
+        const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
+        const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
+
         this._animateGrow = true;
-        const numTicks = 30;
+
         let multiDashWidth = this.width / 9;
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+
         if(this.appIconState === AppIconState.FOCUSED && this._settings.get_boolean('show-window-titles'))
             this._indicatorSpacing = 17 * scaleFactor;
         else
             this._indicatorSpacing = 5 * scaleFactor;
+
         this._toDrawCount = this._nWindows - this._previousNWindows;
-        const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
-        const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
+
         if(this._toDrawCount < 0)
             this._indicatorCount = this._previousNWindows + this._toDrawCount;
         else
@@ -937,34 +879,34 @@ class azTaskbar_AppIcon extends BaseButton {
         this._toDrawCount = Math.abs(this._toDrawCount);
 
         if(this.appIconState === AppIconState.FOCUSED && singleWindowRemains)
-            this._indicatorWidth = this.width / 4;
+            this._desiredIndicatorWidth = this.width / 4;
         else if(this.previousAppIconState === AppIconState.RUNNING && singleWindowStart)
-            this._indicatorWidth = multiDashWidth;
+            this._desiredIndicatorWidth = multiDashWidth;
         else if(this.appIconState === AppIconState.FOCUSED && singleWindowStart){
-            this._indicatorWidth = multiDashWidth;
+            this._desiredIndicatorWidth = multiDashWidth;
             multiDashWidth = this.width / 4;
         }
         else
-            this._indicatorWidth = multiDashWidth;
+            this._desiredIndicatorWidth = multiDashWidth;
 
-        this._totalIndicatorWidth = (this._nWindows * this._indicatorWidth) + ((this._nWindows - 1) * this._indicatorSpacing);
-        this._startIndicatorWidth = (this._previousNWindows * multiDashWidth) + ((this._previousNWindows - 1) * this._indicatorSpacing);
-        this._widthDiff = (this._totalIndicatorWidth - this._startIndicatorWidth) / numTicks;
+        this._totalIndicatorWidth = (this._nWindows * this._desiredIndicatorWidth) + ((this._nWindows - 1) * this._indicatorSpacing);
+        this._previousIndicatorWidth = (this._previousNWindows * multiDashWidth) + ((this._previousNWindows - 1) * this._indicatorSpacing);
+        this._indicatorTickWidth = (this._totalIndicatorWidth - this._previousIndicatorWidth) / numTicks;
     }
 
     _animateIndicatorGrow(){
-        this._startIndicatorWidth += this._widthDiff;
+        this._previousIndicatorWidth += this._indicatorTickWidth;
         let animateDone = false;
-        if(this._widthDiff > 0 && this._startIndicatorWidth >= this._totalIndicatorWidth)
+        if(this._indicatorTickWidth > 0 && this._previousIndicatorWidth >= this._totalIndicatorWidth)
             animateDone = true;
-        else if(this._widthDiff < 0 && this._startIndicatorWidth <= this._totalIndicatorWidth)
+        else if(this._indicatorTickWidth < 0 && this._previousIndicatorWidth <= this._totalIndicatorWidth)
             animateDone = true;
-        else if(this._widthDiff === 0)
+        else if(this._indicatorTickWidth === 0)
             animateDone = true;
 
         if(animateDone) {
             this._animateIndicatorsID = null;
-            this._startIndicatorWidth = this._totalIndicatorWidth;
+            this._previousIndicatorWidth = this._totalIndicatorWidth;
             this._runningIndicator.queue_repaint();
             this._animateGrow = false;
             this._animateIndicatorsComplete = true;
@@ -974,37 +916,37 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _startAnimateIndicatorWidth(){
-        const numTicks = 30;
+        const numTicks = 15;
+        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        let radius = 1.5 * scaleFactor;
         if(this.appIconState === AppIconState.NOT_RUNNING)
-            this._indicatorWidth = 0;
+            this._desiredIndicatorWidth = -radius;
         else if(this.appIconState === AppIconState.RUNNING)
-            this._indicatorWidth = this.width / 9;
+            this._desiredIndicatorWidth = this.width / 9;
         else if(this.appIconState === AppIconState.FOCUSED)
-            this._indicatorWidth = this.width / 4;
+            this._desiredIndicatorWidth = this.width / 4;
 
-        if(this.previousAppIconState === undefined || this.previousAppIconState === AppIconState.NOT_RUNNING)
-            this._indicatorGrowWidth = 0;
-        else if(this.previousAppIconState === AppIconState.RUNNING)
-            this._indicatorGrowWidth = this.width / 9;
-        else if(this.previousAppIconState === AppIconState.FOCUSED)
-            this._indicatorGrowWidth = this.width / 4;
-
-        this._widthDiff = (this._indicatorWidth - this._indicatorGrowWidth) / numTicks;
+        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) / numTicks;
+        //debugLog(this.app.get_name(), `grow tick: ${this._indicatorTickWidth}`)
+        //debugLog(this.app.get_name(), `start width: ${this._startIndicatorWidth}`)
+        //debugLog(this.app.get_name(), `desired width: ${this._desiredIndicatorWidth}`)
+        //debugLog(this.app.get_name(), `current state: ${this.appIconState }`)
+        //debugLog(this.app.get_name(), `previous state: ${this.previousAppIconState }`)
     }
 
     _animateIndicatorWidth(){
         let animateDone = false;
-        this._indicatorGrowWidth += this._widthDiff;
-        if(this._widthDiff > 0 && this._indicatorGrowWidth >= this._indicatorWidth)
+        this._startIndicatorWidth += this._indicatorTickWidth;
+        if(this._indicatorTickWidth > 0 && this._startIndicatorWidth >= this._desiredIndicatorWidth)
             animateDone = true;
-        else if(this._widthDiff < 0 && this._indicatorGrowWidth <= this._indicatorWidth)
+        else if(this._indicatorTickWidth < 0 && this._startIndicatorWidth <= this._desiredIndicatorWidth)
             animateDone = true;
-        else if(this._widthDiff === 0)
+        else if(this._indicatorTickWidth === 0)
             animateDone = true;
 
         if(animateDone) {
             this._animateIndicatorsID = null;
-            this._indicatorGrowWidth = null;
+            this._startIndicatorWidth = this._desiredIndicatorWidth;
             this._runningIndicator.queue_repaint();
             this._animateIndicatorsComplete = true;
             return GLib.SOURCE_REMOVE;
@@ -1014,16 +956,15 @@ class azTaskbar_AppIcon extends BaseButton {
 
     _endAnimateIndicator(){
         if(this._animateIndicatorsID){
+            this._startIndicatorWidth = this._desiredIndicatorWidth;
+            this._previousIndicatorWidth = this._totalIndicatorWidth;
             GLib.Source.remove(this._animateIndicatorsID);
             this._animateIndicatorsID = null;
-            this._indicatorGrowWidth = null;
         }
     }
 
     _setIndicatorColor(){
-        if(this.appIconState === AppIconState.NOT_RUNNING || !this._settings.get_boolean('indicators'))
-            this._indicatorColor = 'transparent';
-        else if(this.appIconState === AppIconState.RUNNING)
+        if(this.appIconState === AppIconState.RUNNING)
             this._indicatorColor = this._settings.get_string('indicator-color-running');
         else if(this.appIconState === AppIconState.FOCUSED)
             this._indicatorColor = this._settings.get_string('indicator-color-focused');
@@ -1142,14 +1083,19 @@ class azTaskbar_AppIcon extends BaseButton {
 
         this._previewMenu?.destroy();
 
+        this._draggable.disconnect(this._dragBeginId);
+        this._dragBeginId = null;
+        this._draggable.disconnect(this._dragCancelledId);
+        this._dragCancelledId = null;
+        this._draggable.disconnect(this._dragEndId);
+        this._dragEndId = null;
+
         if (this._dragMonitor) {
             DND.removeDragMonitor(this._dragMonitor);
             this._dragMonitor = null;
         }
 
         if (this._draggable) {
-            if (this._dragging)
-                Main.overview.endItemDrag(this);
             this._draggable = null;
         }
 
@@ -1167,7 +1113,9 @@ class azTaskbar_AppIcon extends BaseButton {
         if(appIconStyle === AppIconStyle.SYMBOLIC)
             this._iconBin.add_style_class_name('azTaskbar-symbolic-icon');
 
-        this._iconBin.set_child(this.app.create_icon_texture(iconSize));
+        this.icon = this.app.create_icon_texture(iconSize);
+        this.icon.pivot_point = new imports.gi.Graphene.Point({ x: 0.5, y: 0.5 });
+        this._iconBin.set_child(this.icon);
 
         let indicatorSize = Math.max(5, Math.round(iconSize / 4));
 
@@ -1179,7 +1127,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
     updateAppIcon(){
         this.setActiveState();
-        this.updateIcon();
+        //this.updateIcon();
         this.updateIconGeometry();
     }
 
@@ -1220,78 +1168,59 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     getDragActorSource() {
-        return this;
+        return this.icon;
     }
 
     _onDragBegin() {
+        const children = this.mainBox.get_children();
+        this.dragStartPosition = children.indexOf(this);
+        this._dragging = true;
         this.stopAllAnimations();
-
+        this.calculateFavoritesIndicies();
         this.newIndex = -1;
 
         this._removePreviewMenuTimeout();
         this._removeMenuTimeout();
         this.hideLabel();
-        this._dragging = true;
 
         this._dragMonitor = {
             dragMotion: this._onDragMotion.bind(this),
         };
         DND.addDragMonitor(this._dragMonitor);
 
-        if(!this.isFavorite)
-            this.opacity = 105;
-        Main.overview.beginItemDrag(this);
+        this._overlayGroup.opacity = 105;
         this._highlightFavorites(true);
     }
 
     _highlightFavorites(highlight){
         const visibleItems = this.mainBox.get_children();
         for (const item of visibleItems) {
-            if(!item.isFavorite)
-                continue;
-
-            if(highlight)
+            if(highlight && item.isFavorite)
                 item.add_style_class_name('azTaskbar-favorite');
             else
                 item.remove_style_class_name('azTaskbar-favorite');
         }
     }
 
+    calculateFavoritesIndicies(){
+        const children = this.mainBox.get_children();
+        let appFavoritesIdicies = [];
+        children.map(child => {
+            if(child.isFavorite)
+                appFavoritesIdicies.push(children.indexOf(child));
+        });
+        this._firstFavIndex = appFavoritesIdicies[0];
+        this._lastFavIndex = appFavoritesIdicies[appFavoritesIdicies.length - 1];
+    }
+
     _onDragMotion(dragEvent) {
-        const [success, x, y] =
-            this.mainBox.transform_stage_point(dragEvent.x, dragEvent.y);
-
-        if (!success)
-            return;
-
-        let dropTarget = getDropTarget(this.mainBox, x);
-        let dropTargetItem = dropTarget.item;
-        let index = dropTarget.index;
-
-        this.dragPos = index;
-
-        if(this === dropTargetItem || !dropTargetItem)
-            return DND.DragMotionResult.CONTINUE;
-
-        if(this.isFavorite || dropTargetItem.isFavorite)
-            return DND.DragMotionResult.CONTINUE;
-
-        if(dropTargetItem instanceof AppIcon){
-            if(dropTargetItem.monitorIndex !== this.monitorIndex)
-                return DND.DragMotionResult.CONTINUE;
-            this.mainBox.remove_child(this);
-            this.mainBox.insert_child_at_index(this, index);
-            this.positionIndex = index;
-        }
-
         return DND.DragMotionResult.CONTINUE;
     }
 
     _onDragCancelled() {
-        this._dragCancelled = true;
         this._endDrag();
-        Main.overview.cancelledItemDrag(this);
-        this.updateIconGeometry();
+        this.mainBox.remove_child(this);
+        this.mainBox.insert_child_at_index(this, this.dragStartPosition);
     }
 
     _onDragEnd() {
@@ -1299,24 +1228,20 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _endDrag() {
-        this.undoFade();
-        this.appDisplayBox.clearDragPlaceholder();
-        this._highlightFavorites(false);
-        this._box.style = null;
         this._dragging = false;
-
-        if (this._dragMonitor) {
+        if(this._dragMonitor){
             DND.removeDragMonitor(this._dragMonitor);
             this._dragMonitor = null;
         }
-        Main.overview.endItemDrag(this);
+
+        this.undoFade();
+        this._highlightFavorites(false);
+        this._box.style = null;
         this.updateIconGeometry();
     }
 
     undoFade() {
-        this.ease({
-            scale_x: 1.0,
-            scale_y: 1.0,
+        this._overlayGroup.ease({
             opacity: 255,
         });
     }
@@ -1482,8 +1407,11 @@ class azTaskbar_AppIcon extends BaseButton {
             else if(nextWindowIndex < 0)
                 nextWindowIndex = windows.length - 1;
 
-            if(windowIndex != nextWindowIndex)
+            if(windowIndex != nextWindowIndex){
                 Main.activateWindow(windows[nextWindowIndex]);
+                if(windows[nextWindowIndex].minimized)
+                    this._maximizeAppIcon();
+            }
             return true;
         }
         else if(cycleMinimize){
@@ -1501,6 +1429,7 @@ class azTaskbar_AppIcon extends BaseButton {
                 this._cycleWindowList.forEach(window => {
                     window.minimize();
                     window.cycled = false;
+                    this._minimizeAppIcon();
                 });
                 return true;
             }
@@ -1511,6 +1440,8 @@ class azTaskbar_AppIcon extends BaseButton {
                 }
                 if(!window.cycled){
                     window.cycled = true;
+                    if(window.minimized)
+                        this._maximizeAppIcon();
                     Main.activateWindow(window);
                     break;
                 }
@@ -1550,10 +1481,16 @@ class azTaskbar_AppIcon extends BaseButton {
                 const window = windows[0];
                 if(this._settings.get_enum('click-action') === ClickAction.NO_TOGGLE_CYCLE)
                     Main.activateWindow(window);
-                else if(window.minimized || !window.has_focus())
+                else if(window.minimized || !window.has_focus()){
+                    if(window.minimized)
+                        this._maximizeAppIcon();
                     Main.activateWindow(window);
-                else
+                }
+                else{
                     window.minimize();
+                    this._minimizeAppIcon();
+                }
+                    
             }
             //a favorited app is running, but no interesting windows on current workspace/monitor
             else if(this.app.state === Shell.AppState.RUNNING){
