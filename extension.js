@@ -1205,9 +1205,9 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _onDragCancelled() {
-        this._endDrag();
         this.mainBox.remove_child(this);
         this.mainBox.insert_child_at_index(this, this.dragStartPosition);
+        this._endDrag();
     }
 
     _onDragEnd() {
