@@ -913,11 +913,6 @@ class azTaskbar_AppIcon extends BaseButton {
             this._desiredIndicatorWidth = this.width / 4;
 
         this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) / numTicks;
-        //debugLog(this.app.get_name(), `grow tick: ${this._indicatorTickWidth}`)
-        //debugLog(this.app.get_name(), `start width: ${this._startIndicatorWidth}`)
-        //debugLog(this.app.get_name(), `desired width: ${this._desiredIndicatorWidth}`)
-        //debugLog(this.app.get_name(), `current state: ${this.appIconState }`)
-        //debugLog(this.app.get_name(), `previous state: ${this.previousAppIconState }`)
     }
 
     _animateIndicatorWidth(){
@@ -1046,6 +1041,7 @@ class azTaskbar_AppIcon extends BaseButton {
     _onDestroy(){
         this.stopAllAnimations();
 
+        this._disconnectWindowMinimizeEvent();
         this._menu?.close();
         this._previewMenu?.close();
 
@@ -1115,6 +1111,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this.setActiveState();
         //this.updateIcon();
         this.updateIconGeometry();
+        this._onWindowsChanged();
     }
 
     animateLaunch(){
@@ -1350,12 +1347,12 @@ class azTaskbar_AppIcon extends BaseButton {
             this._cycleWindowList = null;
         }
 
-        this._disconnectWindowMinimizeEvent();
         this._connectWindowMinimizeEvent()
     }
 
     _disconnectWindowMinimizeEvent(){
-        this._windowList.forEach(window => {
+        let windows = this.app.get_windows();
+        windows.forEach(window => {
             if (window._windowMinimizeId > 0) {
                 window.disconnect(window._windowMinimizeId);
                 window._windowMinimizeId = 0;
@@ -1366,6 +1363,10 @@ class azTaskbar_AppIcon extends BaseButton {
     _connectWindowMinimizeEvent(){
         this._windowList = this.getInterestingWindows();
         this._windowList.forEach(window => {
+            if (window._windowMinimizeId > 0) {
+                window.disconnect(window._windowMinimizeId);
+                window._windowMinimizeId = 0;
+            }
             window._windowMinimizeId = window.connect('notify::minimized', () => this._animateAppIcon(window.minimized));
         });
     }
