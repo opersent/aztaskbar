@@ -562,25 +562,10 @@ class azTaskbar_BaseButton extends St.Button {
         }
     }
 
-    _minimizeAppIcon(){
+    _animateAppIcon(isMinimized){
         this.icon?.ease({
             duration: 150,
-            translation_y: -3,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onComplete: () => {
-                this.icon?.ease({
-                    translation_y: 0,
-                    duration: 150,
-                    mode: Clutter.AnimationMode.EASE_IN_QUAD,
-                });
-            },
-        });
-    }
-
-    _maximizeAppIcon(){
-        this.icon?.ease({
-            duration: 150,
-            translation_y: 3,
+            translation_y: isMinimized ? -3 : 3,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
                 this.icon?.ease({
@@ -702,6 +687,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
         this.updateIcon();
         this.updateLabel();
+        this._connectWindowMinimizeEvent();
 
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this.setActiveState()), this._settings);
@@ -712,7 +698,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
-        this._connections.set(this.app.connect('windows-changed', () => this._resetCycleWindows()), this.app);
+        this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
         this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
     }
@@ -1159,6 +1145,10 @@ class azTaskbar_AppIcon extends BaseButton {
     stopAllAnimations(){
         this._box.style = 'transition-duration: 0ms;';
         this._box.remove_all_transitions();
+        this.icon?.remove_all_transitions();
+        this.icon.scale_x = 1;
+        this.icon.scale_y = 1;
+        this.icon.translation_y = 0;
 
         this._endAnimateIndicator();
     }
@@ -1354,6 +1344,32 @@ class azTaskbar_AppIcon extends BaseButton {
         this._removePreviewMenuTimeout();
     }
 
+    _onWindowsChanged(){
+        if (this._cycleWindowList && this._cycleWindowList.length !== this.getInterestingWindows().length) {
+            this._clearCycleWindow();
+            this._cycleWindowList = null;
+        }
+
+        this._disconnectWindowMinimizeEvent();
+        this._connectWindowMinimizeEvent()
+    }
+
+    _disconnectWindowMinimizeEvent(){
+        this._windowList.forEach(window => {
+            if (window._windowMinimizeId > 0) {
+                window.disconnect(window._windowMinimizeId);
+                window._windowMinimizeId = 0;
+            }
+        });
+    }
+
+    _connectWindowMinimizeEvent(){
+        this._windowList = this.getInterestingWindows();
+        this._windowList.forEach(window => {
+            window._windowMinimizeId = window.connect('notify::minimized', () => this._animateAppIcon(window.minimized));
+        });
+    }
+
     _removeCylceWindowsTimeout() {
         if (this._cylceWindowsTimeoutId > 0) {
             GLib.source_remove(this._cylceWindowsTimeoutId);
@@ -1365,13 +1381,6 @@ class azTaskbar_AppIcon extends BaseButton {
         this._cycleWindowList?.forEach(window => {
             delete window.cycled;
         });
-    }
-
-    _resetCycleWindows(){
-        if (this._cycleWindowList && this._cycleWindowList.length !== this.getInterestingWindows().length) {
-            this._clearCycleWindow();
-            this._cycleWindowList = null;
-        }
     }
 
     _setCylceWindowsTimeout(windows) {
@@ -1409,8 +1418,6 @@ class azTaskbar_AppIcon extends BaseButton {
 
             if(windowIndex != nextWindowIndex){
                 Main.activateWindow(windows[nextWindowIndex]);
-                if(windows[nextWindowIndex].minimized)
-                    this._maximizeAppIcon();
             }
             return true;
         }
@@ -1429,7 +1436,6 @@ class azTaskbar_AppIcon extends BaseButton {
                 this._cycleWindowList.forEach(window => {
                     window.minimize();
                     window.cycled = false;
-                    this._minimizeAppIcon();
                 });
                 return true;
             }
@@ -1440,8 +1446,6 @@ class azTaskbar_AppIcon extends BaseButton {
                 }
                 if(!window.cycled){
                     window.cycled = true;
-                    if(window.minimized)
-                        this._maximizeAppIcon();
                     Main.activateWindow(window);
                     break;
                 }
@@ -1482,15 +1486,10 @@ class azTaskbar_AppIcon extends BaseButton {
                 if(this._settings.get_enum('click-action') === ClickAction.NO_TOGGLE_CYCLE)
                     Main.activateWindow(window);
                 else if(window.minimized || !window.has_focus()){
-                    if(window.minimized)
-                        this._maximizeAppIcon();
                     Main.activateWindow(window);
                 }
-                else{
+                else
                     window.minimize();
-                    this._minimizeAppIcon();
-                }
-                    
             }
             //a favorited app is running, but no interesting windows on current workspace/monitor
             else if(this.app.state === Shell.AppState.RUNNING){

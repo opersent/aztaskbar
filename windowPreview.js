@@ -643,7 +643,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     activate() {
         this._getTopMenu().close();
         this._endPeek(true);
-        Main.activateWindow(this._window);
 
         this.activateTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
             Main.activateWindow(this._window);
