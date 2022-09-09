@@ -129,7 +129,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             this.mainBox.remove_child(source);
             this.mainBox.insert_child_at_index(source, index);
         }
-    
+
         let inFavoriteRange = source.dragPos < source._firstFavIndex - 1 || source.dragPos > source._lastFavIndex;
         let srcIsFavorite = inFavoriteRange || source.isFavorite;
 
@@ -137,7 +137,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             source.add_style_class_name('azTaskbar-favorite');
         else
             source.remove_style_class_name('azTaskbar-favorite');
-    
+
         if (srcIsFavorite)
             return DND.DragMotionResult.NO_DROP;
 
@@ -765,7 +765,6 @@ class azTaskbar_AppIcon extends BaseButton {
 
     setActiveState(){
         this.previousAppIconState = this.appIconState;
-        this._previousFocusApp = tracker.focus_app ?? this._previousFocusApp;
         this._previousNWindows = this._nWindows;
         this._indicatorLocation = this._settings.get_enum('indicator-location');
 
@@ -782,14 +781,11 @@ class azTaskbar_AppIcon extends BaseButton {
             this.appIconState = AppIconState.RUNNING;
             if(windows.length > 1)
                 showMultiWindowIndicator = true;
-            if(currentMonitorIndex === this.monitorIndex && this._previousFocusApp === this.app)
-                this._setFocused();
-            else{
-                windows.forEach(window => {
-                    if(window.has_focus())
-                        this._setFocused();
-                });
-            }
+
+            windows.forEach(window => {
+                if(window.has_focus())
+                    this._setFocused();
+            });
 
             if(this.appIconState === AppIconState.RUNNING)
                 this._box.set_style_pseudo_class(null);
