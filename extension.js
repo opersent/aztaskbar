@@ -122,38 +122,61 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         source.dragMonitorIndex = dropTargetItem.monitorIndex ?? -1;
         source.dragPos = index;
+        let inFavoriteRange = source.dragPos >= (source._firstFavIndex - 1) && source.dragPos <= source._lastFavIndex;
 
-        if(dropTargetItem instanceof AppIcon){
-            if(dropTargetItem.monitorIndex !== source.monitorIndex)
+        let id = source.app.get_id();
+        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+        let srcIsFavorite = id in favorites;
+
+        if(dropTargetItem instanceof AppIcon && dropTargetItem !== source){
+            if(inFavoriteRange && srcIsFavorite && !source.isFavorite)
                 return DND.DragMotionResult.NO_DROP;
-            this.mainBox.remove_child(source);
-            this.mainBox.insert_child_at_index(source, index);
+                
+            //Drop target location not on same monitor as source, but in fav range
+            if(!source.isFavorite && inFavoriteRange){
+                if(!source.lastPositionIndex)
+                    source.lastPositionIndex = this.mainBox.get_children().indexOf(source);
+                this.mainBox.remove_child(source);
+                this.mainBox.insert_child_at_index(source, index);
+            }
+            //source has been moved to favorite range from different monitor, return to last location.
+            else if(dropTargetItem.monitorIndex !== source.monitorIndex && !inFavoriteRange && source.lastPositionIndex){
+                this.mainBox.remove_child(source);
+                this.mainBox.insert_child_at_index(source, source.lastPositionIndex);
+                source.lastPositionIndex = null;
+            }
+            else if(dropTargetItem.monitorIndex === source.monitorIndex){
+                this.mainBox.remove_child(source);
+                this.mainBox.insert_child_at_index(source, index);
+            }
         }
 
-        let inFavoriteRange = source.dragPos < source._firstFavIndex - 1 || source.dragPos > source._lastFavIndex;
-        let srcIsFavorite = inFavoriteRange || source.isFavorite;
-
-        if(!inFavoriteRange)
+        if(inFavoriteRange)
             source.add_style_class_name('azTaskbar-favorite');
         else
             source.remove_style_class_name('azTaskbar-favorite');
 
-        if (srcIsFavorite)
+        if(source.isFavorite || !inFavoriteRange)
             return DND.DragMotionResult.NO_DROP;
 
         return DND.DragMotionResult.COPY_DROP;
     }
 
     acceptDrop(source, _actor, x, _y, _time){
-        if(source.monitorIndex !== 0)
-            return true;
+        let dropTarget = getDropTarget(this.mainBox, x);
+        let dropTargetItem = dropTarget.item;
 
         let id = source.app.get_id();
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
         let srcIsFavorite = id in favorites;
         let favPos = source.dragPos - source._firstFavIndex;
         let inFavoriteRange = source.dragPos >= (source._firstFavIndex - 1) && source.dragPos <= source._lastFavIndex;
+
+        if(!srcIsFavorite && dropTargetItem.monitorIndex !== source.monitorIndex && !inFavoriteRange)
+            return false;
+
         source.positionIndex = source.dragPos;
+
         if(source.isFavorite){
             if(source.dragPos > source._lastFavIndex || source.dragPos < source._firstFavIndex - 1)
                 AppFavorites.getAppFavorites().removeFavorite(id);
@@ -1202,6 +1225,7 @@ class azTaskbar_AppIcon extends BaseButton {
     _onDragCancelled() {
         this.mainBox.remove_child(this);
         this.mainBox.insert_child_at_index(this, this.dragStartPosition);
+        this.positionIndex = this.dragStartPosition;
         this._endDrag();
     }
 
@@ -1216,6 +1240,7 @@ class azTaskbar_AppIcon extends BaseButton {
             this._dragMonitor = null;
         }
 
+        this.lastPositionIndex = null;
         this.undoFade();
         this._highlightFavorites(false);
         this._box.style = null;
