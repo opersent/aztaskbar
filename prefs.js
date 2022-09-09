@@ -264,7 +264,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         multiWindowIndicatorStyles.append(_("Multi-Dashes"));
         multiWindowIndicatorStyles.append(_("None"));
         let multiWindowIndicatorRow = new Adw.ComboRow({
-            title: _("Indicator Location"),
+            title: _("Multi-Window Indicator Style"),
             model: multiWindowIndicatorStyles,
             selected: this._settings.get_enum('multi-window-indicator-style')
         });
@@ -272,20 +272,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_enum('multi-window-indicator-style', widget.selected);
         });
         indicatorGroup.add(multiWindowIndicatorRow);
-
-        let indicatorSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
-        });
-        let indicatorRow = new Adw.ActionRow({
-            title: _("Indicators"),
-            activatable_widget: indicatorSwitch
-        });
-        indicatorSwitch.set_active(this._settings.get_boolean('indicators'));
-        indicatorSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('indicators', widget.get_active());
-        });
-        indicatorRow.add_suffix(indicatorSwitch);
-        indicatorGroup.add(indicatorRow);
 
         let indicatorLocations = new Gtk.StringList();
         indicatorLocations.append(_("Top"));

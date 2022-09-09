@@ -692,7 +692,6 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicators', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-location', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);

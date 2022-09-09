@@ -89,11 +89,6 @@
             <summary>Multiple window indicator style</summary>
             <description>Multiple window indicator style.</description>
         </key>
-        <key type="b" name="indicators">
-            <default>true</default>
-            <summary>Show running app indicators</summary>
-            <description>Show running app indicators.</description>
-        </key>
         <key enum="org.gnome.shell.extensions.aztaskbar.indicator-location" name="indicator-location">
             <default>'TOP'</default>
             <summary>AppIcon indicator location. TOP or BOTTOM</summary>
