@@ -126,10 +126,13 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         let id = source.app.get_id();
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
-        let srcIsFavorite = id in favorites;
+        let noDrop = id in favorites;
+
+        if (source.app.is_window_backed() || !global.settings.is_writable('favorite-apps'))
+            noDrop = true;
 
         if(dropTargetItem instanceof AppIcon && dropTargetItem !== source){
-            if(inFavoriteRange && srcIsFavorite && !source.isFavorite)
+            if(inFavoriteRange && noDrop && !source.isFavorite)
                 return DND.DragMotionResult.NO_DROP;
                 
             //Drop target location not on same monitor as source, but in fav range
