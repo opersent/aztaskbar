@@ -1,0 +1,279 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Ian <ianloron00@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: aztaskbar\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-25 12:41-0400\n"
+"PO-Revision-Date: 2022-09-10 16:19-0300\n"
+"Last-Translator: Ian <ianloron00@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <i198933@dac.unicamp.br>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 3.36.0\n"
+
+#: extension.js:661
+msgid "Show Applications"
+msgstr "Mostrar Aplicações"
+
+#: prefs.js:8
+msgid "App Icons Taskbar"
+msgstr "Ícone de Apps na Barra de Tarefas"
+
+#: prefs.js:9
+msgid "Show running apps and favorites on the main panel"
+msgstr "Mostrar aplicativos funcionando e favoritos on painel principal"
+
+#: prefs.js:16
+msgid "Settings"
+msgstr "Configurações"
+
+#: prefs.js:24
+msgid "General"
+msgstr "Geral"
+
+#: prefs.js:29 prefs.js:125
+msgid "Left"
+msgstr "Esquerda"
+
+#: prefs.js:30
+msgid "Center"
+msgstr "Centro"
+
+#: prefs.js:31 prefs.js:126
+msgid "Right"
+msgstr "Direita"
+
+#: prefs.js:33
+msgid "Position in Panel"
+msgstr "Posição no Painel"
+
+#: prefs.js:56
+msgid "Position Offset"
+msgstr "Deslocamento de Posição"
+
+#: prefs.js:57
+msgid "Offset the position within the above selected box"
+msgstr "Deslocar a posição dentro da caixa selecionada acima"
+
+#: prefs.js:95
+msgid "Panel Height"
+msgstr "Altura do Painel"
+
+#: prefs.js:134
+msgid "Show Apps Button"
+msgstr "Mostrar Botão de Apps"
+
+#: prefs.js:161
+msgid "Icon Size"
+msgstr "Tamanho do Ícone"
+
+#: prefs.js:181
+msgid "Icon Desaturate Factor"
+msgstr "Fator de Dessaturação do Ícone"
+
+#: prefs.js:188
+msgid "Regular"
+msgstr "Regular"
+
+#: prefs.js:189
+msgid "Symbolic"
+msgstr "Simbólico"
+
+#: prefs.js:191
+msgid "Icon Style"
+msgstr "Estilo do Ícone"
+
+#: prefs.js:192
+msgid "Icon themes may not have a symbolic icon for every app"
+msgstr "Temas de ícones podem não ter um ícone simbólico para todo app"
+
+#: prefs.js:205
+msgid "Show Focused Window Title"
+msgstr "Mostrar Título Janela Focada"
+
+#: prefs.js:219
+msgid "Favorites"
+msgstr "Favoritos"
+
+#: prefs.js:233
+msgid "Isolate Workspaces"
+msgstr "Isolar Áreas de Trabalho"
+
+#: prefs.js:247
+msgid "Isolate Monitors"
+msgstr "Isolar Monitores"
+
+#: prefs.js:258 prefs.js:263
+msgid "Indicator"
+msgstr "Indicador"
+
+#: prefs.js:264
+msgid "Multi-Dashes"
+msgstr "Pontilhado"
+
+#: prefs.js:265
+msgid "None"
+msgstr "Nenhum"
+
+#: prefs.js:267 prefs.js:294
+msgid "Indicator Location"
+msgstr "Indicador de Localização"
+
+#: prefs.js:280
+msgid "Indicators"
+msgstr "Indicadores"
+
+#: prefs.js:291
+msgid "Top"
+msgstr "Topo"
+
+#: prefs.js:292
+msgid "Bottom"
+msgstr "Parte Inferior"
+
+#: prefs.js:315
+msgid "Running Indicator Color"
+msgstr "Cor do Indicador De Execução"
+
+#: prefs.js:334
+msgid "Focused Indicator Color"
+msgstr "Cor do Indicador Do Modo De Foco"
+
+#: prefs.js:346
+msgid "Actions"
+msgstr "Ações"
+
+#: prefs.js:353
+msgid "Click Actions"
+msgstr "Ações de Clique"
+
+#: prefs.js:358
+msgid "Toggle / Cycle"
+msgstr "Alternar / Percorrer"
+
+#: prefs.js:359
+msgid "Toggle / Cycle + Minimize"
+msgstr "Alternar / Percorrer + Minimizar"
+
+#: prefs.js:360
+msgid "Toggle / Preview"
+msgstr "Alternar / Pré-Visualizar"
+
+#: prefs.js:361
+msgid "Cycle"
+msgstr "Percorrer"
+
+#: prefs.js:363
+msgid "Left Click"
+msgstr "Clique Esquerdo"
+
+#: prefs.js:364
+msgid "Modify Left Click Action of Running App Icons"
+msgstr "Modificar Ação do Clique Esquerdo de Ícones de Apps em Execução"
+
+#: prefs.js:374
+msgid "Scroll Actions"
+msgstr "Ações de Rolagem"
+
+#: prefs.js:379
+msgid "Cycle Windows"
+msgstr "Percorrer Janelas"
+
+#: prefs.js:380
+msgid "No Action"
+msgstr "Sem Ação"
+
+#: prefs.js:382
+msgid "Scroll Action"
+msgstr "Ação de Rolagem"
+
+#: prefs.js:392
+msgid "Hover Actions"
+msgstr "Ações ao Pairar o Mouse"
+
+#: prefs.js:400
+msgid "Tool-Tips"
+msgstr "Tool-Tips"
+
+#: prefs.js:422 prefs.js:454
+msgid "Window Previews"
+msgstr "Pré-Visualização de Janela"
+
+#: prefs.js:441
+msgid "Window Preview Options"
+msgstr "Opções de Pré-Visualização de Janelas"
+
+#: prefs.js:472
+msgid "Show Window Previews Delay"
+msgstr "Mostrar Tempo de Pré-Visualização de Janelas"
+
+#: prefs.js:473
+msgid "Time in ms to show the window preview"
+msgstr "Tempo em ms para mostrar a pré-visualização de janelas"
+
+#: prefs.js:493
+msgid "Hide Window Previews Delay"
+msgstr "Esconder tempo de pré-visualização de janelas"
+
+#: prefs.js:494
+msgid "Time in ms to hide the window preview"
+msgstr "Tempo em ms para esconder a pré-visualização de uma janela"
+
+#: prefs.js:501 prefs.js:509
+msgid "Window Peeking"
+msgstr "Visualização Rápida da Janela"
+
+#: prefs.js:510
+msgid "Hovering a window preview will focus desired window"
+msgstr ""
+"Passar o mouse sobre a pré-visualização de uma janela focará na respectiva "
+"janela. "
+
+#: prefs.js:534
+msgid "Window Peeking Delay"
+msgstr "Tempo de Visualização Rápida da Janela"
+
+#: prefs.js:535
+msgid "Time in ms to trigger window peek"
+msgstr "Tempo em ms para acionar a pré-visualização de uma janela"
+
+#: prefs.js:555
+msgid "Window Peeking Opacity"
+msgstr "Opacidade da Visualização Rápida de Janela"
+
+#: prefs.js:556
+msgid "Opacity of non-focused windows during a window peek"
+msgstr ""
+"Opacidade de janelas não focadas durante a pré-visualização de uma janela"
+
+#: prefs.js:568
+msgid "About"
+msgstr "Sobre"
+
+#: prefs.js:612
+msgid "Version"
+msgstr "Versão"
+
+#: prefs.js:621
+msgid "Git Commit"
+msgstr "Git Commit"
+
+#: prefs.js:630
+msgid "GNOME Version"
+msgstr "Versão do GNOME"
+
+#: prefs.js:638
+msgid "OS"
+msgstr "SO"
+
+#: prefs.js:660
+msgid "Session Type"
+msgstr "Tipo de Sessão"
