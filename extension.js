@@ -589,6 +589,9 @@ class azTaskbar_BaseButton extends St.Button {
     }
 
     _animateAppIcon(isMinimized){
+        if(!St.Settings.get().enable_animations)
+            return;
+
         this.icon?.ease({
             duration: 150,
             translation_y: isMinimized ? -3 : 3,
@@ -1334,6 +1337,11 @@ class azTaskbar_AppIcon extends BaseButton {
 
     popupMenu(side = St.Side.TOP) {
         this._removeMenuTimeout();
+        this._dragging = false;
+        if(this._dragMonitor){
+            DND.removeDragMonitor(this._dragMonitor);
+            this._dragMonitor = null;
+        }
 
         if (!this._menu) {
             this._menu = new AppMenu(this, side, {
