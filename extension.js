@@ -277,7 +277,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                 showFavorites = false;
             else{
                 if(panelsOnAllMonitors)
-                    showFavorites = this._monitor === Main.layoutManager.primaryMonitor;
+                    showFavorites = monitorIndex === Main.layoutManager.primaryIndex;
                 else
                     showFavorites = (isolateMonitors ? i === 0 : true);
             }
