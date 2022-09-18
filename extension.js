@@ -1,21 +1,22 @@
-const { Clutter, Gio, GLib, GObject, Meta, Shell, St } = imports.gi;
+const { Clutter, GLib, GObject, Shell, St } = imports.gi;
 
-const { AppMenu } = imports.ui.appMenu;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
+
 const AppFavorites = imports.ui.appFavorites;
+const { AppIconIndicator } = Me.imports.appIconIndicator;
+const { AppIcon, ShowAppsIcon } = Me.imports.appIcon;
 const BoxPointer = imports.ui.boxpointer;
 const DND = imports.ui.dnd;
-const ExtensionUtils = imports.misc.extensionUtils;
-const IconGrid = imports.ui.iconGrid;
+const Enums = Me.imports.enums;
 const Main = imports.ui.main;
-const Me = ExtensionUtils.getCurrentExtension();
+const { Panel } = Me.imports.panel;
 const PopupMenu = imports.ui.popupMenu;
 const Theming = Me.imports.theming;
-const { WindowPreviewMenu } = Me.imports.windowPreview;
+const Utils = Me.imports.utils;
 
-let settings, appDisplayBox, extensionConnections, currentMonitorIndex;
+let settings, appDisplayBox, extensionConnections, panelBoxes;
 let tracker = Shell.WindowTracker.get_default();
-
-const MAX_MULTI_DASHES = 3;
 
 function getDropTarget(box, x){
     const visibleItems = box.get_children();
@@ -38,12 +39,13 @@ function debugLog(appName, msg){
 
 var AppDisplayBox = GObject.registerClass(
 class azTaskbar_AppDisplayBox extends St.ScrollView {
-    _init(settings) {
+    _init(settings, monitor) {
         super._init({
             style_class: 'hfade'
         });
         this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
-
+        this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
+        this._monitor = monitor;
         this._settings = settings;
         this.showAppsIcon = new ShowAppsIcon(this._settings);
         this.mainBox = new St.BoxLayout({
@@ -51,8 +53,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             y_expand: true,
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.FILL,
-        })
+        });
         this.mainBox._delegate = this;
+        this.mainBox.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this.clip_to_allocation = true;
         this.add_actor(this.mainBox);
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
@@ -62,6 +65,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.peekInitialWorkspaceIndex = -1;
 
         this._connections = new Map();
+        this._connections.set(this._settings.connect('changed::panel-on-all-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
@@ -122,7 +126,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         source.dragMonitorIndex = dropTargetItem.monitorIndex ?? -1;
         source.dragPos = index;
-        let inFavoriteRange = source.dragPos >= (source._firstFavIndex - 1) && source.dragPos <= source._lastFavIndex;
+        let inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) && source.dragPos <= source.lastFavIndex;
 
         let id = source.app.get_id();
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
@@ -172,8 +176,8 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         let id = source.app.get_id();
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
         let srcIsFavorite = id in favorites;
-        let favPos = source.dragPos - source._firstFavIndex;
-        let inFavoriteRange = source.dragPos >= (source._firstFavIndex - 1) && source.dragPos <= source._lastFavIndex;
+        let favPos = source.dragPos - source.firstFavIndex;
+        let inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) && source.dragPos <= source.lastFavIndex;
 
         if(!srcIsFavorite && dropTargetItem.monitorIndex !== source.monitorIndex && !inFavoriteRange)
             return false;
@@ -181,7 +185,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         source.positionIndex = source.dragPos;
 
         if(source.isFavorite){
-            if(source.dragPos > source._lastFavIndex || source.dragPos < source._firstFavIndex - 1)
+            if(source.dragPos > source.lastFavIndex || source.dragPos < source.firstFavIndex - 1)
                 AppFavorites.getAppFavorites().removeFavorite(id);
             else
                 AppFavorites.getAppFavorites().moveFavoriteToPos(id, favPos);
@@ -249,11 +253,15 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
 
         let isolateMonitors = this._settings.get_boolean('isolate-monitors');
-        let monitorsCount = isolateMonitors ? Main.layoutManager.monitors.length : 1;
+        let panelsOnAllMonitors = this._settings.get_boolean('panel-on-all-monitors');
+
+        let monitorsCount = (isolateMonitors && !panelsOnAllMonitors) ? Main.layoutManager.monitors.length : 1;
+
         let sortedMonitors = this._sortMonitors();
         let positionIndex = 0;
+
         for(let i = 0; i < monitorsCount; i++){
-            let monitorIndex = sortedMonitors[i].index;
+            let monitorIndex = panelsOnAllMonitors ? this._monitor.index : sortedMonitors[i].index;
 
             let oldApps = this.oldApps.filter(oldApp => {
                 if(oldApp.monitorIndex === monitorIndex)
@@ -264,13 +272,19 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             let appFavorites = AppFavorites.getAppFavorites();
             let favorites = appFavorites.getFavoriteMap();
 
-            //if both Favorites and Isolate Monitors enabled, show favorites first.
-            let showFavorites = this._settings.get_boolean('favorites') &&
-                (isolateMonitors ? i === 0 : true);
+            let showFavorites;
+            if(!this._settings.get_boolean('favorites'))
+                showFavorites = false;
+            else{
+                if(panelsOnAllMonitors)
+                    showFavorites = this._monitor === Main.layoutManager.primaryMonitor;
+                else
+                    showFavorites = (isolateMonitors ? i === 0 : true);
+            }
 
             let running = this._getRunningApps();
 
-            running = running.filter(app => getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
+            running = running.filter(app => Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
             if(showFavorites){
                 let favsArray = appFavorites.getFavorites();
@@ -350,10 +364,10 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         let children = this.mainBox.get_children();
         for(let i = 0; i < children.length; i++){
-            const appicon = children[i];
-            const previusAppicon = children[i - 1];
+            const appIcon = children[i];
+            const previousAppIcon = children[i - 1];
             //if the previous AppIcon has different monitorIndex, add a separator.
-            if(previusAppicon && appicon.monitorIndex !== previusAppicon.monitorIndex){
+            if(previousAppIcon && appIcon.monitorIndex !== previousAppIcon.monitorIndex){
                 let separator = new St.Widget({
                     style_class: "azTaskbar-Separator",
                     x_align: Clutter.ActorAlign.FILL,
@@ -367,7 +381,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
         if(showAppsButton){
-            if(showAppsButtonPosition === ShowAppsButtonPosition.LEFT)
+            if(showAppsButtonPosition === Enums.ShowAppsButtonPosition.LEFT)
                 this.mainBox.insert_child_at_index(this.showAppsIcon, 0);
             else
                 this.mainBox.add_child(this.showAppsIcon);
@@ -433,1184 +447,52 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 });
 
-var BaseButton = GObject.registerClass(
-class azTaskbar_BaseButton extends St.Button {
-    _init(settings) {
+var PanelBox = GObject.registerClass(
+class azTaskbar_PanelBox extends St.BoxLayout {
+    _init(monitor) {
         super._init({
-            reactive: true,
-            can_focus: true,
-            track_hover: true,
-            button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+            name: 'panelBox',
+            vertical: true,
         });
-        this._settings = settings;
-
-        this._delegate = this;
-        this._box = new St.BoxLayout({
-            reactive: true,
-            can_focus: true,
-            track_hover: true,
-            style_class: 'azTaskbar-BaseIcon',
-            x_align: Clutter.ActorAlign.CENTER,
-            y_expand: true,
-            y_align: Clutter.ActorAlign.FILL
+        this._monitor = monitor;
+        Main.layoutManager.addChrome(this, {
+            affectsStruts: true,
+            trackFullscreen: true,
         });
-        this.bind_property('hover', this._box, 'hover', GObject.BindingFlags.SYNC_CREATE);
-
-        this._iconBin = new St.Bin({
-            x_align: Clutter.ActorAlign.CENTER,
-            y_expand: true,
-            y_align: Clutter.ActorAlign.FILL
-        });
-        this._box.add_child(this._iconBin);
-
-        this._label = new St.Label({
-            y_expand: true,
-            y_align: Clutter.ActorAlign.CENTER
-        });
-        this._box.add_child(this._label);
-        this._label.hide();
-
-        this._overlayGroup = new Clutter.Actor({
-            layout_manager: new Clutter.BinLayout(),
-            y_expand: true,
-            y_align: Clutter.ActorAlign.FILL,
-        });
-        this._overlayGroup.add_actor(this._box);
-
-        this.set_child(this._overlayGroup);
-
-        this.connect('notify::hover', () => this._onHover());
-        this.connect('notify::pressed', () => this._onPressed());
-        this.connect('clicked', () => this._onClicked());
-        this.connect('destroy', () => this._onDestroy());
-
-        this._iconSizeChangeId = this._settings.connect('changed::icon-size', () => this.updateIcon());
-
-        this.tooltipLabel = new St.Label({
-            style_class: 'dash-label azTaskbar-Tooltip',
-        });
-        this.tooltipLabel.hide();
-        Main.layoutManager.addChrome(this.tooltipLabel);
-    }
-
-    updateIcon(){
-        throw new GObject.NotImplementedError();
-    }
-
-    _onHover()  {
-        throw new GObject.NotImplementedError();
-    }
-
-    _onPressed()  {
-        if(this.pressed){
-            this._box.add_style_class_name('pressed');
-        }
-        else{
-            this._box.remove_style_class_name('pressed');
-        }
-
-        this.icon?.ease({
-            duration: 150,
-            scale_x: this.pressed ? .85 : 1,
-            scale_y: this.pressed ? .85 : 1,
-        });
-    }
-
-    _onClicked() {
-        throw new GObject.NotImplementedError();
-    }
-
-    showLabel() {
-        if(!this._settings.get_boolean('tool-tips'))
-            return;
-
-        this.tooltipLabel.opacity = 0;
-        this.tooltipLabel.show();
-
-        let [stageX, stageY] = this.get_transformed_position();
-
-        const itemWidth = this.allocation.get_width();
-        const itemHeight = this.allocation.get_height();
-
-        const labelWidth = this.tooltipLabel.get_width();
-        const labelHeight = this.tooltipLabel.get_height();
-        const offset = 6;
-        const xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
-        let monitorIndex = Main.layoutManager.findIndexForActor(this);
-        let workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
-
-        let x, y;
-        x = Math.clamp(stageX + xOffset, 0 + offset, workArea.x + workArea.width - labelWidth - offset);
-
-        //Check if should place tool-tip above or below app icon
-        //Needed in case user has moved the panel to bottom of screen
-        let labelBelowIconRect = new Meta.Rectangle({
-            x,
-            y: stageY + itemHeight + offset,
-            width: labelWidth,
-            height: labelHeight
-        });
-
-        if(workArea.contains_rect(labelBelowIconRect))
-            y = labelBelowIconRect.y;
-        else
-            y = stageY - labelHeight - offset;
-
-        this.tooltipLabel.remove_all_transitions();
-        this.tooltipLabel.set_position(x, y);
-        this.tooltipLabel.ease({
-            opacity: 255,
-            duration: 250,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-        });
-    }
-
-    hideLabel() {
-        this.tooltipLabel.ease({
-            opacity: 0,
-            duration: 100,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onComplete: () => this.tooltipLabel.hide(),
-        });
-    }
-
-    _onDestroy(){
-        this.tooltipLabel.remove_all_transitions();
-        this.tooltipLabel.hide();
-        this.tooltipLabel.destroy();
-        this._settings.disconnect(this._iconSizeChangeId);
-        this._iconSizeChangeId = null;
-
-        if(this._showWindowTitleId){
-            this._settings.disconnect(this._showWindowTitleId);
-            this._showWindowTitleId = null;
-        }
-    }
-
-    _animateAppIcon(isMinimized){
-        if(!St.Settings.get().enable_animations)
-            return;
-
-        this.icon?.ease({
-            duration: 150,
-            translation_y: isMinimized ? -3 : 3,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onComplete: () => {
-                this.icon?.ease({
-                    translation_y: 0,
-                    duration: 150,
-                    mode: Clutter.AnimationMode.EASE_IN_QUAD,
-                });
-            },
-        });
-    }
-});
-
-var ShowAppsIcon = GObject.registerClass(
-class azTaskbar_ShowAppsIcon extends BaseButton {
-    _init(settings) {
-        super._init(settings);
-
-        this.tooltipLabel.text = _('Show Applications');
-        this.bind_property('checked', Main.overview.dash.showAppsButton, 'checked', GObject.BindingFlags.BIDIRECTIONAL);
-        this.connect("notify::checked", () => this._onChecked());
-        this.updateIcon();
-    }
-
-    _onChecked(){
-        if(this.checked)
-            this._box.add_style_pseudo_class('checked');
-        else
-            this._box.remove_style_pseudo_class('checked');
-    }
-
-    _onClicked() {
-        this.hideLabel();
-        if(Main.overview.visible && this.checked){
-            this.checked = false;
-            Main.overview.toggle();
-        }
-        else if(Main.overview.visible && !this.checked)
-            this.checked = true;
-        else{
-            Main.overview.toggle();
-            this.checked = true;
-        }
-    }
-
-    updateIcon(){
-        const icon_size = this._settings.get_int('icon-size');
-        this.icon = new St.Icon({
-            icon_name: 'view-app-grid-symbolic',
-            icon_size: icon_size,
-        });
-        this.icon.pivot_point = new imports.gi.Graphene.Point({ x: 0.5, y: 0.5 });
-        this._iconBin.set_child(this.icon);
-    }
-
-    _onHover() {
-        if(this.hover)
-            this.showLabel();
-        else
-            this.hideLabel();
-    }
-});
-
-var AppIcon = GObject.registerClass(
-class azTaskbar_AppIcon extends BaseButton {
-    _init(appDisplayBox, mainBox, app, monitorIndex, positionIndex, isFavorite) {
-        super._init(appDisplayBox._settings);
-
-        this.appDisplayBox = appDisplayBox;
-        this.mainBox = mainBox;
-        this.app = app;
-        this.menuManager = appDisplayBox.menuManager;
-        this.monitorIndex = monitorIndex;
-        this.positionIndex = positionIndex;
-        this.isFavorite = isFavorite;
-        this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
-        this._indicatorColor = 'transparent';
-        this._desiredIndicatorWidth = 1;
-        this._startIndicatorWidth = 0;
-        this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
-        this._dragBeginId = this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
-        this._dragCancelledId = this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
-        this._dragEndId = this._draggable.connect('drag-end', this._onDragEnd.bind(this));
-        this._animateIndicatorsComplete = true;
-        this._runningIndicator = new St.DrawingArea({
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.FILL,
-            y_align: Clutter.ActorAlign.FILL,
-        });
-        this._overlayGroup.add_actor(this._runningIndicator);
-
-        this._runningIndicator.connect('repaint', () => {
-            this._drawRunningIndicator(this._runningIndicator);
-        });
-
-        this.desaturateEffect = new Clutter.DesaturateEffect();
-        this._iconBin.add_effect(this.desaturateEffect);
-        this._setDesaturateEffect();
-
-        this.multiWindowIndicator = new St.Icon({
-            icon_name: 'list-add-symbolic',
-            style_class: 'azTaskbar-multi-window-indicator',
-            x_expand: true,
-            y_expand: true,
-            x_align: Clutter.ActorAlign.START,
-            y_align: Clutter.ActorAlign.START,
-        });
-        this.multiWindowIndicator.hide();
-        this._overlayGroup.add_actor(this.multiWindowIndicator);
-
-        this.tooltipLabel.text = app.get_name();
-        this._label.text = app.get_name();
-
-        this._menu = null;
-        this._menuTimeoutId = 0;
-
-        this._previewMenu = new WindowPreviewMenu(this, this.menuManager);
-        this.menuManager.addMenu(this._previewMenu);
-
-        this.updateIcon();
-        this.updateLabel();
-        this._connectWindowMinimizeEvent();
-
-        this._connections = new Map();
-        this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-location', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
-        this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
-        this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
-        this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
-        this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
-    }
-
-    _drawRunningIndicator(area){
-        let width = this._startIndicatorWidth ?? this._desiredIndicatorWidth;
-
-        let color = Clutter.color_from_string((this._indicatorColor ?? 'transparent'))[1];
-
-        let [areaWidth, areaHeight] = area.get_surface_size();
-
-        let cr = area.get_context();
-
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let cornerRadius = 1.5 * scaleFactor;
-        let radius = cornerRadius;
-        let degrees = Math.PI / 180;
-
-        if(width <= -radius)
-            return;
-
-        let x = 0;
-        let y = ((this._indicatorLocation === IndicatorLocation.TOP) ? 0 : (areaHeight - (radius * 2)) / 2);
-
-        Clutter.cairo_set_source_color(cr, color);
-
-        if(this._animateGrow || this._showMultiDashIndicator){
-            let totalWidth = this._previousIndicatorWidth;
-            cr.translate((areaWidth - totalWidth) / 2, y);
-            //draw the previous visible indicators
-            for(let i = 0; i < this._indicatorCount; i++){
-                cr.newSubPath();
-                x = i * this._desiredIndicatorWidth + i * this._indicatorSpacing;
-                cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-                cr.arc(x + this._desiredIndicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
-                cr.closePath();
-            }
-            //draw the new indicator
-            for(let i = 0; i < this._toDrawCount; i++){
-                cr.newSubPath();
-                x = totalWidth - this._desiredIndicatorWidth;
-                cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-                cr.arc(x + this._desiredIndicatorWidth, y + radius, radius, -90 * degrees, 90 * degrees);
-                cr.closePath();
-            }
-        }
-        else{
-            cr.translate((areaWidth - width) / 2, y);
-            cr.newSubPath();
-            cr.arc(x, y + radius, radius, 90 * degrees, -90 * degrees);
-            cr.arc(x + width, y + radius, radius, -90 * degrees, 90 * degrees);
-            cr.closePath();
-        }
-        cr.fill();
-        cr.$dispose();
-    }
-
-    _setFocused(){
-        this.appIconState = AppIconState.FOCUSED;
-        ensureActorVisibleInScrollView(this.appDisplayBox, this);
-        this._box.add_style_pseudo_class('active');
-        currentMonitorIndex = this.monitorIndex;
-    }
-
-    setActiveState(){
-        this.previousAppIconState = this.appIconState;
-        this._previousNWindows = this._nWindows;
-        this._indicatorLocation = this._settings.get_enum('indicator-location');
-
-        if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
-            return;
-
-        this._box.style = null;
-
-        let showMultiWindowIndicator;
-
-        let windows = this.getInterestingWindows();
-        if(windows.length >= 1){
-            this._nWindows = windows.length > MAX_MULTI_DASHES ? MAX_MULTI_DASHES : windows.length;
-            this.appIconState = AppIconState.RUNNING;
-            if(windows.length > 1)
-                showMultiWindowIndicator = true;
-
-            windows.forEach(window => {
-                if(window.has_focus())
-                    this._setFocused();
-            });
-
-            if(this.appIconState === AppIconState.RUNNING)
-                this._box.set_style_pseudo_class(null);
-        }
-        else{
-            this._box.set_style_pseudo_class(null);
-            this.appIconState = AppIconState.NOT_RUNNING;
-        }
-
-        this.updateLabel();
-
-        if(this._previousNWindows === undefined)
-            this._previousNWindows = this._nWindows;
-
-        this._showMultiDashIndicator = this._settings.get_enum('multi-window-indicator-style') === MultiWindowIndicatorStyle.MULTI_DASH && (this._nWindows > 1 || this._nWindows < this._previousNWindows);
-
-        const needsAnimate = (this.previousAppIconState !== this.appIconState ||
-                            (this.previousAppIconState === this.appIconState && this._previousNWindows !== this._nWindows));
-
-        this._setIndicatorColor();
-
-        if(this._settings.get_enum('multi-window-indicator-style') !== MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
-            this._hideMultiWindowIndicator();
-        else if(showMultiWindowIndicator && !this.multiWindowIndicator.visible)
-            this._showMultiWindowIndicator();
-
-        if(needsAnimate){
-            this._animateIndicatorsComplete = false;
-            this._endAnimateIndicator();
-
-            if(this._showMultiDashIndicator)
-                this._startanimateIndicatorGrow();
-            else
-                this._startAnimateIndicatorWidth();
-
-            this._animateIndicatorsID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
-                this._runningIndicator.queue_repaint();
-                if(this._animateGrow)
-                    return this._animateIndicatorGrow();
-                else
-                    return this._animateIndicatorWidth();
-            });
-        }
-        else{
-            if(this._animateIndicatorsComplete){
-                this._runningIndicator.queue_repaint();
-            }
-        }
-    }
-
-    _startanimateIndicatorGrow(){
-        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        const numTicks = 15;
-        const singleWindowRemains = this._previousNWindows === 2 && this._nWindows === 1;
-        const singleWindowStart = this._previousNWindows === 1 && this._nWindows === 2;
-
-        this._animateGrow = true;
-
-        let multiDashWidth = this.width / 9;
-
-        if(this.appIconState === AppIconState.FOCUSED && this._settings.get_boolean('show-window-titles'))
-            this._indicatorSpacing = 17 * scaleFactor;
-        else
-            this._indicatorSpacing = 5 * scaleFactor;
-
-        this._toDrawCount = this._nWindows - this._previousNWindows;
-
-        if(this._toDrawCount < 0)
-            this._indicatorCount = this._previousNWindows + this._toDrawCount;
-        else
-            this._indicatorCount = this._previousNWindows;
-
-        this._toDrawCount = Math.abs(this._toDrawCount);
-
-        if(this.appIconState === AppIconState.FOCUSED && singleWindowRemains)
-            this._desiredIndicatorWidth = this.width / 4;
-        else if(this.previousAppIconState === AppIconState.RUNNING && singleWindowStart)
-            this._desiredIndicatorWidth = multiDashWidth;
-        else if(this.appIconState === AppIconState.FOCUSED && singleWindowStart){
-            this._desiredIndicatorWidth = multiDashWidth;
-            multiDashWidth = this.width / 4;
-        }
-        else
-            this._desiredIndicatorWidth = multiDashWidth;
-
-        this._totalIndicatorWidth = (this._nWindows * this._desiredIndicatorWidth) + ((this._nWindows - 1) * this._indicatorSpacing);
-        this._previousIndicatorWidth = (this._previousNWindows * multiDashWidth) + ((this._previousNWindows - 1) * this._indicatorSpacing);
-        this._indicatorTickWidth = (this._totalIndicatorWidth - this._previousIndicatorWidth) / numTicks;
-    }
-
-    _animateIndicatorGrow(){
-        this._previousIndicatorWidth += this._indicatorTickWidth;
-        let animateDone = false;
-        if(this._indicatorTickWidth > 0 && this._previousIndicatorWidth >= this._totalIndicatorWidth)
-            animateDone = true;
-        else if(this._indicatorTickWidth < 0 && this._previousIndicatorWidth <= this._totalIndicatorWidth)
-            animateDone = true;
-        else if(this._indicatorTickWidth === 0)
-            animateDone = true;
-
-        if(animateDone) {
-            this._animateIndicatorsID = null;
-            this._previousIndicatorWidth = this._totalIndicatorWidth;
-            this._runningIndicator.queue_repaint();
-            this._animateGrow = false;
-            this._animateIndicatorsComplete = true;
-            return GLib.SOURCE_REMOVE;
-        }
-        return GLib.SOURCE_CONTINUE;
-    }
-
-    _startAnimateIndicatorWidth(){
-        const numTicks = 15;
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let radius = 1.5 * scaleFactor;
-        if(this.appIconState === AppIconState.NOT_RUNNING)
-            this._desiredIndicatorWidth = -radius;
-        else if(this.appIconState === AppIconState.RUNNING)
-            this._desiredIndicatorWidth = this.width / 9;
-        else if(this.appIconState === AppIconState.FOCUSED)
-            this._desiredIndicatorWidth = this.width / 4;
-
-        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) / numTicks;
-    }
-
-    _animateIndicatorWidth(){
-        let animateDone = false;
-        this._startIndicatorWidth += this._indicatorTickWidth;
-        if(this._indicatorTickWidth > 0 && this._startIndicatorWidth >= this._desiredIndicatorWidth)
-            animateDone = true;
-        else if(this._indicatorTickWidth < 0 && this._startIndicatorWidth <= this._desiredIndicatorWidth)
-            animateDone = true;
-        else if(this._indicatorTickWidth === 0)
-            animateDone = true;
-
-        if(animateDone) {
-            this._animateIndicatorsID = null;
-            this._startIndicatorWidth = this._desiredIndicatorWidth;
-            this._runningIndicator.queue_repaint();
-            this._animateIndicatorsComplete = true;
-            return GLib.SOURCE_REMOVE;
-        }
-        return GLib.SOURCE_CONTINUE;
-    }
-
-    _endAnimateIndicator(){
-        if(this._animateIndicatorsID){
-            this._startIndicatorWidth = this._desiredIndicatorWidth;
-            this._previousIndicatorWidth = this._totalIndicatorWidth;
-            GLib.Source.remove(this._animateIndicatorsID);
-            this._animateIndicatorsID = null;
-        }
-    }
-
-    _setIndicatorColor(){
-        if(this.appIconState === AppIconState.RUNNING)
-            this._indicatorColor = this._settings.get_string('indicator-color-running');
-        else if(this.appIconState === AppIconState.FOCUSED)
-            this._indicatorColor = this._settings.get_string('indicator-color-focused');
-    }
-
-    updateLabel(){
-        const showLabels = this._settings.get_boolean('show-window-titles') && this.appIconState === AppIconState.FOCUSED;
-
-        this._box.remove_style_class_name('azTaskbar-BaseIconText');
-
-        if(showLabels){
-            this._label.show();
-            this._box.add_style_class_name('azTaskbar-BaseIconText');
-        }
-        else
-            this._label.hide();
-
-        let windows = this.getInterestingWindows();
-        const showWindowTitle = windows.length === 1;
-
-        if(this._notifyTitleId && this._singleWindow){
-            this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
-            this._notifyTitleId = null;
-            this._singleWindow = null;
-        }
-
-        if(showWindowTitle){
-            this._singleWindow = windows[0];
-            this._notifyTitleId = this._singleWindow.connect(
-                'notify::title', () => this._label.text = this._singleWindow.get_title());
-            this._label.text = this._singleWindow.get_title();
-        }
-        else
-            this._label.text = this.app.get_name();
-    }
-
-    _onClicked() {
-        this.hideLabel();
-    }
-
-    _setDesaturateEffect(){
-        this.desaturateEffect.factor = this._settings.get_double('desaturation-factor');
-    }
-
-    _previewMenuOpenStateChanged(menu, isPoppedUp){
-        if (!isPoppedUp){
-            this.setForcedHighlight(false);
-            this._onMenuPoppedDown();
-        }
-        else{
-            this.hideLabel();
-            this.setForcedHighlight(true);
-        }
-    }
-
-    _onMouseScroll(actor, event) {
-        let scrollAction = this._settings.get_enum('scroll-action');
-
-        let direction;
-
-        switch (event.get_scroll_direction()) {
-            case Clutter.ScrollDirection.UP:
-            case Clutter.ScrollDirection.LEFT:
-                direction = 'up';
-                break;
-            case Clutter.ScrollDirection.DOWN:
-            case Clutter.ScrollDirection.RIGHT:
-                direction = 'down';
-                break;
-        }
-
-        if(scrollAction === ScrollAction.CYCLE && direction){
-            if (!this._scrollTimeOutId) {
-                this._scrollTimeOutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-                    this._scrollTimeOutId = null;
-                    return GLib.SOURCE_REMOVE;
-                });
-
-                let windows = this.getInterestingWindows();
-                if(windows.length <= 1)
-                    return;
-
-                this._removePreviewMenuTimeout();
-                this._removeMenuTimeout();
-                this.hideLabel();
-                this._cycleWindows(windows, direction);
-            }
-        }
-        else
-            return;
-    }
-
-    _onDestroy(){
-        this.stopAllAnimations();
-
-        this._disconnectWindowMinimizeEvent();
-        this._menu?.close();
-        this._previewMenu?.close();
-
-        if (this._scrollTimeOutId) {
-            GLib.source_remove(this._scrollTimeOutId);
-            this._scrollTimeOutId = null;
-        }
-
-        this._endAnimateIndicator();
-
-        if(this._notifyTitleId){
-            this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
-            this._notifyTitleId = null;
-        }
-
-        this._connections.forEach((object, id) => {
-            object.disconnect(id);
-            id = null;
-        });
-        this._connections = null;
-
-        this._previewMenu?.destroy();
-
-        this._draggable.disconnect(this._dragBeginId);
-        this._dragBeginId = null;
-        this._draggable.disconnect(this._dragCancelledId);
-        this._dragCancelledId = null;
-        this._draggable.disconnect(this._dragEndId);
-        this._dragEndId = null;
-
-        if (this._dragMonitor) {
-            DND.removeDragMonitor(this._dragMonitor);
-            this._dragMonitor = null;
-        }
-
-        if (this._draggable) {
-            this._draggable = null;
-        }
-
-        this._removeMenuTimeout();
-        this._removePreviewMenuTimeout();
-        this._clearCycleWindow();
-        this._removeCylceWindowsTimeout();
-        super._onDestroy();
-    }
-
-    updateIcon(){
-        let iconSize = this._settings.get_int('icon-size');
-        this._iconBin.remove_style_class_name('azTaskbar-symbolic-icon');
-        let appIconStyle = this._settings.get_enum('icon-style');
-        if(appIconStyle === AppIconStyle.SYMBOLIC)
-            this._iconBin.add_style_class_name('azTaskbar-symbolic-icon');
-
-        this.icon = this.app.create_icon_texture(iconSize);
-        this.icon.pivot_point = new imports.gi.Graphene.Point({ x: 0.5, y: 0.5 });
-        this._iconBin.set_child(this.icon);
-
-        let indicatorSize = Math.max(5, Math.round(iconSize / 4));
-
-        if(indicatorSize % 2 === 0)
-            indicatorSize++;
-
-        this.multiWindowIndicator.icon_size = indicatorSize;
-    }
-
-    updateAppIcon(){
-        this.setActiveState();
-        //this.updateIcon();
-        this.updateIconGeometry();
-        this._onWindowsChanged();
-    }
-
-    animateLaunch(){
-        IconGrid.zoomOutActor(this._iconBin);
-    }
-
-    /**
-    * Update target for minimization animation
-    * Credit: Dash to Dock
-    * https://github.com/micheleg/dash-to-dock/blob/master/appIcons.js
-    */
-    updateIconGeometry() {
-        if (this.get_stage() === null)
-            return;
-
-        this.get_allocation_box();
-        let rect = new Meta.Rectangle();
-
-        [rect.x, rect.y] = this.get_transformed_position();
-        [rect.width, rect.height] = this.get_transformed_size();
-
-        let windows = this.getInterestingWindows();
-        windows.forEach(w => {
-            w.set_icon_geometry(rect);
-        });
-    }
-
-    stopAllAnimations(){
-        this._box.style = 'transition-duration: 0ms;';
-        this._box.remove_all_transitions();
-        this.icon?.remove_all_transitions();
-        this.icon.scale_x = 1;
-        this.icon.scale_y = 1;
-        this.icon.translation_y = 0;
-
-        this._endAnimateIndicator();
-    }
-
-    getDragActor() {
-        return this.app.create_icon_texture(this._settings.get_int('icon-size') * 1.5);
-    }
-
-    getDragActorSource() {
-        return this.icon;
-    }
-
-    _onDragBegin() {
-        const children = this.mainBox.get_children();
-        this.dragStartPosition = children.indexOf(this);
-        this._dragging = true;
-        this.stopAllAnimations();
-        this.calculateFavoritesIndicies();
-        this.newIndex = -1;
-
-        this._removePreviewMenuTimeout();
-        this._removeMenuTimeout();
-        this.hideLabel();
-
-        this._dragMonitor = {
-            dragMotion: this._onDragMotion.bind(this),
-        };
-        DND.addDragMonitor(this._dragMonitor);
-
-        this._overlayGroup.opacity = 105;
-        this._highlightFavorites(true);
-    }
-
-    _highlightFavorites(highlight){
-        const visibleItems = this.mainBox.get_children();
-        for (const item of visibleItems) {
-            if(highlight && item.isFavorite)
-                item.add_style_class_name('azTaskbar-favorite');
-            else
-                item.remove_style_class_name('azTaskbar-favorite');
-        }
-    }
-
-    calculateFavoritesIndicies(){
-        const children = this.mainBox.get_children();
-        let appFavoritesIdicies = [];
-        children.map(child => {
-            if(child.isFavorite)
-                appFavoritesIdicies.push(children.indexOf(child));
-        });
-        this._firstFavIndex = appFavoritesIdicies[0];
-        this._lastFavIndex = appFavoritesIdicies[appFavoritesIdicies.length - 1];
-    }
-
-    _onDragMotion(dragEvent) {
-        return DND.DragMotionResult.CONTINUE;
-    }
-
-    _onDragCancelled() {
-        this.mainBox.remove_child(this);
-        this.mainBox.insert_child_at_index(this, this.dragStartPosition);
-        this.positionIndex = this.dragStartPosition;
-        this._endDrag();
-    }
-
-    _onDragEnd() {
-        this._endDrag();
-    }
-
-    _endDrag() {
-        this._dragging = false;
-        if(this._dragMonitor){
-            DND.removeDragMonitor(this._dragMonitor);
-            this._dragMonitor = null;
-        }
-
-        this.lastPositionIndex = null;
-        this.undoFade();
-        this._highlightFavorites(false);
-        this._box.style = null;
-        this.updateIconGeometry();
-    }
-
-    undoFade() {
-        this._overlayGroup.ease({
-            opacity: 255,
-        });
-    }
-
-    setForcedHighlight(highlighted) {
-        this._forcedHighlight = highlighted;
-        if (highlighted)
-            this._box.add_style_pseudo_class('focus');
-        else
-            this._box.remove_style_pseudo_class('focus');
-    }
-
-    _removeMenuTimeout() {
-        if (this._menuTimeoutId > 0) {
-            GLib.source_remove(this._menuTimeoutId);
-            this._menuTimeoutId = 0;
-        }
+        this.connect('notify::allocation',
+            this._panelBoxChanged.bind(this));
     }
-
-    _setPopupTimeout() {
-        this._removeMenuTimeout();
-        this._menuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
-            this._menuTimeoutId = 0;
-            this.popupMenu();
-            return GLib.SOURCE_REMOVE;
-        });
-        GLib.Source.set_name_by_id(this._menuTimeoutId, '[azTaskbar] this.popupMenu');
-    }
-
-    _removePreviewMenuTimeout() {
-        if (this._previewMenuTimeoutId > 0) {
-            GLib.source_remove(this._previewMenuTimeoutId);
-            this._previewMenuTimeoutId = 0;
-        }
-    }
-
-    _setPreviewPopupTimeout() {
-        if(!this._settings.get_boolean('window-previews'))
-            return;
-
-        this._removePreviewMenuTimeout();
-
-        this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('window-previews-show-timeout'), () => {
-            this._previewMenuTimeoutId = 0;
-            this._windowPreviews();
-            return GLib.SOURCE_REMOVE;
-        });
-        GLib.Source.set_name_by_id(this._previewMenuTimeoutId, '[azTaskbar] this.previewPopupMenu');
-    }
-
-    vfunc_button_press_event(buttonEvent) {
-        const ret = super.vfunc_button_press_event(buttonEvent);
-
-        this._removePreviewMenuTimeout();
-
-        if (this._previewMenu?.isOpen)
-            this._previewMenu.close();
-
-        if (buttonEvent.button === 1)
-            this._setPopupTimeout();
-        else if (buttonEvent.button === 3) {
-            this.hideLabel();
-            this.popupMenu();
-            return Clutter.EVENT_STOP;
-        }
-
-        return ret;
-    }
-
-    vfunc_clicked(button) {
-        this._removePreviewMenuTimeout();
-        this._removeMenuTimeout();
-        this.hideLabel();
-
-        if(this._menu?.isOpen)
-            return;
-
-        this.activate(button);
-    }
-
-    popupMenu(side = St.Side.TOP) {
-        this._removeMenuTimeout();
-        this._dragging = false;
-        if(this._dragMonitor){
-            DND.removeDragMonitor(this._dragMonitor);
-            this._dragMonitor = null;
-        }
-
-        if (!this._menu) {
-            this._menu = new AppMenu(this, side, {
-                favoritesSection: true,
-                showSingleWindows: true,
-            });
-            this._menu.blockSourceEvents = true;
-            this._menu.setApp(this.app);
-            this._connections.set(this._menu.connect('open-state-changed', (menu, isPoppedUp) => {
-                if (!isPoppedUp){
-                    this.setForcedHighlight(false);
-                    this._onMenuPoppedDown();
-                }
-            }), this._menu);
-
-            Main.uiGroup.add_actor(this._menu.actor);
-            this._contextMenuManager.addMenu(this._menu);
-        }
-
-        this._menu.open();
-        this.setForcedHighlight(true);
-        this._contextMenuManager.ignoreRelease();
-
-        return false;
-    }
-
-    _onMenuPoppedDown() {
-        this._removePreviewMenuTimeout();
-    }
-
-    _onWindowsChanged(){
-        if (this._cycleWindowList && this._cycleWindowList.length !== this.getInterestingWindows().length) {
-            this._clearCycleWindow();
-            this._cycleWindowList = null;
-        }
-
-        this._connectWindowMinimizeEvent()
-    }
-
-    _disconnectWindowMinimizeEvent(){
-        let windows = this.app.get_windows();
-        windows.forEach(window => {
-            if (window._windowMinimizeId > 0) {
-                window.disconnect(window._windowMinimizeId);
-                window._windowMinimizeId = 0;
-            }
-        });
-    }
-
-    _connectWindowMinimizeEvent(){
-        this._windowList = this.getInterestingWindows();
-        this._windowList.forEach(window => {
-            if (window._windowMinimizeId > 0) {
-                window.disconnect(window._windowMinimizeId);
-                window._windowMinimizeId = 0;
-            }
-            window._windowMinimizeId = window.connect('notify::minimized', () => this._animateAppIcon(window.minimized));
-        });
-    }
-
-    _removeCylceWindowsTimeout() {
-        if (this._cylceWindowsTimeoutId > 0) {
-            GLib.source_remove(this._cylceWindowsTimeoutId);
-            this._cylceWindowsTimeoutId = 0;
-        }
-    }
-
-    _clearCycleWindow(){
-        this._cycleWindowList?.forEach(window => {
-            delete window.cycled;
-        });
-    }
-
-    _setCylceWindowsTimeout(windows) {
-        this._removeCylceWindowsTimeout();
-
-        this._cylceWindowsTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
-            this._cylceWindowsTimeoutId = 0;
-            this._clearCycleWindow();
-            this._cycleWindowList = null;
-            return GLib.SOURCE_REMOVE;
-        });
-        GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
-    }
-
-    _cycleWindows(windows, scrollDirection){
-        windows = windows.sort((a, b) => {
-            return a.get_stable_sequence() > b.get_stable_sequence();
-        });
-
-        const clickActionSetting = this._settings.get_enum('click-action');
-        const cycleMinimize = clickActionSetting === ClickAction.CYCLE_MINIMIZE;
-        if(!scrollDirection && clickActionSetting === ClickAction.NO_TOGGLE_CYCLE || clickActionSetting === ClickAction.CYCLE)
-            scrollDirection = true;
-        if(scrollDirection){
-            //mouse scroll cycle window logic borrowed from Dash to Panel
-            //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
-            let windowIndex = windows.indexOf(global.display.focus_window);
-            let nextWindowIndex = windowIndex < 0 ? 0 :
-                                  windowIndex + (scrollDirection == 'up' ? -1 : 1);
-
-            if(nextWindowIndex === windows.length)
-                nextWindowIndex = 0;
-            else if(nextWindowIndex < 0)
-                nextWindowIndex = windows.length - 1;
-
-            if(windowIndex != nextWindowIndex){
-                Main.activateWindow(windows[nextWindowIndex]);
-            }
-            return true;
-        }
-        else if(cycleMinimize){
-            //start a timer that clears cycle state after x amount of time
-            this._setCylceWindowsTimeout();
-
-            if(!this._cycleWindowList)
-                this._cycleWindowList = windows;
-
-            let cycled = this._cycleWindowList.filter(window => {
-                if(window.cycled)
-                    return window;
-            });
-            if(cycled.length === this._cycleWindowList.length){
-                this._cycleWindowList.forEach(window => {
-                    window.minimize();
-                    window.cycled = false;
-                });
-                return true;
-            }
-            for(let i = 0; i < this._cycleWindowList.length; i++){
-                let window = this._cycleWindowList[i];
-                if(window.has_focus() && !window.cycled){
-                    window.cycled = true;
-                }
-                if(!window.cycled){
-                    window.cycled = true;
-                    Main.activateWindow(window);
-                    break;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    activate(button) {
-        let event = Clutter.get_current_event();
-        let modifiers = event ? event.get_state() : 0;
-        let windows = this.getInterestingWindows();
-        let isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
-        let isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) != 0;
-        let openNewWindow = this.app.can_open_new_window() &&
-                            this.app.state === Shell.AppState.RUNNING &&
-                            (isCtrlPressed || isMiddleButton);
-
-        Main.overview.hide();
-
-        if (this.app.state === Shell.AppState.STOPPED || openNewWindow)
-            IconGrid.zoomOutActor(this._iconBin);
-
-        if (openNewWindow)
-            this.app.open_new_window(-1);
-        else{
-            if(windows.length > 1){
-                if(!this._cycleWindows(windows)){
-                    this._removePreviewMenuTimeout();
-                    this._removeMenuTimeout();
-                    this.hideLabel();
-                    this._previewMenu?.popup();
-                }
-            }
-            else if(windows.length === 1){
-                const window = windows[0];
-                if(this._settings.get_enum('click-action') === ClickAction.NO_TOGGLE_CYCLE)
-                    Main.activateWindow(window);
-                else if(window.minimized || !window.has_focus()){
-                    Main.activateWindow(window);
-                }
-                else
-                    window.minimize();
-            }
-            //a favorited app is running, but no interesting windows on current workspace/monitor
-            else if(this.app.state === Shell.AppState.RUNNING){
-                IconGrid.zoomOutActor(this._iconBin);
-                this.app.open_new_window(-1);
-            }
-            else
-                this.app.activate();
-        }
-    }
-
-    _onHover() {
-        if (this.hover) {
-            let windowCount = this.getInterestingWindows().length;
-            if(windowCount >= 1)
-                this._setPreviewPopupTimeout();
-            if(!this.menuManager.activeMenu)
-                this.showLabel();
-            ensureActorVisibleInScrollView(this.appDisplayBox, this);
-        }
-        else {
-            this._removePreviewMenuTimeout();
-            this._removeMenuTimeout();
-            this.hideLabel();
-        }
-    }
-
-    getWindows() {
-        return this.app.get_windows();
-    }
-
-    getInterestingWindows() {
-        const interestingWindows = getInterestingWindows(this._settings, this.getWindows(), this.monitorIndex);
-
-        return interestingWindows;
-    }
-
-    _windowPreviews() {
-        if (this._previewMenu?.isOpen)
-            return;
-        else{
-            this._removeMenuTimeout();
-
-            this._previewMenu?.popup();
-        }
-    }
-
-    _showMultiWindowIndicator(){
-        if(this._settings.get_enum('multi-window-indicator-style') !== MultiWindowIndicatorStyle.INDICATOR)
-            return;
 
-        this.multiWindowIndicator.opacity = 0;
-        this.multiWindowIndicator.show();
-        this.multiWindowIndicator.remove_all_transitions()
-        this.multiWindowIndicator.ease({
-            opacity: 255,
-            duration: 300,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-        });
+    _panelBoxChanged() {
+        this.set_position(this._monitor.x, this._monitor.y);
+        this.set_size(this._monitor.width, -1);
     }
 
-    _hideMultiWindowIndicator() {
-        this.multiWindowIndicator.remove_all_transitions()
-        this.multiWindowIndicator.ease({
-            opacity: 0,
-            duration: 100,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onComplete: () => this.multiWindowIndicator.hide(),
-        });
+    get index() {
+        return this._monitor.index;
     }
-});
+})
 
 function enable() {
     settings = ExtensionUtils.getSettings();
+    panelBoxes = [];
 
     Me.customStylesheet = Theming.getStylesheetFile();
     Theming.updateStylesheet(settings);
 
     extensionConnections = new Map();
-    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel(true)), settings);
-    extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel(true)), settings);
+    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => createPanels()), settings);
     extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
 
-    appDisplayBox = new AppDisplayBox(settings);
-    addAppBoxToPanel();
+    appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
 
     extensionConnections.set(settings.connect('changed::icon-style', () => appDisplayBox.updateIcon()), settings);
     Main.panel.statusArea.appMenu.container.hide();
     Main.panel.add_style_class_name("azTaskbar-panel");
+
+    createPanels();
 }
 
 function disable() {
@@ -1628,6 +510,8 @@ function disable() {
     });
     extensionConnections = null;
 
+    deletePanels();
+
     appDisplayBox.destroy();
     appDisplayBox = null;
     settings.run_dispose();
@@ -1636,125 +520,61 @@ function disable() {
 
 function init() {
     ExtensionUtils.initTranslations(Me.metadata['gettext-domain']);
+    Me.persistentStorage = {};
 }
 
-function addAppBoxToPanel(redisplay){
-    if(redisplay){
-        appDisplayBox.destroy();
-        appDisplayBox = new AppDisplayBox(settings);
-    }
-
-    const offset = settings.get_int('position-offset');
-
-    if(settings.get_enum('position-in-panel') === PanelPosition.LEFT)
-        Main.panel._leftBox.insert_child_at_index(appDisplayBox, offset);
-    else if(settings.get_enum('position-in-panel') === PanelPosition.CENTER)
-        Main.panel._centerBox.insert_child_at_index(appDisplayBox, offset);
-    else if(settings.get_enum('position-in-panel') === PanelPosition.RIGHT){
-        let nChildren = Main.panel._rightBox.get_n_children();
-        const order = Math.clamp(nChildren - offset, 0, nChildren);
-        Main.panel._rightBox.insert_child_at_index(appDisplayBox, order);
-    }
-}
-
-function getInterestingWindows(settings, windows, monitorIndex) {
-    if(settings.get_boolean('isolate-workspaces')){
-        const activeWorkspace = global.workspace_manager.get_active_workspace_index();
-        windows = windows.filter(function(w) {
-            const inWorkspace = w.get_workspace().index() === activeWorkspace;
-            return inWorkspace;
-        });
-    }
-
-    if(settings.get_boolean('isolate-monitors')){
-        windows = windows.filter(function(w) {
-            return w.get_monitor() === monitorIndex;
-        });
-    }
-
-    return windows.filter(w => !w.skipTaskbar);
-}
-
-/**
- * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
- */
-function ensureActorVisibleInScrollView(scrollView, actor) {
-    let adjustment = scrollView.hscroll.adjustment;
-    let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
-
-    let offset = 0;
-    let hfade = scrollView.get_effect("fade");
-    if (hfade)
-        offset = hfade.fade_margins.left;
-
-    let box = actor.get_allocation_box();
-    let x1 = box.x1, x2 = box.x2;
-
-    let parent = actor.get_parent();
-    while (parent != scrollView) {
-        if (!parent)
-            throw new Error("actor not in scroll view");
-
-        box = parent.get_allocation_box();
-        x1 += box.x1;
-        x2 += box.x1;
-        parent = parent.get_parent();
-    }
-
-    if (x1 < value + offset)
-        value = Math.max(0, x1 - offset);
-    else if (x2 > value + pageSize - offset)
-        value = Math.min(upper, x2 + offset - pageSize);
-    else
+function createPanels(){
+    if(!settings.get_boolean('panel-on-all-monitors')){
+        deletePanels();
         return;
+    }
 
-    adjustment.ease(value, {
-        mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-        duration: 100,
+    panelBoxes = [];
+    Main.layoutManager.monitors.forEach(monitor => {
+        if (monitor !== Main.layoutManager.primaryMonitor){
+            let panelBox = new PanelBox(monitor);
+            let panel = new Panel(monitor, panelBox);
+            panelBox.panel = panel;
+            panelBox.appDisplayBox = new AppDisplayBox(settings, monitor);
+            panelBoxes.push(panelBox);
+        }
     });
+    addAppBoxToPanel();
 }
 
-var IndicatorLocation = {
-    TOP: 0,
-    BOTTOM: 1
+function deletePanels(){
+    panelBoxes.forEach(panelBox => {
+        panelBox.panel.disable();
+        panelBox.appDisplayBox.destroy();
+        panelBox.hide();
+        panelBox.destroy();
+    });
+    panelBoxes = null;
 }
 
-var ClickAction = {
-    CYCLE: 0,
-    CYCLE_MINIMIZE: 1,
-    PREVIEW: 2,
-    NO_TOGGLE_CYCLE: 3,
+function addAppBoxToPanel(){
+    panelBoxes.forEach(panelBox => {
+        const panel = panelBox.panel;
+        const appDisplayBox = panelBox.appDisplayBox;
+        setAppDisplayBoxPosition(panel, appDisplayBox);
+    });
+
+    setAppDisplayBoxPosition(Main.panel, appDisplayBox);
 }
 
-var ScrollAction = {
-    CYCLE: 0,
-    NO_ACTION: 1
-}
+function setAppDisplayBoxPosition(panel, appDisplayBox){
+    const offset = settings.get_int('position-offset');
+    let parent = appDisplayBox.get_parent();
+    if(parent)
+        parent.remove_actor(appDisplayBox);
 
-var PanelPosition = {
-    LEFT: 0,
-    CENTER: 1,
-    RIGHT: 2,
-}
-
-var AppIconState = {
-    RUNNING: 0,
-    FOCUSED: 1,
-    NOT_RUNNING: 2,
-}
-
-var AppIconStyle = {
-    REGULAR: 0,
-    SYMBOLIC: 1,
-}
-
-var ShowAppsButtonPosition = {
-    LEFT: 0,
-    RIGHT: 1,
-}
-
-var MultiWindowIndicatorStyle = {
-    INDICATOR: 0,
-    MULTI_DASH: 1,
-    NONE: 2,
+    if(settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT)
+        panel._leftBox.insert_child_at_index(appDisplayBox, offset);
+    else if(settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER)
+        panel._centerBox.insert_child_at_index(appDisplayBox, offset);
+    else if(settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT){
+        let nChildren = panel._rightBox.get_n_children();
+        const order = Math.clamp(nChildren - offset, 0, nChildren);
+        panel._rightBox.insert_child_at_index(appDisplayBox, order);
+    }
 }

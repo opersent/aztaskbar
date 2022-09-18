@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-25 12:41-0400\n"
+"POT-Creation-Date: 2022-09-18 15:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,10 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: extension.js:661
-msgid "Show Applications"
-msgstr ""
 
 #: prefs.js:8
 msgid "App Icons Taskbar"
@@ -37,238 +33,242 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: prefs.js:29 prefs.js:125
+#: prefs.js:32
+msgid "Show Panels on All Monitors"
+msgstr ""
+
+#: prefs.js:43 prefs.js:139
 msgid "Left"
 msgstr ""
 
-#: prefs.js:30
+#: prefs.js:44
 msgid "Center"
 msgstr ""
 
-#: prefs.js:31 prefs.js:126
+#: prefs.js:45 prefs.js:140
 msgid "Right"
 msgstr ""
 
-#: prefs.js:33
+#: prefs.js:47
 msgid "Position in Panel"
 msgstr ""
 
-#: prefs.js:56
+#: prefs.js:70
 msgid "Position Offset"
 msgstr ""
 
-#: prefs.js:57
+#: prefs.js:71
 msgid "Offset the position within the above selected box"
 msgstr ""
 
-#: prefs.js:95
+#: prefs.js:109
 msgid "Panel Height"
 msgstr ""
 
-#: prefs.js:134
+#: prefs.js:148
 msgid "Show Apps Button"
 msgstr ""
 
-#: prefs.js:161
+#: prefs.js:175
 msgid "Icon Size"
 msgstr ""
 
-#: prefs.js:181
+#: prefs.js:195
 msgid "Icon Desaturate Factor"
 msgstr ""
 
-#: prefs.js:188
+#: prefs.js:202
 msgid "Regular"
 msgstr ""
 
-#: prefs.js:189
+#: prefs.js:203
 msgid "Symbolic"
 msgstr ""
 
-#: prefs.js:191
+#: prefs.js:205
 msgid "Icon Style"
 msgstr ""
 
-#: prefs.js:192
+#: prefs.js:206
 msgid "Icon themes may not have a symbolic icon for every app"
 msgstr ""
 
-#: prefs.js:205
+#: prefs.js:219
 msgid "Show Focused Window Title"
 msgstr ""
 
-#: prefs.js:219
+#: prefs.js:233
 msgid "Favorites"
 msgstr ""
 
-#: prefs.js:233
+#: prefs.js:247
 msgid "Isolate Workspaces"
 msgstr ""
 
-#: prefs.js:247
+#: prefs.js:261
 msgid "Isolate Monitors"
 msgstr ""
 
-#: prefs.js:258 prefs.js:263
+#: prefs.js:272 prefs.js:277
 msgid "Indicator"
 msgstr ""
 
-#: prefs.js:264
+#: prefs.js:278
 msgid "Multi-Dashes"
 msgstr ""
 
-#: prefs.js:265
-msgid "None"
-msgstr ""
-
-#: prefs.js:267 prefs.js:294
-msgid "Indicator Location"
-msgstr ""
-
 #: prefs.js:280
-msgid "Indicators"
+msgid "Multi-Window Indicator Style"
 msgstr ""
 
-#: prefs.js:291
+#: prefs.js:290
 msgid "Top"
 msgstr ""
 
-#: prefs.js:292
+#: prefs.js:291
 msgid "Bottom"
 msgstr ""
 
-#: prefs.js:315
+#: prefs.js:293
+msgid "Indicator Location"
+msgstr ""
+
+#: prefs.js:314
 msgid "Running Indicator Color"
 msgstr ""
 
-#: prefs.js:334
+#: prefs.js:333
 msgid "Focused Indicator Color"
 msgstr ""
 
-#: prefs.js:346
+#: prefs.js:345
 msgid "Actions"
 msgstr ""
 
-#: prefs.js:353
+#: prefs.js:352
 msgid "Click Actions"
 msgstr ""
 
-#: prefs.js:358
+#: prefs.js:357
 msgid "Toggle / Cycle"
 msgstr ""
 
-#: prefs.js:359
+#: prefs.js:358
 msgid "Toggle / Cycle + Minimize"
 msgstr ""
 
-#: prefs.js:360
+#: prefs.js:359
 msgid "Toggle / Preview"
 msgstr ""
 
-#: prefs.js:361
+#: prefs.js:360
 msgid "Cycle"
 msgstr ""
 
-#: prefs.js:363
+#: prefs.js:362
 msgid "Left Click"
 msgstr ""
 
-#: prefs.js:364
+#: prefs.js:363
 msgid "Modify Left Click Action of Running App Icons"
 msgstr ""
 
-#: prefs.js:374
+#: prefs.js:373
 msgid "Scroll Actions"
 msgstr ""
 
-#: prefs.js:379
+#: prefs.js:378
 msgid "Cycle Windows"
 msgstr ""
 
-#: prefs.js:380
+#: prefs.js:379
 msgid "No Action"
 msgstr ""
 
-#: prefs.js:382
+#: prefs.js:381
 msgid "Scroll Action"
 msgstr ""
 
-#: prefs.js:392
+#: prefs.js:391
 msgid "Hover Actions"
 msgstr ""
 
-#: prefs.js:400
+#: prefs.js:399
 msgid "Tool-Tips"
 msgstr ""
 
-#: prefs.js:422 prefs.js:454
+#: prefs.js:421 prefs.js:453
 msgid "Window Previews"
 msgstr ""
 
-#: prefs.js:441
+#: prefs.js:440
 msgid "Window Preview Options"
 msgstr ""
 
-#: prefs.js:472
+#: prefs.js:471
 msgid "Show Window Previews Delay"
 msgstr ""
 
-#: prefs.js:473
+#: prefs.js:472
 msgid "Time in ms to show the window preview"
 msgstr ""
 
-#: prefs.js:493
+#: prefs.js:492
 msgid "Hide Window Previews Delay"
 msgstr ""
 
-#: prefs.js:494
+#: prefs.js:493
 msgid "Time in ms to hide the window preview"
 msgstr ""
 
-#: prefs.js:501 prefs.js:509
+#: prefs.js:500 prefs.js:508
 msgid "Window Peeking"
 msgstr ""
 
-#: prefs.js:510
+#: prefs.js:509
 msgid "Hovering a window preview will focus desired window"
 msgstr ""
 
-#: prefs.js:534
+#: prefs.js:533
 msgid "Window Peeking Delay"
 msgstr ""
 
-#: prefs.js:535
+#: prefs.js:534
 msgid "Time in ms to trigger window peek"
 msgstr ""
 
-#: prefs.js:555
+#: prefs.js:554
 msgid "Window Peeking Opacity"
 msgstr ""
 
-#: prefs.js:556
+#: prefs.js:555
 msgid "Opacity of non-focused windows during a window peek"
 msgstr ""
 
-#: prefs.js:568
+#: prefs.js:567
 msgid "About"
 msgstr ""
 
-#: prefs.js:612
+#: prefs.js:611
 msgid "Version"
 msgstr ""
 
-#: prefs.js:621
+#: prefs.js:620
 msgid "Git Commit"
 msgstr ""
 
-#: prefs.js:630
+#: prefs.js:629
 msgid "GNOME Version"
 msgstr ""
 
-#: prefs.js:638
+#: prefs.js:637
 msgid "OS"
 msgstr ""
 
-#: prefs.js:660
+#: prefs.js:659
 msgid "Session Type"
+msgstr ""
+
+#: appIcon.js:198
+msgid "Show Applications"
 msgstr ""

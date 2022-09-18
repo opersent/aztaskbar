@@ -26,7 +26,6 @@
     <enum id='org.gnome.shell.extensions.aztaskbar.multi-window-indicator-style'>
         <value value='0' nick='INDICATOR'/>
         <value value='1' nick='MULTI_DASH'/>
-        <value value='2' nick='NONE'/>
     </enum>
     <schema id="org.gnome.shell.extensions.aztaskbar" path="/org/gnome/shell/extensions/aztaskbar/">
         <key type="b" name="isolate-workspaces">
@@ -34,13 +33,18 @@
             <summary>Isolate running apps by current workspace</summary>
             <description>Isolate running apps by current workspace.</description>
         </key>
+        <key type="b" name="panel-on-all-monitors">
+            <default>true</default>
+            <summary>Show a panel on all monitors</summary>
+            <description>Show a panel on all monitors.</description>
+        </key>
         <key type="b" name="isolate-monitors">
             <default>true</default>
             <summary>Isolate running apps by current monitors</summary>
             <description>Isolate running apps by current monitors.</description>
         </key>
         <key type="(bi)" name="main-panel-height">
-            <default>(false, 40)</default>
+            <default>(true, 40)</default>
             <summary>Change the height of GNOME top panel</summary>
             <description>Change the height of GNOME top panel.</description>
         </key>
@@ -120,7 +124,7 @@
             <description>Show window titles on AppIcons.</description>
         </key>
         <key type="i" name="icon-size">
-            <default>20</default>
+            <default>26</default>
             <summary>Icon size for the AppIcons</summary>
             <description>Icon size for the AppIcons.</description>
         </key>

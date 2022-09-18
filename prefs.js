@@ -25,6 +25,20 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(generalGroup);
 
+        let showOnAllMonitorsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let showOnAllMonitorsRow = new Adw.ActionRow({
+            title: _("Show Panels on All Monitors"),
+            activatable_widget: showOnAllMonitorsSwitch
+        });
+        showOnAllMonitorsSwitch.set_active(this._settings.get_boolean('panel-on-all-monitors'));
+        showOnAllMonitorsSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('panel-on-all-monitors', widget.get_active());
+        });
+        showOnAllMonitorsRow.add_suffix(showOnAllMonitorsSwitch);
+        generalGroup.add(showOnAllMonitorsRow);
+
         let panelPositions = new Gtk.StringList();
         panelPositions.append(_("Left"));
         panelPositions.append(_("Center"));
@@ -262,7 +276,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         let multiWindowIndicatorStyles = new Gtk.StringList();
         multiWindowIndicatorStyles.append(_("Indicator"));
         multiWindowIndicatorStyles.append(_("Multi-Dashes"));
-        multiWindowIndicatorStyles.append(_("None"));
         let multiWindowIndicatorRow = new Adw.ComboRow({
             title: _("Multi-Window Indicator Style"),
             model: multiWindowIndicatorStyles,
