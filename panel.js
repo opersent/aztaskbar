@@ -1,5 +1,6 @@
 const { Clutter, Gio, GLib, GObject, Gtk, Meta, Shell, St } = imports.gi;
 
+const Config = imports.misc.config;
 const DND = imports.ui.dnd;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Main = imports.ui.main;
@@ -80,7 +81,11 @@ var Panel = GObject.registerClass(
                 this._updateKeyboardAnchor();
             });
         
-        this._setPanelMenu('aggregateMenu', imports.ui.panel.AggregateMenu, this._rightBox);
+        if (Config.PACKAGE_VERSION < '43')
+            this._setPanelMenu('aggregateMenu', imports.ui.panel.AggregateMenu, this._rightBox);
+        else
+            this._setPanelMenu('quickSettings', imports.ui.panel.QuickSettings, this._rightBox);
+
         this._setPanelMenu('dateMenu', imports.ui.dateMenu.DateMenuButton, this._centerBox);
         this._updatePanel();
     }
@@ -262,7 +267,6 @@ var Panel = GObject.registerClass(
         let parent = container.get_parent();
         if (parent)
             parent.remove_actor(container);
-
 
         box.insert_child_at_index(container, position);
         if (indicator.menu)
