@@ -293,11 +293,11 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connectWindowMinimizeEvent();
 
         this._connections = new Map();
-        this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this._onIndicatorSettingChanged()), this._settings);
         this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-location', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this.setActiveState()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-location', () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._onIndicatorSettingChanged()), this._settings);
         this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
@@ -305,8 +305,9 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
     }
 
-    _drawRunningIndicator(area){
-
+    _onIndicatorSettingChanged(){
+        this.setActiveState();
+        this._runningIndicator.queue_repaint();
     }
 
     _setFocused(){

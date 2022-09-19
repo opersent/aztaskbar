@@ -12,6 +12,7 @@ const Enums = Me.imports.enums;
 const Main = imports.ui.main;
 const { Panel } = Me.imports.panel;
 const PopupMenu = imports.ui.popupMenu;
+const Signals = imports.signals;
 const Theming = Me.imports.theming;
 const Utils = Me.imports.utils;
 
@@ -454,7 +455,7 @@ class azTaskbar_PanelBox extends St.BoxLayout {
             name: 'panelBox',
             vertical: true,
         });
-        this._monitor = monitor;
+        this.monitor = monitor;
         Main.layoutManager.addChrome(this, {
             affectsStruts: true,
             trackFullscreen: true,
@@ -464,18 +465,21 @@ class azTaskbar_PanelBox extends St.BoxLayout {
     }
 
     _panelBoxChanged() {
-        this.set_position(this._monitor.x, this._monitor.y);
-        this.set_size(this._monitor.width, -1);
+        this.set_position(this.monitor.x, this.monitor.y);
+        this.set_size(this.monitor.width, -1);
     }
 
     get index() {
-        return this._monitor.index;
+        return this.monitor.index;
     }
 })
 
 function enable() {
     settings = ExtensionUtils.getSettings();
     panelBoxes = [];
+
+    global.azTaskbar = {};
+    Signals.addSignalMethods(global.azTaskbar);
 
     Me.customStylesheet = Theming.getStylesheetFile();
     Theming.updateStylesheet(settings);
@@ -510,6 +514,7 @@ function disable() {
     });
     extensionConnections = null;
 
+    delete global.azTaskbar;
     deletePanels();
 
     appDisplayBox.destroy();
@@ -540,6 +545,8 @@ function createPanels(){
         }
     });
     addAppBoxToPanel();
+    global.azTaskbar.panels = panelBoxes;
+    global.azTaskbar.emit('panels-created');
 }
 
 function deletePanels(){

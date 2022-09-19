@@ -5,6 +5,7 @@ const DND = imports.ui.dnd;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Main = imports.ui.main;
 const Overview = imports.ui.overview;
+const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
 const Me = ExtensionUtils.getCurrentExtension();
@@ -29,7 +30,7 @@ var Panel = GObject.registerClass(
 
         this.statusArea = {};
 
-        this._monitor = monitor;
+        this.monitor = monitor;
 
         this._leftBox = new St.BoxLayout({ name: 'panelLeft' });
         this.add_child(this._leftBox);
@@ -44,7 +45,7 @@ var Panel = GObject.registerClass(
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         panelBox.add(this);
 
-        this.width = this._monitor.width;
+        this.width = this.monitor.width;
         this.connect('notify::height', this._updatePosition.bind(this));
         this._updatePosition();
 
@@ -97,13 +98,13 @@ var Panel = GObject.registerClass(
 
     _updatePosition() {
         this.set_position(
-            this._monitor.x,
-            this._monitor.y + this._monitor.height - this.height);
+            this.monitor.x,
+            this.monitor.y + this.monitor.height - this.height);
     }
 
     vfunc_get_preferred_width(_forHeight) {
-        if (this._monitor)
-            return [0, this._monitor.width];
+        if (this.monitor)
+            return [0, this.monitor.width];
 
         return [0,  0];
     }
@@ -306,7 +307,7 @@ var Panel = GObject.registerClass(
 
         return allWindowsByStacking.find(metaWindow => {
             let rect = metaWindow.get_frame_rect();
-            return metaWindow.get_monitor() === this._monitor.index &&
+            return metaWindow.get_monitor() === this.monitor.index &&
                    metaWindow.showing_on_its_workspace() &&
                    metaWindow.get_window_type() != Meta.WindowType.DESKTOP &&
                    metaWindow.maximized_vertically &&
