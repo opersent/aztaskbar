@@ -14,9 +14,11 @@
  */
 
 const { Clutter, GLib, GObject, St } = imports.gi;
-
-const BoxPointer = imports.ui.boxpointer;
 const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
+
+const AppIcon = Me.imports.appIcon;
+const BoxPointer = imports.ui.boxpointer;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Workspace = imports.ui.workspace;
@@ -106,6 +108,19 @@ var WindowPreviewMenu = class azTaskbar_WindowPreviewMenu extends PopupMenu.Popu
                 this.appDisplayBox.setWindowPreviewCloseTimeout();
             }
         }
+        else if (this._findBaseButton(targetActor) && event.type() === Clutter.EventType.BUTTON_PRESS){
+            this._source.event(event, false);
+        }
+    }
+
+    _findBaseButton(targetActor) {
+        while (targetActor) {
+            if(targetActor instanceof AppIcon.BaseButton)
+                return targetActor;
+            targetActor = targetActor.get_parent();
+        }
+
+        return null;
     }
 
     _onDestroy() {

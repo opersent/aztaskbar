@@ -47,8 +47,8 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
             this._indicatorColor = this._settings.get_string('indicator-color-focused');
     }
 
-    updateIndicator(oldAppState, appState, oldWindows, windows){
-        const needsRepaint = oldAppState !== appState || (oldAppState === appState && oldWindows !== windows);
+    updateIndicator(forceRedraw, oldAppState, appState, oldWindows, windows){
+        const needsRepaint = oldAppState !== appState || (oldAppState === appState && oldWindows !== windows) || forceRedraw;
 
         if(!needsRepaint)
             return;
@@ -74,7 +74,7 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
         const singleWindowRemains = oldWindows === 2 && windows === 1;
         const singleWindowStart = oldWindows === 1 && windows === 2;
 
-        let dashWidth = this._appIcon.width / 9;
+        let dashWidth = this._appIcon.width / 10;
 
         if(appState === Enums.AppState.FOCUSED && this._settings.get_boolean('show-window-titles'))
             this._indicatorSpacing = 17 * scaleFactor;
@@ -113,7 +113,7 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
         if(appState === Enums.AppState.NOT_RUNNING)
             this._desiredIndicatorWidth = -radius;
         else if(appState === Enums.AppState.RUNNING)
-            this._desiredIndicatorWidth = this._appIcon.width / 9;
+            this._desiredIndicatorWidth = this._appIcon.width / 10;
         else if(appState === Enums.AppState.FOCUSED)
             this._desiredIndicatorWidth = this._appIcon.width / 4;
 

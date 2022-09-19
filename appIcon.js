@@ -2,7 +2,7 @@ const { Clutter, GLib, GObject, Graphene, Meta, Shell, St } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-;
+
 const { AppIconIndicator } = Me.imports.appIconIndicator;
 const { AppMenu } = imports.ui.appMenu;
 const DND = imports.ui.dnd;
@@ -306,8 +306,8 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _onIndicatorSettingChanged(){
-        this.setActiveState();
-        this._runningIndicator.queue_repaint();
+        let forceRedraw = true;
+        this.setActiveState(forceRedraw);
     }
 
     _setFocused(){
@@ -316,7 +316,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._box.add_style_pseudo_class('active');
     }
 
-    setActiveState(){
+    setActiveState(forceRedraw){
         this.oldAppState = this.appState;
         this._previousNWindows = this._nWindows;
 
@@ -352,7 +352,7 @@ class azTaskbar_AppIcon extends BaseButton {
         if(this._previousNWindows === undefined)
             this._previousNWindows = this._nWindows;
 
-        this._runningIndicator.updateIndicator(this.oldAppState, this.appState, this._previousNWindows, this._nWindows);
+        this._runningIndicator.updateIndicator(forceRedraw, this.oldAppState, this.appState, this._previousNWindows, this._nWindows);
 
         if(this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
             this._hideMultiWindowIndicator();
