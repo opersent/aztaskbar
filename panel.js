@@ -1,22 +1,15 @@
 const { Clutter, Gio, GLib, GObject, Gtk, Meta, Shell, St } = imports.gi;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 
 const Config = imports.misc.config;
-const DND = imports.ui.dnd;
-const ExtensionUtils = imports.misc.extensionUtils;
 const Main = imports.ui.main;
-const Overview = imports.ui.overview;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
-const Me = ExtensionUtils.getCurrentExtension();
-
-const _ = ExtensionUtils.gettext;
-
-
 var Panel = GObject.registerClass(
     class azTaskbar_Panel extends St.Widget {
-
-    _init(monitor, panelBox) {
+    _init(monitor) {
         super._init({
             name: 'panel',
             style_class: 'panel azTaskbar-panel',
@@ -25,8 +18,6 @@ var Panel = GObject.registerClass(
         this.connect('destroy', this._onDestroy.bind(this));
 
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
-
-        this._sessionStyle = null;
 
         this.statusArea = {};
 
@@ -43,26 +34,8 @@ var Panel = GObject.registerClass(
         this.connect('touch-event', this._onTouchEvent.bind(this));
 
         this.menuManager = new PopupMenu.PopupMenuManager(this);
-        panelBox.add(this);
 
         this.width = this.monitor.width;
-        this.connect('notify::height', this._updatePosition.bind(this));
-        this._updatePosition();
-
-        // Hack: OSK gesture is tied to visibility, piggy-back on that
-        this._keyboardVisiblechangedId =
-            Main.keyboard._bottomDragAction.connect('notify::enabled',
-                action => {
-                    const visible = !action.enabled;
-                    if (visible) {
-                        Main.uiGroup.set_child_above_sibling(
-                            this, Main.layoutManager.keyboardBox);
-                    } else {
-                        Main.uiGroup.set_child_above_sibling(
-                            this, Main.layoutManager.panelBox);
-                    }
-                    this._updateKeyboardAnchor();
-                });
 
         this._overviewShowingId = Main.overview.connect('showing', () => {
             this.style = 'transition-duration: 0ms;';
@@ -74,32 +47,12 @@ var Panel = GObject.registerClass(
             this.style = null;
         });
 
-        this._fullscreenChangedId =
-            global.display.connect('in-fullscreen-changed', () => {
-                // Work-around for initial change from unknown to !fullscreen
-                if (Main.overview.visible)
-                    this.hide();
-                this._updateKeyboardAnchor();
-            });
-        
         if (Config.PACKAGE_VERSION < '43')
             this._setPanelMenu('aggregateMenu', imports.ui.panel.AggregateMenu, this._rightBox);
         else
             this._setPanelMenu('quickSettings', imports.ui.panel.QuickSettings, this._rightBox);
 
         this._setPanelMenu('dateMenu', imports.ui.dateMenu.DateMenuButton, this._centerBox);
-        this._updatePanel();
-    }
-
-    _updateKeyboardAnchor() {
-        const translationY = Main.overview.visible ? 0 : this.height;
-        Main.layoutManager.keyboardBox.translation_y = -translationY;
-    }
-
-    _updatePosition() {
-        this.set_position(
-            this.monitor.x,
-            this.monitor.y + this.monitor.height - this.height);
     }
 
     vfunc_get_preferred_width(_forHeight) {
@@ -221,49 +174,8 @@ var Panel = GObject.registerClass(
         return super.vfunc_key_press_event(keyEvent);
     }
 
-    _updatePanel() {
-        let panel = Main.sessionMode.panel;
-        this._updateBox(panel.left, this._leftBox);
-        this._updateBox(panel.center, this._centerBox);
-        this._updateBox(panel.right, this._rightBox);
-
-        if (panel.left.includes('dateMenu'))
-            Main.messageTray.bannerAlignment = Clutter.ActorAlign.START;
-        else if (panel.right.includes('dateMenu'))
-            Main.messageTray.bannerAlignment = Clutter.ActorAlign.END;
-        // Default to center if there is no dateMenu
-        else
-            Main.messageTray.bannerAlignment = Clutter.ActorAlign.CENTER;
-
-        if (this._sessionStyle)
-            this.remove_style_class_name(this._sessionStyle);
-
-        this._sessionStyle = Main.sessionMode.panelStyle;
-        if (this._sessionStyle)
-            this.add_style_class_name(this._sessionStyle);
-    }
-
-    _ensureIndicator(role) {
-        let indicator = this.statusArea[role];
-        return indicator;
-    }
-
-    _updateBox(elements, box) {
-        let nChildren = box.get_n_children();
-
-        for (let i = 0; i < elements.length; i++) {
-            let role = elements[i];
-            let indicator = this._ensureIndicator(role);
-            if (indicator == null)
-                continue;
-
-            this._addToPanelBox(role, indicator, i + nChildren, box);
-        }
-    }
-
     _addToPanelBox(role, indicator, position, box) {
         let container = indicator.container;
-        container.show();
 
         let parent = container.get_parent();
         if (parent)
@@ -362,13 +274,7 @@ var Panel = GObject.registerClass(
     }
 
     _onDestroy() {
-        Main.keyboard._bottomDragAction.disconnect(this._keyboardVisiblechangedId);
-        this._keyboardVisiblechangedId = 0;
-
         Main.overview.disconnect(this._overviewShowingId);
         Main.overview.disconnect(this._overviewHidingId);
-
-        global.display.disconnect(this._fullscreenChangedId);
-        global.display.disconnect(this._windowCreatedId);
     }
 })

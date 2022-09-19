@@ -33,11 +33,6 @@ function getDropTarget(box, x){
     return { item: null, index: -1 };
 }
 
-function debugLog(appName, msg){
-    if(appName === "Files")
-        log(`${appName} ${msg}`);
-}
-
 var AppDisplayBox = GObject.registerClass(
 class azTaskbar_AppDisplayBox extends St.ScrollView {
     _init(settings, monitor) {
@@ -455,7 +450,12 @@ class azTaskbar_PanelBox extends St.BoxLayout {
             name: 'panelBox',
             vertical: true,
         });
+
         this.monitor = monitor;
+        this.panel = new Panel(monitor, this);
+        this.add_child(this.panel);
+        this.appDisplayBox = new AppDisplayBox(settings, monitor);
+    
         Main.layoutManager.addChrome(this, {
             affectsStruts: true,
             trackFullscreen: true,
@@ -476,7 +476,6 @@ class azTaskbar_PanelBox extends St.BoxLayout {
 
 function enable() {
     settings = ExtensionUtils.getSettings();
-    panelBoxes = [];
 
     global.azTaskbar = {};
     Signals.addSignalMethods(global.azTaskbar);
@@ -485,10 +484,11 @@ function enable() {
     Theming.updateStylesheet(settings);
 
     extensionConnections = new Map();
-    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::position-offset', () => addAppBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => createPanels()), settings);
+    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppDisplayBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::position-offset', () => addAppDisplayBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => resetPanels()), settings);
     extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
+    extensionConnections.set(Main.layoutManager.connect('monitors-changed', () => resetPanels()), Main.layoutManager);
 
     appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
 
@@ -528,23 +528,26 @@ function init() {
     Me.persistentStorage = {};
 }
 
+function resetPanels(){
+    deletePanels();
+    createPanels();
+}
+
 function createPanels(){
+    panelBoxes = [];
+
     if(!settings.get_boolean('panel-on-all-monitors')){
-        deletePanels();
         return;
     }
 
-    panelBoxes = [];
     Main.layoutManager.monitors.forEach(monitor => {
         if (monitor !== Main.layoutManager.primaryMonitor){
-            let panelBox = new PanelBox(monitor);
-            let panel = new Panel(monitor, panelBox);
-            panelBox.panel = panel;
-            panelBox.appDisplayBox = new AppDisplayBox(settings, monitor);
-            panelBoxes.push(panelBox);
+            panelBoxes.push(new PanelBox(monitor));
         }
     });
-    addAppBoxToPanel();
+
+    addAppDisplayBoxToPanel();
+
     global.azTaskbar.panels = panelBoxes;
     global.azTaskbar.emit('panels-created');
 }
@@ -559,7 +562,7 @@ function deletePanels(){
     panelBoxes = null;
 }
 
-function addAppBoxToPanel(){
+function addAppDisplayBoxToPanel(){
     panelBoxes.forEach(panelBox => {
         const panel = panelBox.panel;
         const appDisplayBox = panelBox.appDisplayBox;
