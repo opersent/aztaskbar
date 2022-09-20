@@ -56,7 +56,7 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
         this._setAnimationState(oldWindows, windows);
         this._setIndicatorColor(appState);
         
-        this._endAnimation();
+        this.endAnimation();
 
         if(this._animationState === Enums.AnimationState.ANIMATE_DASHES)
             this._startDashesAnimation(oldAppState, appState, oldWindows, windows);
@@ -140,7 +140,7 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
         return GLib.SOURCE_CONTINUE;
     }
 
-    _endAnimation(){
+    endAnimation(){
         if(this._animateIndicatorsID){
             this._startIndicatorWidth = this._desiredIndicatorWidth;
             GLib.Source.remove(this._animateIndicatorsID);
@@ -200,6 +200,6 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
     }
 
     _onDestroy(){
-        this._endAnimation();
+        this.endAnimation();
     }
 });

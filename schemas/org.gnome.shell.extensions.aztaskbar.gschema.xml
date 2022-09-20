@@ -129,7 +129,7 @@
             <description>Icon size for the AppIcons.</description>
         </key>
         <key enum="org.gnome.shell.extensions.aztaskbar.click-action" name="click-action">
-            <default>'CYCLE'</default>
+            <default>'CYCLE_MINIMIZE'</default>
             <summary>Left Click action for running AppIcons</summary>
             <description>Left Click action for running AppIcons.</description>
         </key>

@@ -492,7 +492,6 @@ function enable() {
 
     appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
 
-    extensionConnections.set(settings.connect('changed::icon-style', () => appDisplayBox.updateIcon()), settings);
     Main.panel.statusArea.appMenu.container.hide();
     Main.panel.add_style_class_name("azTaskbar-panel");
 

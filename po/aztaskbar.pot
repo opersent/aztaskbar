@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-18 15:34-0400\n"
+"POT-Creation-Date: 2022-09-20 08:15-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -165,107 +165,107 @@ msgstr ""
 msgid "Cycle"
 msgstr ""
 
-#: prefs.js:362
+#: prefs.js:367
 msgid "Left Click"
 msgstr ""
 
-#: prefs.js:363
+#: prefs.js:368
 msgid "Modify Left Click Action of Running App Icons"
 msgstr ""
 
-#: prefs.js:373
+#: prefs.js:378
 msgid "Scroll Actions"
 msgstr ""
 
-#: prefs.js:378
+#: prefs.js:383
 msgid "Cycle Windows"
 msgstr ""
 
-#: prefs.js:379
+#: prefs.js:384
 msgid "No Action"
 msgstr ""
 
-#: prefs.js:381
+#: prefs.js:386
 msgid "Scroll Action"
 msgstr ""
 
-#: prefs.js:391
+#: prefs.js:396
 msgid "Hover Actions"
 msgstr ""
 
-#: prefs.js:399
+#: prefs.js:404
 msgid "Tool-Tips"
 msgstr ""
 
-#: prefs.js:421 prefs.js:453
+#: prefs.js:426 prefs.js:458
 msgid "Window Previews"
 msgstr ""
 
-#: prefs.js:440
+#: prefs.js:445
 msgid "Window Preview Options"
 msgstr ""
 
-#: prefs.js:471
+#: prefs.js:476
 msgid "Show Window Previews Delay"
 msgstr ""
 
-#: prefs.js:472
+#: prefs.js:477
 msgid "Time in ms to show the window preview"
 msgstr ""
 
-#: prefs.js:492
+#: prefs.js:497
 msgid "Hide Window Previews Delay"
 msgstr ""
 
-#: prefs.js:493
+#: prefs.js:498
 msgid "Time in ms to hide the window preview"
 msgstr ""
 
-#: prefs.js:500 prefs.js:508
+#: prefs.js:505 prefs.js:513
 msgid "Window Peeking"
 msgstr ""
 
-#: prefs.js:509
+#: prefs.js:514
 msgid "Hovering a window preview will focus desired window"
 msgstr ""
 
-#: prefs.js:533
+#: prefs.js:538
 msgid "Window Peeking Delay"
 msgstr ""
 
-#: prefs.js:534
+#: prefs.js:539
 msgid "Time in ms to trigger window peek"
 msgstr ""
 
-#: prefs.js:554
+#: prefs.js:559
 msgid "Window Peeking Opacity"
 msgstr ""
 
-#: prefs.js:555
+#: prefs.js:560
 msgid "Opacity of non-focused windows during a window peek"
 msgstr ""
 
-#: prefs.js:567
+#: prefs.js:572
 msgid "About"
 msgstr ""
 
-#: prefs.js:611
+#: prefs.js:616
 msgid "Version"
 msgstr ""
 
-#: prefs.js:620
+#: prefs.js:625
 msgid "Git Commit"
 msgstr ""
 
-#: prefs.js:629
+#: prefs.js:634
 msgid "GNOME Version"
 msgstr ""
 
-#: prefs.js:637
+#: prefs.js:642
 msgid "OS"
 msgstr ""
 
-#: prefs.js:659
+#: prefs.js:664
 msgid "Session Type"
 msgstr ""
 

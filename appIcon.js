@@ -299,6 +299,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections.set(this._settings.connect('changed::indicator-color-running', () => this._onIndicatorSettingChanged()), this._settings);
         this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._onIndicatorSettingChanged()), this._settings);
         this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
+        this._connections.set(this._settings.connect('changed::icon-style', () => this.updateIcon()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
@@ -545,7 +546,7 @@ class azTaskbar_AppIcon extends BaseButton {
     stopAllAnimations(){
         this._box.style = 'transition-duration: 0ms;';
         this._box.remove_all_transitions();
-        this._runningIndicator._endAnimation();
+        this._runningIndicator.endAnimation();
 
         let icon = this._iconBin.get_child();
 
