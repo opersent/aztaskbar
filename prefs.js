@@ -358,13 +358,18 @@ class azTaskbar_ActionsPage extends Adw.PreferencesPage {
         clickOptions.append(_("Toggle / Cycle + Minimize"));
         clickOptions.append(_("Toggle / Preview"));
         clickOptions.append(_("Cycle"));
-        let clickOptionsRow = new Adw.ComboRow({
-            title: _("Left Click"),
-            subtitle: _("Modify Left Click Action of Running App Icons"),
+        let clickOptionsMenu = new Gtk.DropDown({
+            valign: Gtk.Align.CENTER,
             model: clickOptions,
             selected: this._settings.get_enum('click-action')
+        })
+        let clickOptionsRow = new Adw.ActionRow({
+            title: _("Left Click"),
+            subtitle: _("Modify Left Click Action of Running App Icons"),
+            activatable_widget: clickOptionsMenu
         });
-        clickOptionsRow.connect("notify::selected", (widget) => {
+        clickOptionsRow.add_suffix(clickOptionsMenu);
+        clickOptionsMenu.connect("notify::selected", (widget) => {
             this._settings.set_enum('click-action', widget.selected);
         });
         clickActionGroup.add(clickOptionsRow);
