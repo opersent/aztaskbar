@@ -535,20 +535,17 @@ function resetPanels(){
 function createPanels(){
     panelBoxes = [];
 
-    if(!settings.get_boolean('panel-on-all-monitors')){
-        return;
+    if(settings.get_boolean('panel-on-all-monitors')){
+        Main.layoutManager.monitors.forEach(monitor => {
+            if (monitor !== Main.layoutManager.primaryMonitor){
+                panelBoxes.push(new PanelBox(monitor));
+            }
+        });
+        global.azTaskbar.panels = panelBoxes;
+        global.azTaskbar.emit('panels-created');
     }
 
-    Main.layoutManager.monitors.forEach(monitor => {
-        if (monitor !== Main.layoutManager.primaryMonitor){
-            panelBoxes.push(new PanelBox(monitor));
-        }
-    });
-
     addAppDisplayBoxToPanel();
-
-    global.azTaskbar.panels = panelBoxes;
-    global.azTaskbar.emit('panels-created');
 }
 
 function deletePanels(){
