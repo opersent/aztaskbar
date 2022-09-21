@@ -309,7 +309,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                 //check if entry exists in this.oldAppIcons
                 //if it does, it's no longer needed - destroy it
                 else if(!showFavorites || !(app.get_id() in favorites)){
-                    const appID = app.get_id() + ", " + monitorIndex;
+                    const appID = `${app.get_id()} - ${monitorIndex}`;
                     let item = this.oldAppIcons.get(appID);
                     if(item){
                         this.oldAppIcons.delete(appID);
@@ -340,7 +340,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                         this.mainBox.insert_child_at_index(item, positionIndex);
                     }
                     else if(!parent) {
+                        item.opacity = 0;
                         this.mainBox.insert_child_at_index(item, positionIndex);
+                        item.animateIn();
                     }
 
                     positionIndex++;

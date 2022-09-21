@@ -169,6 +169,14 @@ class azTaskbar_BaseButton extends St.Button {
         }
     }
 
+    animateIn(){
+        this.ease({
+            duration: 150,
+            opacity: 255,
+            mode: Clutter.AnimationMode.EASE_IN_QUAD,
+        });
+    }
+
     _animateAppIcon(isMinimized){
         if(!St.Settings.get().enable_animations)
             return;
