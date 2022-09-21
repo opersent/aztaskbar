@@ -61,9 +61,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.peekInitialWorkspaceIndex = -1;
 
         this._connections = new Map();
-        this._connections.set(this._settings.connect('changed::panel-on-all-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::isolate-monitors', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::show-apps-button', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
@@ -511,10 +509,9 @@ function enable() {
     extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppDisplayBoxToPanel()), settings);
     extensionConnections.set(settings.connect('changed::position-offset', () => addAppDisplayBoxToPanel()), settings);
     extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => resetPanels()), settings);
+    extensionConnections.set(settings.connect('changed::isolate-monitors', () => resetPanels()), settings);
     extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
     extensionConnections.set(Main.layoutManager.connect('monitors-changed', () => resetPanels()), Main.layoutManager);
-
-    appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
 
     Main.panel.statusArea.appMenu.container.hide();
     Main.panel.add_style_class_name("azTaskbar-panel");
@@ -540,8 +537,6 @@ function disable() {
     delete global.azTaskbar;
     deletePanels();
 
-    appDisplayBox.destroy();
-    appDisplayBox = null;
     settings.run_dispose();
     settings = null;
 }
@@ -559,6 +554,8 @@ function resetPanels(){
 function createPanels(){
     panelBoxes = [];
 
+    appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
+
     if(settings.get_boolean('panel-on-all-monitors')){
         Main.layoutManager.monitors.forEach(monitor => {
             if (monitor !== Main.layoutManager.primaryMonitor){
@@ -573,6 +570,8 @@ function createPanels(){
 }
 
 function deletePanels(){
+    appDisplayBox.destroy();
+    appDisplayBox = null;
     panelBoxes.forEach(panelBox => {
         panelBox.panel.disable();
         panelBox.destroy();

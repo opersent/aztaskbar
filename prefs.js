@@ -25,20 +25,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(generalGroup);
 
-        let showOnAllMonitorsSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER
-        });
-        let showOnAllMonitorsRow = new Adw.ActionRow({
-            title: _("Show Panels on All Monitors"),
-            activatable_widget: showOnAllMonitorsSwitch
-        });
-        showOnAllMonitorsSwitch.set_active(this._settings.get_boolean('panel-on-all-monitors'));
-        showOnAllMonitorsSwitch.connect('notify::active', (widget) => {
-            this._settings.set_boolean('panel-on-all-monitors', widget.get_active());
-        });
-        showOnAllMonitorsRow.add_suffix(showOnAllMonitorsSwitch);
-        generalGroup.add(showOnAllMonitorsRow);
-
         let panelPositions = new Gtk.StringList();
         panelPositions.append(_("Left"));
         panelPositions.append(_("Center"));
@@ -73,52 +59,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         positionOffsetRow.add_suffix(positionOffsetSpinButton);
         generalGroup.add(positionOffsetRow);
-
-        let [panelHeightOverride, panelHeight] = this._settings.get_value('main-panel-height').deep_unpack();
-
-        let panelHeightSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-        });
-        panelHeightSwitch.connect('notify::active', (widget) => {
-            let [oldEnabled_, oldValue] = this._settings.get_value('main-panel-height').deep_unpack();
-            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
-            if(widget.get_active())
-                panelHeightSpinButton.set_sensitive(true);
-            else
-                panelHeightSpinButton.set_sensitive(false);
-        });
-        let panelHeightSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 5,
-                upper: 60,
-                step_increment: 1
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-            value: panelHeight,
-            sensitive: panelHeightOverride
-        });
-        panelHeightSpinButton.connect('value-changed', (widget) => {
-            let [oldEnabled, oldValue_] = this._settings.get_value('main-panel-height').deep_unpack();
-            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [oldEnabled, widget.get_value()]));
-        });
-
-        let panelHeightRow = new Adw.ActionRow({
-            title: _('Panel Height'),
-            activatable_widget: panelHeightSwitch
-        });
-        panelHeightRow.add_suffix(panelHeightSwitch);
-        panelHeightRow.add_suffix(new Gtk.Separator({
-            orientation: Gtk.Orientation.VERTICAL,
-            margin_top: 10,
-            margin_bottom: 10
-        }));
-        panelHeightRow.add_suffix(panelHeightSpinButton);
-        panelHeightSwitch.set_active(panelHeightOverride);
-        generalGroup.add(panelHeightRow);
-
+    
         let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
 
         let showAppsButtonSwitch = new Gtk.Switch({
@@ -157,60 +98,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         showAppsButtonRow.add_suffix(showAppsButtonCombo);
         showAppsButtonSwitch.set_active(showAppsButton);
         generalGroup.add(showAppsButtonRow);
-
-        let iconSizeSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,
-            }),
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        iconSizeSpinButton.set_value(this._settings.get_int('icon-size'));
-        iconSizeSpinButton.connect('value-changed', (widget) => {
-            this._settings.set_int('icon-size', widget.get_value());
-        });
-        let iconSizeRow = new Adw.ActionRow({
-            title: _("Icon Size"),
-            activatable_widget: iconSizeSpinButton
-        });
-        iconSizeRow.add_suffix(iconSizeSpinButton);
-        generalGroup.add(iconSizeRow);
-
-        let desatureFactorSpinButton = new Gtk.SpinButton({
-            adjustment: new Gtk.Adjustment({
-                lower: 0.0, upper: 1.0, step_increment: 0.05, page_increment: 0.1, page_size: 0,
-            }),
-            climb_rate: 0.05,
-            digits: 2,
-            numeric: true,
-            valign: Gtk.Align.CENTER,
-        });
-        desatureFactorSpinButton.set_value(this._settings.get_double('desaturation-factor'));
-        desatureFactorSpinButton.connect('value-changed', (widget) => {
-            this._settings.set_double('desaturation-factor', widget.get_value());
-        });
-        let desatureFactorRow = new Adw.ActionRow({
-            title: _("Icon Desaturate Factor"),
-            activatable_widget: desatureFactorSpinButton
-        });
-        desatureFactorRow.add_suffix(desatureFactorSpinButton);
-        generalGroup.add(desatureFactorRow);
-
-        let iconStyles = new Gtk.StringList();
-        iconStyles.append(_("Regular"));
-        iconStyles.append(_("Symbolic"));
-        let iconStyleRow = new Adw.ComboRow({
-            title: _("Icon Style"),
-            subtitle: _("Icon themes may not have a symbolic icon for every app"),
-            model: iconStyles,
-            selected: this._settings.get_enum('icon-style')
-        });
-        iconStyleRow.connect("notify::selected", (widget) => {
-            this._settings.set_enum('icon-style', widget.selected);
-        });
-        generalGroup.add(iconStyleRow);
 
         let windowTitleSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -267,6 +154,129 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         isolateMonitorsRow.add_suffix(isolateMonitorsSwitch);
         generalGroup.add(isolateMonitorsRow);
+
+        let panelGroup = new Adw.PreferencesGroup({
+            title: _("Panel")
+        });
+        this.add(panelGroup);
+
+        let showOnAllMonitorsSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let showOnAllMonitorsRow = new Adw.ActionRow({
+            title: _("Show Panels on All Monitors"),
+            activatable_widget: showOnAllMonitorsSwitch
+        });
+        showOnAllMonitorsSwitch.set_active(this._settings.get_boolean('panel-on-all-monitors'));
+        showOnAllMonitorsSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('panel-on-all-monitors', widget.get_active());
+        });
+        showOnAllMonitorsRow.add_suffix(showOnAllMonitorsSwitch);
+        panelGroup.add(showOnAllMonitorsRow);
+
+        let [panelHeightOverride, panelHeight] = this._settings.get_value('main-panel-height').deep_unpack();
+
+        let panelHeightSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER,
+        });
+        panelHeightSwitch.connect('notify::active', (widget) => {
+            let [oldEnabled_, oldValue] = this._settings.get_value('main-panel-height').deep_unpack();
+            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
+            if(widget.get_active())
+                panelHeightSpinButton.set_sensitive(true);
+            else
+                panelHeightSpinButton.set_sensitive(false);
+        });
+        let panelHeightSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 5,
+                upper: 60,
+                step_increment: 1
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+            value: panelHeight,
+            sensitive: panelHeightOverride
+        });
+        panelHeightSpinButton.connect('value-changed', (widget) => {
+            let [oldEnabled, oldValue_] = this._settings.get_value('main-panel-height').deep_unpack();
+            this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [oldEnabled, widget.get_value()]));
+        });
+
+        let panelHeightRow = new Adw.ActionRow({
+            title: _('Panel Height'),
+            activatable_widget: panelHeightSwitch
+        });
+        panelHeightRow.add_suffix(panelHeightSwitch);
+        panelHeightRow.add_suffix(new Gtk.Separator({
+            orientation: Gtk.Orientation.VERTICAL,
+            margin_top: 10,
+            margin_bottom: 10
+        }));
+        panelHeightRow.add_suffix(panelHeightSpinButton);
+        panelHeightSwitch.set_active(panelHeightOverride);
+        panelGroup.add(panelHeightRow);
+
+        let iconGroup = new Adw.PreferencesGroup({
+            title: _("App Icons")
+        });
+        this.add(iconGroup);
+
+        let iconSizeSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 15, upper: 50, step_increment: 1, page_increment: 1, page_size: 0,
+            }),
+            climb_rate: 1,
+            digits: 0,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        iconSizeSpinButton.set_value(this._settings.get_int('icon-size'));
+        iconSizeSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_int('icon-size', widget.get_value());
+        });
+        let iconSizeRow = new Adw.ActionRow({
+            title: _("Icon Size"),
+            activatable_widget: iconSizeSpinButton
+        });
+        iconSizeRow.add_suffix(iconSizeSpinButton);
+        iconGroup.add(iconSizeRow);
+
+        let desatureFactorSpinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 0.0, upper: 1.0, step_increment: 0.05, page_increment: 0.1, page_size: 0,
+            }),
+            climb_rate: 0.05,
+            digits: 2,
+            numeric: true,
+            valign: Gtk.Align.CENTER,
+        });
+        desatureFactorSpinButton.set_value(this._settings.get_double('desaturation-factor'));
+        desatureFactorSpinButton.connect('value-changed', (widget) => {
+            this._settings.set_double('desaturation-factor', widget.get_value());
+        });
+        let desatureFactorRow = new Adw.ActionRow({
+            title: _("Icon Desaturate Factor"),
+            activatable_widget: desatureFactorSpinButton
+        });
+        desatureFactorRow.add_suffix(desatureFactorSpinButton);
+        iconGroup.add(desatureFactorRow);
+
+        let iconStyles = new Gtk.StringList();
+        iconStyles.append(_("Regular"));
+        iconStyles.append(_("Symbolic"));
+        let iconStyleRow = new Adw.ComboRow({
+            title: _("Icon Style"),
+            subtitle: _("Icon themes may not have a symbolic icon for every app"),
+            model: iconStyles,
+            selected: this._settings.get_enum('icon-style')
+        });
+        iconStyleRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('icon-style', widget.selected);
+        });
+        iconGroup.add(iconStyleRow);
 
         let indicatorGroup = new Adw.PreferencesGroup({
             title: _("Indicator")
