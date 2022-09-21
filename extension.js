@@ -551,8 +551,6 @@ function createPanels(){
 function deletePanels(){
     panelBoxes.forEach(panelBox => {
         panelBox.panel.disable();
-        panelBox.appDisplayBox.destroy();
-        panelBox.hide();
         panelBox.destroy();
     });
     panelBoxes = null;

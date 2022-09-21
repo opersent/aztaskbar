@@ -269,7 +269,11 @@ var Panel = GObject.registerClass(
     }
 
     disable(){
-        this._removePanelMenu('aggregateMenu');
+        if (Config.PACKAGE_VERSION < '43')
+            this._removePanelMenu('aggregateMenu');
+        else
+            this._removePanelMenu('quickSettings');
+
         this._removePanelMenu('dateMenu');
     }
 
