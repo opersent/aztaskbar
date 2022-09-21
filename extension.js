@@ -72,7 +72,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             AppFavorites.getAppFavorites().reload();
             this._queueRedisplay();
         }), this._appSystem);
-        this._connections.set(global.window_manager.connect('switch-workspace', () => this._queueRedisplay()), global.window_manager);
+        this._connections.set(global.window_manager.connect('switch-workspace', () => this._connectWorkspaceSignals()), global.window_manager);
         this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-left-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
@@ -83,6 +83,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         //If appDisplayBox position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
         this.connect("destroy", () => this._destroy());
+        this._connectWorkspaceSignals();
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex){
@@ -338,6 +339,8 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                         item.stopAllAnimations();
                         this.mainBox.remove_child(item);
                         this.mainBox.insert_child_at_index(item, positionIndex);
+                        if(item.opacity !== 255)
+                            item.animateIn();
                     }
                     else if(!parent) {
                         item.opacity = 0;
@@ -388,6 +391,24 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         this.mainBox.queue_relayout();
     }
+    
+    _connectWorkspaceSignals() {
+        this._disconnectWorkspaceSignals();
+
+        this._lastWorkspace = global.workspace_manager.get_active_workspace();
+
+        this._workspaceWindowAddedId = this._lastWorkspace.connect('window-added', () => this._queueRedisplay());
+        this._workspaceWindowRemovedId = this._lastWorkspace.connect('window-removed', () => this._queueRedisplay());
+    }
+
+    _disconnectWorkspaceSignals() {
+        if (this._lastWorkspace) {
+            this._lastWorkspace.disconnect(this._workspaceWindowAddedId);
+            this._lastWorkspace.disconnect(this._workspaceWindowRemovedId);
+
+            this._lastWorkspace = null;
+        }
+    }
 
     updateIcon(){
         this.oldAppIcons.forEach((appIcon, appID) => {
@@ -427,6 +448,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _destroy() {
+        this._disconnectWorkspaceSignals();
         this.removeWindowPreviewCloseTimeout();
 
         this._connections.forEach((object, id) => {
