@@ -21,6 +21,7 @@ var AppIconIndicator = GObject.registerClass(class azTaskbar_AppIconIndicator ex
             x_align: Clutter.ActorAlign.FILL,
             y_align: Clutter.ActorAlign.FILL,
         });
+        this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this._settings = appIcon._settings;
         this._appIcon = appIcon;
         this.app = appIcon.app;

@@ -534,8 +534,8 @@ function disable() {
     });
     extensionConnections = null;
 
-    delete global.azTaskbar;
     deletePanels();
+    delete global.azTaskbar;
 
     settings.run_dispose();
     settings = null;

@@ -775,7 +775,7 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _disconnectWindowMinimizeEvent(){
-        let windows = this.app.get_windows();
+        let windows = this.getInterestingWindows();
         windows.forEach(window => {
             if (window._windowMinimizeId > 0) {
                 window.disconnect(window._windowMinimizeId);
