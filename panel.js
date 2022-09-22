@@ -53,6 +53,7 @@ var Panel = GObject.registerClass(
             this._setPanelMenu('quickSettings', imports.ui.panel.QuickSettings, this._rightBox);
 
         this._setPanelMenu('dateMenu', imports.ui.dateMenu.DateMenuButton, this._centerBox);
+        this._setPanelMenu('activities', imports.ui.panel.ActivitiesButton, this._leftBox);
     }
 
     vfunc_get_preferred_width(_forHeight) {
@@ -274,6 +275,7 @@ var Panel = GObject.registerClass(
         else
             this._removePanelMenu('quickSettings');
 
+        this._removePanelMenu('activities');
         this._removePanelMenu('dateMenu');
     }
 
