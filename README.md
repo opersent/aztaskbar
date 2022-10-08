@@ -49,7 +49,7 @@ Created by **@[AndyC](https://gitlab.com/LinxGem33)** and licensed under [CC BY-
 
 #### Thanks to the following people for contributing via merge requests:
 
-**@[wednesbunny](https://gitlab.com/wednesbunny)**
+**@[wednesbunny](https://gitlab.com/wednesbunny) !3** | **@[Finnerale](https://gitlab.com/Finnerale) !13**
 
 
 #### Translators:
