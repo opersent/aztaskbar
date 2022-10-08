@@ -362,7 +362,8 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
 
         let children = this.mainBox.get_children();
-        for(let i = 0; i < children.length; i++){
+        let insertedSeparators = 0;
+        for(let i = 1; i < children.length; i++){
             const appIcon = children[i];
             const previousAppIcon = children[i - 1];
             //if the previous AppIcon has different monitorIndex, add a separator.
@@ -374,7 +375,8 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                     width: 1,
                     height: 15,
                 });
-                this.mainBox.insert_child_at_index(separator, i);
+                this.mainBox.insert_child_at_index(separator, i + insertedSeparators);
+                insertedSeparators += 1;
             }
         }
 
