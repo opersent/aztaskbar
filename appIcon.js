@@ -633,17 +633,26 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _endDrag() {
-        this._dragging = false;
-        if(this._dragMonitor){
-            DND.removeDragMonitor(this._dragMonitor);
-            this._dragMonitor = null;
-        }
-
+        this._removeDragMonitor();
         this.lastPositionIndex = null;
         this.undoFade();
         this._highlightFavorites(false);
         this._box.style = null;
         this.updateIconGeometry();
+    }
+
+    _cancelActions(){
+        if (this._draggable)
+            this._draggable.fakeRelease();
+        this.fake_release();
+    }
+
+    _removeDragMonitor(){
+        this._dragging = false;
+        if(this._dragMonitor){
+            DND.removeDragMonitor(this._dragMonitor);
+            this._dragMonitor = null;
+        }
     }
 
     undoFade() {
@@ -730,11 +739,7 @@ class azTaskbar_AppIcon extends BaseButton {
 
     popupMenu(side = St.Side.TOP) {
         this._removeMenuTimeout();
-        this._dragging = false;
-        if(this._dragMonitor){
-            DND.removeDragMonitor(this._dragMonitor);
-            this._dragMonitor = null;
-        }
+        this._cancelActions();
 
         if (!this._menu) {
             this._menu = new AppMenu(this, side, {
@@ -958,6 +963,7 @@ class azTaskbar_AppIcon extends BaseButton {
             return;
         else{
             this._removeMenuTimeout();
+            this._cancelActions();
             this._previewMenu?.popup();
         }
     }
