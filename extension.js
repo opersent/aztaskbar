@@ -81,6 +81,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         //If appDisplayBox position is moved in the main panel, updateIconGeometry
         this.connect("notify::position", () => this._updateIconGeometry());
         this.connect("destroy", () => this._destroy());
+        this._connectWorkspaceSignals();
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex){
@@ -227,6 +228,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _redisplay() {
+        this._connectWorkspaceSignals();
         this.oldApps = [];
 
         this.mainBox.get_children().forEach(actor => {
@@ -391,6 +393,28 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.mainBox.queue_relayout();
     }
     
+    _connectWorkspaceSignals() {
+        const currentWorkspace = global.workspace_manager.get_active_workspace();
+
+        if(this._lastWorkspace === currentWorkspace)
+            return;
+
+        this._disconnectWorkspaceSignals();
+
+        this._lastWorkspace = currentWorkspace;
+
+        this._workspaceWindowAddedId = this._lastWorkspace.connect('window-added', () => this._queueRedisplay());
+        this._workspaceWindowRemovedId = this._lastWorkspace.connect('window-removed', () => this._queueRedisplay());
+    }
+
+    _disconnectWorkspaceSignals() {
+        if (this._lastWorkspace) {
+            this._lastWorkspace.disconnect(this._workspaceWindowAddedId);
+            this._lastWorkspace.disconnect(this._workspaceWindowRemovedId);
+
+            this._lastWorkspace = null;
+        }
+    }
 
     updateIcon(){
         this.oldAppIcons.forEach((appIcon, appID) => {
@@ -430,6 +454,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _destroy() {
+        this._disconnectWorkspaceSignals();
         this.removeWindowPreviewCloseTimeout();
 
         this._connections.forEach((object, id) => {

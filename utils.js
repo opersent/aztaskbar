@@ -2,9 +2,9 @@ const { Clutter } = imports.gi;
 
 function getInterestingWindows(settings, windows, monitorIndex) {
     if(settings.get_boolean('isolate-workspaces')){
-        const activeWorkspace = global.workspace_manager.get_active_workspace_index();
+        const activeWorkspace = global.workspace_manager.get_active_workspace();
         windows = windows.filter(function(w) {
-            const inWorkspace = w.get_workspace().index() === activeWorkspace;
+            const inWorkspace = w.get_workspace() === activeWorkspace;
             return inWorkspace;
         });
     }
