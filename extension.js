@@ -70,7 +70,10 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             AppFavorites.getAppFavorites().reload();
             this._queueRedisplay();
         }), this._appSystem);
-        this._connections.set(global.window_manager.connect('switch-workspace', () => this._queueRedisplay.bind(this)), global.window_manager);
+        this._connections.set(global.window_manager.connect('switch-workspace', () => {
+            this._connectWorkspaceSignals();
+            this._queueRedisplay();
+        }), global.window_manager);
         this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-left-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
@@ -228,7 +231,6 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _redisplay() {
-        this._connectWorkspaceSignals();
         this.oldApps = [];
 
         this.mainBox.get_children().forEach(actor => {
