@@ -4,7 +4,7 @@
   "uuid": "aztaskbar@aztaskbar.gitlab.com",
   "gettext-domain": "aztaskbar",
   "settings-schema": "org.gnome.shell.extensions.aztaskbar",
-  "version": 12,
+  "version": 13,
   "shell-version": ["42", "43"],
   "url": "https://gitlab.com/AndrewZaech/aztaskbar"
 }
