@@ -183,9 +183,18 @@ class azTaskbar_BaseButton extends St.Button {
 
         let icon = this._iconBin.get_child();
 
+        // Default value (AnimationDirection.TOP)
+        let translationY = isMinimized ? -3 : 3;
+
+         //get the value of your new setting
+         //if the setting is for a bottom panel, invert the translationY value
+         const animationDirectionSetting = this._settings.get_enum("animation-direction");
+          if (animationDirectionSetting === Enums.AnimationDirection.BOT)
+              translationY *= -1;
+
         icon?.ease({
             duration: 150,
-            translation_y: isMinimized ? -3 : 3,
+            translation_y: translationY,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
                 icon?.ease({
@@ -197,7 +206,7 @@ class azTaskbar_BaseButton extends St.Button {
         });
     }
 });
-    
+
 var ShowAppsIcon = GObject.registerClass(
 class azTaskbar_ShowAppsIcon extends BaseButton {
     _init(settings) {
