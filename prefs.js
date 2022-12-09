@@ -59,7 +59,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         positionOffsetRow.add_suffix(positionOffsetSpinButton);
         generalGroup.add(positionOffsetRow);
-    
+
         let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
 
         let showAppsButtonSwitch = new Gtk.Switch({
@@ -112,7 +112,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         windowTitleRow.add_suffix(windowTitleSwitch);
         generalGroup.add(windowTitleRow);
-    
+
         let favoritesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });
@@ -277,6 +277,20 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_enum('icon-style', widget.selected);
         });
         iconGroup.add(iconStyleRow);
+
+        let animationDirections = new Gtk.StringList();
+        animationDirections.append(_("Panel on Top"));
+        animationDirections.append(_("Panel on Bottom"));
+        let animationDirectionsRow = new Adw.ComboRow({
+          title: _("Animation Direction"),
+          subtitle: _("Adjust icon animations based on panel location"),
+          model: animationDirections,
+          selected: this._settings.get_enum("animation-direction"),
+        });
+        animationDirectionsRow.connect("notify::selected", (widget) => {
+          this._settings.set_enum("animation-direction", widget.selected);
+        });
+        iconGroup.add(animationDirectionsRow);
 
         let indicatorGroup = new Adw.PreferencesGroup({
             title: _("Indicator")

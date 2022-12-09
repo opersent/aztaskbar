@@ -4,6 +4,10 @@
         <value value='0' nick='TOP'/>
         <value value='1' nick='BOTTOM'/>
     </enum>
+    <enum id='org.gnome.shell.extensions.aztaskbar.animation-direction'>
+        <value value='0' nick='TOP'/>
+        <value value='1' nick='BOTTOM'/>
+    </enum>
     <enum id='org.gnome.shell.extensions.aztaskbar.click-action'>
         <value value='0' nick='CYCLE'/>
         <value value='1' nick='CYCLE_MINIMIZE'/>
@@ -97,6 +101,11 @@
             <default>'TOP'</default>
             <summary>AppIcon indicator location. TOP or BOTTOM</summary>
             <description>AppIcon indicator location. TOP or BOTTOM.</description>
+        </key>
+          <key enum="org.gnome.shell.extensions.aztaskbar.animation-direction" name="animation-direction">
+            <default>'TOP'</default>
+            <summary>Animation direction. TOP or BOTTOM</summary>
+            <description>Animation direction. TOP or BOTTOM </description>
         </key>
         <key type="s" name="indicator-color-running">
             <default>'rgb(204, 204, 204)'</default>

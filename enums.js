@@ -3,6 +3,11 @@ var IndicatorLocation = {
     BOTTOM: 1
 }
 
+var AnimationDirection = {
+    TOP: 0,
+    BOT: 1,
+};
+
 var AnimationState = {
     NONE: 0,
     ANIMATE_DASHES: 1,
