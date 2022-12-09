@@ -283,7 +283,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         animationDirections.append(_("Panel on Bottom"));
         let animationDirectionsRow = new Adw.ComboRow({
           title: _("Animation Direction"),
-          subtitle: _("Little jump animation on interact"),
+          subtitle: _("Adjust icon animations based on panel location"),
           model: animationDirections,
           selected: this._settings.get_enum("animation-direction"),
         });
