@@ -75,3 +75,8 @@
   padding: 0px;
   margin: 0px;
 }
+
+.azTaskbar-bottom-panel .popup-menu.panel-menu{
+    margin-bottom: 0;
+}
+

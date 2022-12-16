@@ -5,9 +5,11 @@ const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
+const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${Me.metadata.name}&source=url`;
 const PROJECT_TITLE = _('App Icons Taskbar');
 const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
 const PROJECT_IMAGE = 'aztaskbar-logo';
+const SCHEMA_PATH = '/org/gnome/shell/extensions/aztaskbar/';
 
 var GeneralPage = GObject.registerClass(
 class azTaskbar_GeneralPage extends Adw.PreferencesPage {
@@ -160,6 +162,19 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         this.add(panelGroup);
 
+        let panelLocations = new Gtk.StringList();
+        panelLocations.append(_("Top"));
+        panelLocations.append(_("Bottom"));
+        let panelLocationRow = new Adw.ComboRow({
+            title: _("Panel Location"),
+            model: panelLocations,
+            selected: this._settings.get_enum('panel-location')
+        });
+        panelLocationRow.connect("notify::selected", (widget) => {
+            this._settings.set_enum('panel-location', widget.selected);
+        });
+        panelGroup.add(panelLocationRow);
+
         let showOnAllMonitorsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
         });
@@ -277,20 +292,6 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_enum('icon-style', widget.selected);
         });
         iconGroup.add(iconStyleRow);
-
-        let animationDirections = new Gtk.StringList();
-        animationDirections.append(_("Panel on Top"));
-        animationDirections.append(_("Panel on Bottom"));
-        let animationDirectionsRow = new Adw.ComboRow({
-          title: _("Animation Direction"),
-          subtitle: _("Adjust icon animations based on panel location"),
-          model: animationDirections,
-          selected: this._settings.get_enum("animation-direction"),
-        });
-        animationDirectionsRow.connect("notify::selected", (widget) => {
-          this._settings.set_enum("animation-direction", widget.selected);
-        });
-        iconGroup.add(animationDirectionsRow);
 
         let indicatorGroup = new Adw.PreferencesGroup({
             title: _("Indicator")
@@ -590,14 +591,13 @@ class azTaskbar_WindowPreviewOptions extends Gtk.Window {
 });
 
 var AboutPage = GObject.registerClass(
-class azTaskbar_AboutPage extends Adw.PreferencesPage {
-    _init(settings) {
+class extends Adw.PreferencesPage {
+    _init() {
         super._init({
             title: _('About'),
             icon_name: 'help-about-symbolic',
             name: 'AboutPage'
         });
-        this._settings = settings;
 
         //Project Logo, title, description-------------------------------------
         let projectHeaderGroup = new Adw.PreferencesGroup();
@@ -614,14 +614,14 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         });
 
         let projectTitleLabel = new Gtk.Label({
-            label: PROJECT_TITLE,
+            label: _(PROJECT_TITLE),
             css_classes: ['title-1'],
             vexpand: true,
             valign: Gtk.Align.FILL
         });
 
         let projectDescriptionLabel = new Gtk.Label({
-            label: PROJECT_DESCRIPTION,
+            label: _(PROJECT_DESCRIPTION),
             hexpand: false,
             vexpand: false,
         });
@@ -633,14 +633,15 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         this.add(projectHeaderGroup);
         //-----------------------------------------------------------------------
 
-        //Extension/OS Info Group------------------------------------------------
+        //Extension/OS Info and Links Group------------------------------------------------
         let infoGroup = new Adw.PreferencesGroup();
 
         let projectVersionRow = new Adw.ActionRow({
             title: `${PROJECT_TITLE} ${_('Version')}`,
         });
         projectVersionRow.add_suffix(new Gtk.Label({
-            label: Me.metadata.version.toString()
+            label: Me.metadata.version.toString(),
+            css_classes: ['dim-label']
         }));
         infoGroup.add(projectVersionRow);
 
@@ -650,6 +651,7 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
             });
             commitRow.add_suffix(new Gtk.Label({
                 label: Me.metadata.commit.toString(),
+                css_classes: ['dim-label']
             }));
             infoGroup.add(commitRow);
         }
@@ -659,63 +661,120 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         });
         gnomeVersionRow.add_suffix(new Gtk.Label({
             label: imports.misc.config.PACKAGE_VERSION.toString(),
+            css_classes: ['dim-label']
         }));
         infoGroup.add(gnomeVersionRow);
 
         let osRow = new Adw.ActionRow({
-            title: _('OS'),
+            title: _('OS Name'),
         });
 
         let name = GLib.get_os_info("NAME");
         let prettyName = GLib.get_os_info("PRETTY_NAME");
-        let buildID = GLib.get_os_info("BUILD_ID");
-        let versionID = GLib.get_os_info("VERSION_ID");
-
-        let osInfoText = prettyName ? prettyName : name;
-        if(versionID)
-            osInfoText += `; Version ID: ${versionID}`;
-        if(buildID)
-            osInfoText += `; Build ID: ${buildID}`;
 
         osRow.add_suffix(new Gtk.Label({
-            label: osInfoText,
-            single_line_mode: false,
-            wrap: true,
+            label: prettyName ? prettyName : name,
+            css_classes: ['dim-label'],
         }));
         infoGroup.add(osRow);
 
         let sessionTypeRow = new Adw.ActionRow({
-            title: _('Session Type'),
+            title: _('Windowing System'),
         });
         sessionTypeRow.add_suffix(new Gtk.Label({
             label: GLib.getenv('XDG_SESSION_TYPE') === "wayland" ? 'Wayland' : 'X11',
+            css_classes: ['dim-label']
         }));
         infoGroup.add(sessionTypeRow);
+
+        let gitlabButton = new Gtk.LinkButton({
+            child: new Gtk.Image({
+                      icon_name: 'adw-external-link-symbolic'
+                   }),
+            uri: Me.metadata.url
+        });
+        let gitlabRow = new Adw.ActionRow({
+            title: `${PROJECT_TITLE} ${_('GitLab')}`,
+            activatable_widget: gitlabButton,
+        });
+        gitlabRow.add_suffix(gitlabButton);
+        infoGroup.add(gitlabRow);
+
+        let donateButton = new Gtk.LinkButton({
+            child: new Gtk.Image({
+                      icon_name: 'adw-external-link-symbolic'
+                   }),
+            uri: PAYPAL_LINK,
+        });
+        let donateRow = new Adw.ActionRow({
+            title: _('Donate via PayPal'),
+            activatable_widget: donateButton,
+        });
+        donateRow.add_suffix(donateButton);
+        infoGroup.add(donateRow);
+
         this.add(infoGroup);
         //-----------------------------------------------------------------------
 
-        let linksGroup = new Adw.PreferencesGroup();
-        let linksBox = new Adw.ActionRow();
-
-        let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/donate-icon.svg', -1, 50, true);
-        let donateImage = Gtk.Picture.new_for_pixbuf(pixbuf);
-        let donateLinkButton = new Gtk.LinkButton({
-            child: donateImage,
-            uri: 'https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Donate+to+support+my+work&currency_code=USD&source=url',
+        //Save/Load Settings----------------------------------------------------------
+        let settingsGroup = new Adw.PreferencesGroup();
+        let settingsRow = new Adw.ActionRow({
+            title: `${PROJECT_TITLE} ${_('Settings')}`,
         });
-
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(Me.path + '/media/gitlab-icon.svg', -1, 50, true);
-        let gitlabImage = Gtk.Picture.new_for_pixbuf(pixbuf);
-        let projectUrl = Me.metadata.url;
-        let projectLinkButton = new Gtk.LinkButton({
-            child: gitlabImage,
-            uri: projectUrl,
+        let loadButton = new Gtk.Button({
+            label: _('Load'),
+            valign: Gtk.Align.CENTER
         });
+        loadButton.connect('clicked', () => {
+            this._showFileChooser(
+                `${_('Load')} ${_('Settings')}`,
+                { action: Gtk.FileChooserAction.OPEN },
+                "_Open",
+                filename => {
+                    if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
+                        let settingsFile = Gio.File.new_for_path(filename);
+                        let [ success_, pid, stdin, stdout, stderr] =
+                            GLib.spawn_async_with_pipes(
+                                null,
+                                ['dconf', 'load', SCHEMA_PATH],
+                                null,
+                                GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                                null
+                            );
 
-        linksBox.add_prefix(projectLinkButton);
-        linksBox.add_suffix(donateLinkButton);
-        linksGroup.add(linksBox);
-        this.add(linksGroup);
+                        stdin = new Gio.UnixOutputStream({ fd: stdin, close_fd: true });
+                        GLib.close(stdout);
+                        GLib.close(stderr);
+
+                        stdin.splice(settingsFile.read(null), Gio.OutputStreamSpliceFlags.CLOSE_SOURCE | Gio.OutputStreamSpliceFlags.CLOSE_TARGET, null);
+                    }
+                }
+            );
+        });
+        let saveButton = new Gtk.Button({
+            label: _('Save'),
+            valign: Gtk.Align.CENTER
+        });
+        saveButton.connect('clicked', () => {
+            this._showFileChooser(
+                `${_('Save')} ${_('Settings')}`,
+                { action: Gtk.FileChooserAction.SAVE},
+                "_Save",
+                filename => {
+                    let file = Gio.file_new_for_path(filename);
+                    let raw = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
+                    let out = Gio.BufferedOutputStream.new_sized(raw, 4096);
+
+                    out.write_all(GLib.spawn_command_line_sync('dconf dump ' + SCHEMA_PATH)[1], null);
+                    out.close(null);
+                }
+            );
+        });
+        settingsRow.add_suffix(saveButton);
+        settingsRow.add_suffix(loadButton);
+        settingsGroup.add(settingsRow);
+        this.add(settingsGroup);
+        //-----------------------------------------------------------------------
 
         let gnuSoftwareGroup = new Adw.PreferencesGroup();
         let gnuSofwareLabel = new Gtk.Label({
@@ -731,6 +790,30 @@ class azTaskbar_AboutPage extends Adw.PreferencesPage {
         gnuSofwareLabelBox.append(gnuSofwareLabel);
         gnuSoftwareGroup.add(gnuSofwareLabelBox);
         this.add(gnuSoftwareGroup);
+    }
+
+    _showFileChooser(title, params, acceptBtn, acceptHandler) {
+        let dialog = new Gtk.FileChooserDialog({
+            title: _(title),
+            transient_for: this.get_root(),
+            modal: true,
+            action: params.action,
+        });
+        dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL);
+        dialog.add_button(acceptBtn, Gtk.ResponseType.ACCEPT);
+
+        dialog.connect("response", (self, response) => {
+            if(response === Gtk.ResponseType.ACCEPT){
+                try {
+                    acceptHandler(dialog.get_file().get_path());
+                } catch(e) {
+                    log('DesktopClock - Filechooser error: ' + e);
+                }
+            }
+            dialog.destroy();
+        });
+
+        dialog.show();
     }
 });
 

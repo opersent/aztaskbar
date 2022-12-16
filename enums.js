@@ -3,10 +3,10 @@ var IndicatorLocation = {
     BOTTOM: 1
 }
 
-var AnimationDirection = {
+var PanelLocation = {
     TOP: 0,
-    BOT: 1,
-};
+    BOTTOM: 1
+}
 
 var AnimationState = {
     NONE: 0,

@@ -16,7 +16,7 @@ const Signals = imports.signals;
 const Theming = Me.imports.theming;
 const Utils = Me.imports.utils;
 
-let settings, appDisplayBox, extensionConnections, panelBoxes;
+let settings, appDisplayBox, extensionConnections, panelBoxes, _workareasChangedId;
 let tracker = Shell.WindowTracker.get_default();
 
 function getDropTarget(box, x){
@@ -41,9 +41,17 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
         this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
-        this._monitor = monitor;
+        this.clip_to_allocation = true;
+
         this._settings = settings;
+        this._monitor = monitor;
         this.showAppsIcon = new ShowAppsIcon(this._settings);
+        this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+        this._appSystem = Shell.AppSystem.get_default();
+        this.appIconsCache = new Map();
+        this.peekInitialWorkspaceIndex = -1;
+
         this.mainBox = new St.BoxLayout({
             x_expand: true,
             y_expand: true,
@@ -52,13 +60,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         });
         this.mainBox._delegate = this;
         this.mainBox.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
-        this.clip_to_allocation = true;
         this.add_actor(this.mainBox);
-        this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
-        this.menuManager = new PopupMenu.PopupMenuManager(this);
-        this._appSystem = Shell.AppSystem.get_default();
-        this.oldAppIcons = new Map();
-        this.peekInitialWorkspaceIndex = -1;
 
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
@@ -92,7 +94,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         const app = newApp.app;
         const appID = `${app.get_id()} - ${monitorIndex}`;
 
-        let item = this.oldAppIcons.get(appID);
+        let item = this.appIconsCache.get(appID);
 
         //If a favorited app is running when extension starts,
         //the corresponding AppIcon may initially be created with isFavorite = false.
@@ -104,13 +106,13 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             return item;
         }
         else if(item && favoriteChanged){
-            this.oldAppIcons.delete(appID);
+            this.appIconsCache.delete(appID);
             item.destroy();
         }
 
-        let appIcon = new AppIcon(this, this.mainBox, app, monitorIndex, positionIndex, isFavorite);
+        let appIcon = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
         appIcon.isSet = true;
-        this.oldAppIcons.set(appID, appIcon);
+        this.appIconsCache.set(appID, appIcon);
         return appIcon;
     }
 
@@ -231,12 +233,12 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _redisplay() {
-        this.oldApps = [];
+        let appIconsOnTaskbar = [];
 
         this.mainBox.get_children().forEach(actor => {
             if(actor instanceof AppIcon){
                 actor.isSet = false;
-                this.oldApps.push({
+                appIconsOnTaskbar.push({
                     monitorIndex: actor.monitorIndex,
                     app: actor.app,
                 });
@@ -250,25 +252,23 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             }
         });
 
-        let isolateMonitors = this._settings.get_boolean('isolate-monitors');
-        let panelsOnAllMonitors = this._settings.get_boolean('panel-on-all-monitors');
+        const isolateMonitors = this._settings.get_boolean('isolate-monitors');
+        const panelsOnAllMonitors = this._settings.get_boolean('panel-on-all-monitors');
+        const monitorsCount = (isolateMonitors && !panelsOnAllMonitors) ? Main.layoutManager.monitors.length : 1;
+        const sortedMonitors = this._sortMonitors();
 
-        let monitorsCount = (isolateMonitors && !panelsOnAllMonitors) ? Main.layoutManager.monitors.length : 1;
-
-        let sortedMonitors = this._sortMonitors();
         let positionIndex = 0;
 
         for(let i = 0; i < monitorsCount; i++){
-            let monitorIndex = panelsOnAllMonitors ? this._monitor.index : sortedMonitors[i].index;
+            const monitorIndex = panelsOnAllMonitors ? this._monitor.index : sortedMonitors[i].index;
 
-            let oldApps = this.oldApps.filter(oldApp => {
-                if(oldApp.monitorIndex === monitorIndex)
-                    return oldApp;
-            })
-            let newApps = [];
+            //Filter out any AppIcons that have moved to a different monitor
+            appIconsOnTaskbar = appIconsOnTaskbar.filter(appIcon => {
+                return appIcon.monitorIndex === monitorIndex;
+            });
 
-            let appFavorites = AppFavorites.getAppFavorites();
-            let favorites = appFavorites.getFavoriteMap();
+            const appFavorites = AppFavorites.getAppFavorites();
+            const favorites = appFavorites.getFavoriteMap();
 
             let showFavorites;
             if(!this._settings.get_boolean('favorites'))
@@ -280,59 +280,63 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                     showFavorites = (isolateMonitors ? i === 0 : true);
             }
 
-            let running = this._getRunningApps();
+            const runningApps = this._getRunningApps();
+            let filteredRunningApps = runningApps.filter(app => Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
-            running = running.filter(app => Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
+            //The list of AppIcons to be shown on the taskbar.
+            let appIconsList = [];
 
             if(showFavorites){
                 let favsArray = appFavorites.getFavorites();
                 for (let i = 0; i < favsArray.length; i++) {
-                    newApps.push({
+                    appIconsList.push({
                         app: favsArray[i],
                         isFavorite: true,
                     });
                 }
             }
 
-            //Search old apps, if running contains an old app, remove from running
-            oldApps.forEach(oldApp => {
-                const app = oldApp.app;
-                const index = running.indexOf(app);
+            //To preserve the order of AppIcons already on the taskbar,
+            //remove any AppIcons already on the taskbar from filteredRunningApps list,
+            //and then push to appIconsList.
+            appIconsOnTaskbar.forEach(appIcon => {
+                const app = appIcon.app;
+                const index = filteredRunningApps.indexOf(app);
                 if (index > -1) {
-                    const [app] = running.splice(index, 1);
+                    const [app] = filteredRunningApps.splice(index, 1);
                     if (!showFavorites || !(app.get_id() in favorites)) {
-                        newApps.push({
+                        appIconsList.push({
                             app,
                             isFavorite: false
                         });
                     }
                 }
-                //if oldApp not found in running apps list,
-                //check if entry exists in this.oldAppIcons
+                //if AppIcon not found in filteredRunningApps apps list,
+                //check if entry exists in this.appIconsCache
                 //if it does, it's no longer needed - destroy it
                 else if(!showFavorites || !(app.get_id() in favorites)){
                     const appID = `${app.get_id()} - ${monitorIndex}`;
-                    let item = this.oldAppIcons.get(appID);
+                    let item = this.appIconsCache.get(appID);
                     if(item){
-                        this.oldAppIcons.delete(appID);
+                        this.appIconsCache.delete(appID);
                         item.destroy();
                     }
                 }
             });
 
-            //add the new apps
-            running.forEach(app => {
+            //Add any remaining running apps to appIconsList
+            filteredRunningApps.forEach(app => {
                 if (!showFavorites || !(app.get_id() in favorites)) {
-                    newApps.push({
+                    appIconsList.push({
                         app,
                         isFavorite: false
                     });
                 }
             });
 
-            if(newApps.length > 0){
-                newApps.forEach(newApp => {
-                    let item = this._createAppItem(newApp, monitorIndex, positionIndex);
+            if(appIconsList.length > 0){
+                appIconsList.forEach(appIcon => {
+                    let item = this._createAppItem(appIcon, monitorIndex, positionIndex);
                     const parent = item.get_parent();
 
                     if(parent && item.positionIndex !== positionIndex){
@@ -354,12 +358,12 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             }
         }
 
-        this.oldAppIcons.forEach((appIcon, appID) => {
+        this.appIconsCache.forEach((appIcon, appID) => {
             if(appIcon.isSet){
                 appIcon.updateAppIcon();
             }
             else{
-                this.oldAppIcons.delete(appID);
+                this.appIconsCache.delete(appID);
                 appIcon.destroy();
             }
         });
@@ -419,7 +423,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     updateIcon(){
-        this.oldAppIcons.forEach((appIcon, appID) => {
+        this.appIconsCache.forEach((appIcon, appID) => {
             if(appIcon.isSet){
                 appIcon.updateIcon();
             }
@@ -427,7 +431,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _updateIconGeometry(){
-        this.oldAppIcons.forEach((appIcon, appID) => {
+        this.appIconsCache.forEach((appIcon, appID) => {
             if(appIcon.isSet){
                 appIcon.updateIconGeometry();
             }
@@ -466,12 +470,12 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         this._connections = null;
         this.showAppsIcon.destroy();
-        this.oldAppIcons.forEach((appIcon, appID) => {
+        this.appIconsCache.forEach((appIcon, appID) => {
             appIcon.stopAllAnimations();
             appIcon.destroy();
-            this.oldAppIcons.delete(appID);
+            this.appIconsCache.delete(appID);
         });
-        this.oldAppIcons = null;
+        this.appIconsCache = null;
     }
 });
 
@@ -493,11 +497,19 @@ class azTaskbar_PanelBox extends St.BoxLayout {
             trackFullscreen: true,
         });
         this.connect('notify::allocation',
-            this._panelBoxChanged.bind(this));
+            this.setSizeAndPosition.bind(this));
     }
 
-    _panelBoxChanged() {
-        this.set_position(this.monitor.x, this.monitor.y);
+    setSizeAndPosition() {
+        const panelLocation = settings.get_enum('panel-location');
+        if(panelLocation === Enums.PanelLocation.TOP){
+            this.set_position(this.monitor.x, this.monitor.y);
+            this.set_size(this.monitor.width, -1);
+            return;
+        }
+        let bottomX = this.monitor.x;
+        let bottomY = this.monitor.y + this.monitor.height - this.height;
+        this.set_position(bottomX, bottomY);
         this.set_size(this.monitor.width, -1);
     }
 
@@ -519,6 +531,10 @@ function enable() {
     extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppDisplayBoxToPanel()), settings);
     extensionConnections.set(settings.connect('changed::position-offset', () => addAppDisplayBoxToPanel()), settings);
     extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => resetPanels()), settings);
+    extensionConnections.set(settings.connect('changed::panel-location', () => {
+        setPanelsLocation();
+        Theming.updateStylesheet(settings);
+    }), settings);
     extensionConnections.set(settings.connect('changed::isolate-monitors', () => resetPanels()), settings);
     extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
     extensionConnections.set(Main.layoutManager.connect('monitors-changed', () => resetPanels()), Main.layoutManager);
@@ -527,9 +543,18 @@ function enable() {
     Main.panel.add_style_class_name("azTaskbar-panel");
 
     createPanels();
+    setPanelsLocation();
 }
 
 function disable() {
+    if (_workareasChangedId) {
+        global.display.disconnect(_workareasChangedId);
+        _workareasChangedId = null;
+    }
+    const mainMonitor = Main.layoutManager.primaryMonitor;
+    Main.layoutManager.panelBox.set_position(mainMonitor.x, mainMonitor.y);
+    Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
+
     if (!Main.overview.visible && !Main.sessionMode.isLocked)
         Main.panel.statusArea.appMenu.container.show();
 
@@ -587,6 +612,37 @@ function deletePanels(){
         panelBox.destroy();
     });
     panelBoxes = null;
+}
+
+function setPanelsLocation(){
+    const panelLocation = settings.get_enum('panel-location');
+
+    const mainPanelBox = Main.layoutManager.panelBox;
+    const mainMonitor = Main.layoutManager.primaryMonitor;
+
+    panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
+
+    if(panelLocation === Enums.PanelLocation.TOP){
+        if (_workareasChangedId) {
+            global.display.disconnect(_workareasChangedId);
+            _workareasChangedId = null;
+        }
+        mainPanelBox.set_position(mainMonitor.x, mainMonitor.y);
+        Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
+        return;
+    }
+
+    let bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+    mainPanelBox.set_position(mainMonitor.x, bottomY);
+    Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+
+    if (!_workareasChangedId) {
+        _workareasChangedId = global.display.connect('workareas-changed', () => {
+            let bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+            mainPanelBox.set_position(mainMonitor.x, bottomY);
+            Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+        });
+    }
 }
 
 function addAppDisplayBoxToPanel(){

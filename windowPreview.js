@@ -279,7 +279,7 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         let label = new St.Label({
             text: workSpaceIndexText + window.get_title(),
-            style: 'font-size: 10pt; font-weight: bolder;'
+            style: 'font-size: smaller; font-weight: bolder;'
         });
         let labelBin = new St.Bin({ child: label,
             x_align: Clutter.ActorAlign.START,

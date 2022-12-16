@@ -1,5 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const {Gio, GLib, St} = imports.gi;
+const Enums = Me.imports.enums;
 
 function getStylesheetFile(){
     try {
@@ -38,15 +39,26 @@ function updateStylesheet(settings){
     }
 
     let [overridePanelHeight, panelHeight] = settings.get_value('main-panel-height').deep_unpack();
+    const panelLocation = settings.get_enum('panel-location');
 
-    if(!overridePanelHeight){
-        unloadStylesheet();
-        return;
+    let customStylesheetCSS = '';
+    
+    if(overridePanelHeight){
+        customStylesheetCSS += `.azTaskbar-panel{
+            height: ${panelHeight}px;
+        }`;
+
+        if(panelLocation === Enums.PanelLocation.BOTTOM){
+            customStylesheetCSS += `.azTaskbar-bottom-panel #overview{
+                margin-bottom: ${panelHeight}px;
+            }`;
+        }
     }
-
-    let customStylesheetCSS = `.azTaskbar-panel{
-                                    height: ${panelHeight}px;
-                                }`;
+    else{
+        customStylesheetCSS += `.azTaskbar-bottom-panel #overview{
+            margin-bottom: 24px;
+        }`;
+    }
 
     try{
         let bytes = new GLib.Bytes(customStylesheetCSS);

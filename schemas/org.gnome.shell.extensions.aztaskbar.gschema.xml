@@ -4,7 +4,7 @@
         <value value='0' nick='TOP'/>
         <value value='1' nick='BOTTOM'/>
     </enum>
-    <enum id='org.gnome.shell.extensions.aztaskbar.animation-direction'>
+    <enum id='org.gnome.shell.extensions.aztaskbar.panel-location'>
         <value value='0' nick='TOP'/>
         <value value='1' nick='BOTTOM'/>
     </enum>
@@ -41,6 +41,11 @@
             <default>true</default>
             <summary>Show a panel on all monitors</summary>
             <description>Show a panel on all monitors.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.panel-location" name="panel-location">
+            <default>'TOP'</default>
+            <summary>Panel location. TOP or BOTTOM</summary>
+            <description>Panel location. TOP or BOTTOM.</description>
         </key>
         <key type="b" name="isolate-monitors">
             <default>true</default>
@@ -101,11 +106,6 @@
             <default>'TOP'</default>
             <summary>AppIcon indicator location. TOP or BOTTOM</summary>
             <description>AppIcon indicator location. TOP or BOTTOM.</description>
-        </key>
-          <key enum="org.gnome.shell.extensions.aztaskbar.animation-direction" name="animation-direction">
-            <default>'TOP'</default>
-            <summary>Animation direction. TOP or BOTTOM</summary>
-            <description>Animation direction. TOP or BOTTOM </description>
         </key>
         <key type="s" name="indicator-color-running">
             <default>'rgb(204, 204, 204)'</default>

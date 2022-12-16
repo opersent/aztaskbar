@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-09-21 13:54-0400\n"
+"POT-Creation-Date: 2022-12-16 08:03-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,266 +17,286 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: prefs.js:8
-msgid "App Icons Taskbar"
+#: appIcon.js:218
+msgid "Show Applications"
 msgstr ""
 
 #: prefs.js:9
+msgid "App Icons Taskbar"
+msgstr ""
+
+#: prefs.js:10
 msgid "Show running apps and favorites on the main panel"
 msgstr ""
 
-#: prefs.js:16
+#: prefs.js:18 prefs.js:722 prefs.js:730 prefs.js:760
 msgid "Settings"
 msgstr ""
 
-#: prefs.js:24
+#: prefs.js:26
 msgid "General"
 msgstr ""
 
-#: prefs.js:29 prefs.js:80
+#: prefs.js:31 prefs.js:82
 msgid "Left"
 msgstr ""
 
-#: prefs.js:30
+#: prefs.js:32
 msgid "Center"
 msgstr ""
 
-#: prefs.js:31 prefs.js:81
+#: prefs.js:33 prefs.js:83
 msgid "Right"
 msgstr ""
 
-#: prefs.js:33
+#: prefs.js:35
 msgid "Position in Panel"
 msgstr ""
 
-#: prefs.js:56
+#: prefs.js:58
 msgid "Position Offset"
 msgstr ""
 
-#: prefs.js:57
+#: prefs.js:59
 msgid "Offset the position within the above selected box"
 msgstr ""
 
-#: prefs.js:89
+#: prefs.js:91
 msgid "Show Apps Button"
 msgstr ""
 
-#: prefs.js:106
+#: prefs.js:108
 msgid "Show Focused Window Title"
 msgstr ""
 
-#: prefs.js:120
+#: prefs.js:122
 msgid "Favorites"
 msgstr ""
 
-#: prefs.js:134
+#: prefs.js:136
 msgid "Isolate Workspaces"
 msgstr ""
 
-#: prefs.js:148
+#: prefs.js:150
 msgid "Isolate Monitors"
 msgstr ""
 
-#: prefs.js:159
+#: prefs.js:161
 msgid "Panel"
 msgstr ""
 
-#: prefs.js:167
-msgid "Show Panels on All Monitors"
-msgstr ""
-
-#: prefs.js:209
-msgid "Panel Height"
-msgstr ""
-
-#: prefs.js:223
-msgid "App Icons"
-msgstr ""
-
-#: prefs.js:241
-msgid "Icon Size"
-msgstr ""
-
-#: prefs.js:261
-msgid "Icon Desaturate Factor"
-msgstr ""
-
-#: prefs.js:268
-msgid "Regular"
-msgstr ""
-
-#: prefs.js:269
-msgid "Symbolic"
-msgstr ""
-
-#: prefs.js:271
-msgid "Icon Style"
-msgstr ""
-
-#: prefs.js:272
-msgid "Icon themes may not have a symbolic icon for every app"
-msgstr ""
-
-#: prefs.js:282 prefs.js:287
-msgid "Indicator"
-msgstr ""
-
-#: prefs.js:288
-msgid "Multi-Dashes"
-msgstr ""
-
-#: prefs.js:290
-msgid "Multi-Window Indicator Style"
-msgstr ""
-
-#: prefs.js:300
+#: prefs.js:166 prefs.js:315
 msgid "Top"
 msgstr ""
 
-#: prefs.js:301
+#: prefs.js:167 prefs.js:316
 msgid "Bottom"
 msgstr ""
 
+#: prefs.js:169
+msgid "Panel Location"
+msgstr ""
+
+#: prefs.js:182
+msgid "Show Panels on All Monitors"
+msgstr ""
+
+#: prefs.js:224
+msgid "Panel Height"
+msgstr ""
+
+#: prefs.js:238
+msgid "App Icons"
+msgstr ""
+
+#: prefs.js:256
+msgid "Icon Size"
+msgstr ""
+
+#: prefs.js:276
+msgid "Icon Desaturate Factor"
+msgstr ""
+
+#: prefs.js:283
+msgid "Regular"
+msgstr ""
+
+#: prefs.js:284
+msgid "Symbolic"
+msgstr ""
+
+#: prefs.js:286
+msgid "Icon Style"
+msgstr ""
+
+#: prefs.js:287
+msgid "Icon themes may not have a symbolic icon for every app"
+msgstr ""
+
+#: prefs.js:297 prefs.js:302
+msgid "Indicator"
+msgstr ""
+
 #: prefs.js:303
+msgid "Multi-Dashes"
+msgstr ""
+
+#: prefs.js:305
+msgid "Multi-Window Indicator Style"
+msgstr ""
+
+#: prefs.js:318
 msgid "Indicator Location"
 msgstr ""
 
-#: prefs.js:324
+#: prefs.js:339
 msgid "Running Indicator Color"
 msgstr ""
 
-#: prefs.js:343
+#: prefs.js:358
 msgid "Focused Indicator Color"
 msgstr ""
 
-#: prefs.js:355
+#: prefs.js:370
 msgid "Actions"
 msgstr ""
 
-#: prefs.js:362
+#: prefs.js:377
 msgid "Click Actions"
 msgstr ""
 
-#: prefs.js:367
+#: prefs.js:382
 msgid "Toggle / Cycle"
 msgstr ""
 
-#: prefs.js:368
+#: prefs.js:383
 msgid "Toggle / Cycle + Minimize"
 msgstr ""
 
-#: prefs.js:369
+#: prefs.js:384
 msgid "Toggle / Preview"
 msgstr ""
 
-#: prefs.js:370
+#: prefs.js:385
 msgid "Cycle"
 msgstr ""
 
-#: prefs.js:377
+#: prefs.js:392
 msgid "Left Click"
 msgstr ""
 
-#: prefs.js:378
+#: prefs.js:393
 msgid "Modify Left Click Action of Running App Icons"
 msgstr ""
 
-#: prefs.js:388
+#: prefs.js:403
 msgid "Scroll Actions"
 msgstr ""
 
-#: prefs.js:393
+#: prefs.js:408
 msgid "Cycle Windows"
 msgstr ""
 
-#: prefs.js:394
+#: prefs.js:409
 msgid "No Action"
 msgstr ""
 
-#: prefs.js:396
+#: prefs.js:411
 msgid "Scroll Action"
 msgstr ""
 
-#: prefs.js:406
+#: prefs.js:421
 msgid "Hover Actions"
 msgstr ""
 
-#: prefs.js:414
+#: prefs.js:429
 msgid "Tool-Tips"
 msgstr ""
 
-#: prefs.js:436 prefs.js:468
+#: prefs.js:451 prefs.js:483
 msgid "Window Previews"
 msgstr ""
 
-#: prefs.js:455
+#: prefs.js:470
 msgid "Window Preview Options"
 msgstr ""
 
-#: prefs.js:486
+#: prefs.js:501
 msgid "Show Window Previews Delay"
 msgstr ""
 
-#: prefs.js:487
+#: prefs.js:502
 msgid "Time in ms to show the window preview"
 msgstr ""
 
-#: prefs.js:507
+#: prefs.js:522
 msgid "Hide Window Previews Delay"
 msgstr ""
 
-#: prefs.js:508
+#: prefs.js:523
 msgid "Time in ms to hide the window preview"
 msgstr ""
 
-#: prefs.js:515 prefs.js:523
+#: prefs.js:530 prefs.js:538
 msgid "Window Peeking"
 msgstr ""
 
-#: prefs.js:524
+#: prefs.js:539
 msgid "Hovering a window preview will focus desired window"
 msgstr ""
 
-#: prefs.js:548
+#: prefs.js:563
 msgid "Window Peeking Delay"
 msgstr ""
 
-#: prefs.js:549
+#: prefs.js:564
 msgid "Time in ms to trigger window peek"
 msgstr ""
 
-#: prefs.js:569
+#: prefs.js:584
 msgid "Window Peeking Opacity"
 msgstr ""
 
-#: prefs.js:570
+#: prefs.js:585
 msgid "Opacity of non-focused windows during a window peek"
 msgstr ""
 
-#: prefs.js:582
+#: prefs.js:597
 msgid "About"
 msgstr ""
 
-#: prefs.js:626
+#: prefs.js:640
 msgid "Version"
 msgstr ""
 
-#: prefs.js:635
+#: prefs.js:650
 msgid "Git Commit"
 msgstr ""
 
-#: prefs.js:644
+#: prefs.js:660
 msgid "GNOME Version"
 msgstr ""
 
-#: prefs.js:652
-msgid "OS"
+#: prefs.js:669
+msgid "OS Name"
 msgstr ""
 
-#: prefs.js:674
-msgid "Session Type"
+#: prefs.js:682
+msgid "Windowing System"
 msgstr ""
 
-#: appIcon.js:206
-msgid "Show Applications"
+#: prefs.js:697
+msgid "GitLab"
+msgstr ""
+
+#: prefs.js:710
+msgid "Donate via PayPal"
+msgstr ""
+
+#: prefs.js:725 prefs.js:730
+msgid "Load"
+msgstr ""
+
+#: prefs.js:755 prefs.js:760
+msgid "Save"
 msgstr ""

@@ -13,6 +13,8 @@ const Utils = Me.imports.utils;
 const { WindowPreviewMenu } = Me.imports.windowPreview;
 
 const MAX_MULTI_WINDOW_DASHES = 3;
+const TRANSLATION_UP = 3;
+const TRANSLATION_DOWN = -3;
 
 var BaseButton = GObject.registerClass(
 class azTaskbar_BaseButton extends St.Button {
@@ -88,9 +90,11 @@ class azTaskbar_BaseButton extends St.Button {
         else
             this._box.remove_style_class_name('pressed');
 
-        let icon = this._iconBin.get_child();
+        const icon = this._iconBin.get_child();
+        if(!icon)
+            return;
 
-        icon?.ease({
+        icon.ease({
             duration: 150,
             scale_x: this.pressed ? .85 : 1,
             scale_y: this.pressed ? .85 : 1,
@@ -181,23 +185,22 @@ class azTaskbar_BaseButton extends St.Button {
         if(!St.Settings.get().enable_animations)
             return;
 
-        let icon = this._iconBin.get_child();
+        const icon = this._iconBin.get_child();
+        if(!icon)
+            return;
 
-        // Default value (AnimationDirection.TOP)
-        let translationY = isMinimized ? -3 : 3;
+        let translationY = isMinimized ? TRANSLATION_DOWN : TRANSLATION_UP;
 
-         //get the value of your new setting
-         //if the setting is for a bottom panel, invert the translationY value
-         const animationDirectionSetting = this._settings.get_enum("animation-direction");
-          if (animationDirectionSetting === Enums.AnimationDirection.BOT)
-              translationY *= -1;
+        const panelLocation = this._settings.get_enum('panel-location');
+        if(panelLocation === Enums.PanelLocation.BOTTOM)
+            translationY *= -1;
 
-        icon?.ease({
+        icon.ease({
             duration: 150,
             translation_y: translationY,
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: () => {
-                icon?.ease({
+                icon.ease({
                     translation_y: 0,
                     duration: 150,
                     mode: Clutter.AnimationMode.EASE_IN_QUAD,
@@ -259,25 +262,28 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
 
 var AppIcon = GObject.registerClass(
 class azTaskbar_AppIcon extends BaseButton {
-    _init(appDisplayBox, mainBox, app, monitorIndex, positionIndex, isFavorite) {
+    _init(appDisplayBox, app, monitorIndex, positionIndex, isFavorite) {
         super._init(appDisplayBox._settings);
 
         this.appDisplayBox = appDisplayBox;
-        this.mainBox = mainBox;
+        this.mainBox = appDisplayBox.mainBox;
         this.app = app;
         this.menuManager = appDisplayBox.menuManager;
         this.monitorIndex = monitorIndex;
         this.positionIndex = positionIndex;
         this.isFavorite = isFavorite;
+
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
         this._indicatorColor = 'transparent';
         this._desiredIndicatorWidth = 1;
         this._startIndicatorWidth = 0;
+        this._animateIndicatorsComplete = true;
+
         this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
         this._dragBeginId = this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
         this._dragCancelledId = this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
         this._dragEndId = this._draggable.connect('drag-end', this._onDragEnd.bind(this));
-        this._animateIndicatorsComplete = true;
+
         this._runningIndicator = new AppIconIndicator(this);
         this._overlayGroup.add_actor(this._runningIndicator);
 
