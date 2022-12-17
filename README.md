@@ -56,4 +56,6 @@ Created by **@[AndyC](https://gitlab.com/LinxGem33)** and licensed under [CC BY-
 
 **@[daPhipz](https://gitlab.com/daPhipz), @[Etamuk](https://gitlab.com/Etamuk) - German** | **@[Vistaus](https://gitlab.com/Vistaus) - Dutch** | **@[celeri](https://gitlab.com/celestomm) - French** | **@[Martin Torres](https://gitlab.com/martttin) - Spanish**
 
+**@[Ser82-png ](https://gitlab.com/Ser82-png) - Russian**
+
 -----
