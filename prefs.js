@@ -1,7 +1,7 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-const {Adw, Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk} = imports.gi;
+const {Adw, Gdk, Gio, GLib, GObject, Gtk} = imports.gi;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
@@ -687,30 +687,10 @@ class extends Adw.PreferencesPage {
         }));
         infoGroup.add(sessionTypeRow);
 
-        let gitlabButton = new Gtk.LinkButton({
-            child: new Gtk.Image({
-                      icon_name: 'adw-external-link-symbolic'
-                   }),
-            uri: Me.metadata.url
-        });
-        let gitlabRow = new Adw.ActionRow({
-            title: `${PROJECT_TITLE} ${_('GitLab')}`,
-            activatable_widget: gitlabButton,
-        });
-        gitlabRow.add_suffix(gitlabButton);
+        let gitlabRow = this._createLinkRow(`${PROJECT_TITLE} ${_('GitLab')}`, Me.metadata.url);
         infoGroup.add(gitlabRow);
 
-        let donateButton = new Gtk.LinkButton({
-            child: new Gtk.Image({
-                      icon_name: 'adw-external-link-symbolic'
-                   }),
-            uri: PAYPAL_LINK,
-        });
-        let donateRow = new Adw.ActionRow({
-            title: _('Donate via PayPal'),
-            activatable_widget: donateButton,
-        });
-        donateRow.add_suffix(donateButton);
+        let donateRow = this._createLinkRow(_('Donate via PayPal'), PAYPAL_LINK);
         infoGroup.add(donateRow);
 
         this.add(infoGroup);
@@ -790,6 +770,23 @@ class extends Adw.PreferencesPage {
         gnuSofwareLabelBox.append(gnuSofwareLabel);
         gnuSoftwareGroup.add(gnuSofwareLabelBox);
         this.add(gnuSoftwareGroup);
+    }
+
+    _createLinkRow(title, uri){
+        let image = new Gtk.Image({
+            icon_name: 'adw-external-link-symbolic',
+            valign: Gtk.Align.CENTER
+        });
+        let linkRow = new Adw.ActionRow({
+            title: _(title),
+            activatable: true,
+        });
+        linkRow.connect('activated', () => {
+            Gtk.show_uri(this.get_root(), uri, Gdk.CURRENT_TIME);
+        });
+        linkRow.add_suffix(image);
+
+        return linkRow;
     }
 
     _showFileChooser(title, params, acceptBtn, acceptHandler) {
