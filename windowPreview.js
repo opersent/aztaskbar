@@ -13,7 +13,7 @@
  * New code and modifications implemented to better suit this extensions needs.
  */
 
-const { Clutter, GLib, GObject, St } = imports.gi;
+const { Clutter, GLib, GObject, Meta, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -30,6 +30,7 @@ const PREVIEW_ITEM_WIDTH = 255;
 const PREVIEW_ITEM_HEIGHT = 190;
 
 const PREVIEW_ANIMATION_DURATION = 250;
+const MAX_PREVIEW_GENERATION_ATTEMPTS = 15;
 
 const PREVIEW_ICON_SIZE = 22;
 
@@ -235,7 +236,6 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._windowAddedId = 0;
         this._settings = ExtensionUtils.getSettings();
         this._source = source.appDisplayBox;
-        [this._width, this._height] = this._getWindowPreviewSize(); // This gets the actual windows size for the preview
 
         //hard set the width and height for consistancy across all window previews
         this.style = `width: ${PREVIEW_ITEM_WIDTH}px; height: ${PREVIEW_ITEM_HEIGHT}px;`
@@ -245,12 +245,13 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
 
         this._cloneBin = new St.Bin({
             style_class: 'azTaskbar-window-preview',
-            style: `width: ${this._width}px; height: ${this._height}px;`,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             x_expand: true
         });
+
+        this._updateWindowPreviewSize();
 
         this.closeButton = new St.Button({
             style_class: 'window-close azTaskbar-window-preview-close-button',
@@ -321,14 +322,17 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
     }
 
     _getWindowPreviewSize() {
+        const emptySize = [0, 0];
+
         let mutterWindow = this._window.get_compositor_private();
+
+        if (!mutterWindow?.get_texture())
+            return emptySize;
 
         let [width, height] = mutterWindow.get_size();
 
-        // a simple example with 1680x1050:
-        // * 250/1680 = 0,1488
-        // * 150/1050 = 0,1429
-        // => scale is 0,1429
+        if (!width || !height)
+            return emptySize;
 
         let scale = Math.min(1.0, PREVIEW_MAX_WIDTH / width, PREVIEW_MAX_HEIGHT / height);
 
@@ -336,28 +340,35 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         return [width * scale, height * scale];
     }
 
-    _cloneTexture(metaWin){
-        let mutterWindow = metaWin.get_compositor_private();
+    _updateWindowPreviewSize() {
+        // This gets the actual windows size for the preview
+        [this._width, this._height] = this._getWindowPreviewSize();
+        this._cloneBin.style = `width: ${this._width}px; height: ${this._height}px;`;
+    }
 
-        // Newly-created windows are added to a workspace before
-        // the compositor finds out about them...
-        // Moreover sometimes they return an empty texture, thus as a workaround also check for it size
-        if (!mutterWindow || !mutterWindow.get_texture() || !mutterWindow.get_size()[0]) {
-            this._cloneTextureId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+    _cloneTexture(metaWin){
+        if (!this._width || !this._height) {
+            this._cloneTextureLater = Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
                 // Check if there's still a point in getting the texture,
                 // otherwise this could go on indefinitely
-                if (metaWin.get_workspace())
+                this._updateWindowPreviewSize();
+
+                if (this._width && this._height) {
                     this._cloneTexture(metaWin);
-                this._cloneTextureId = 0;
+                } else {
+                    this._cloneAttempt = (this._cloneAttempt || 0) + 1;
+                    if (this._cloneAttempt < MAX_PREVIEW_GENERATION_ATTEMPTS)
+                        return GLib.SOURCE_CONTINUE;
+                }
+                delete this._cloneTextureLater;
                 return GLib.SOURCE_REMOVE;
             });
-            GLib.Source.set_name_by_id(this._cloneTextureId, '[azTaskbar] this._cloneTexture');
             return;
         }
 
-        let clone = new Clutter.Clone ({
-            source: mutterWindow,
-        });
+        const mutterWindow = metaWin.get_compositor_private();
+        let clone = new Clutter.Clone ({ source: mutterWindow,
+                                         reactive: true });
 
         // when the source actor is destroyed, i.e. the window closed, first destroy the clone
         // and then destroy the menu item (do this animating out)
@@ -425,11 +436,11 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             // use an idle handler to avoid mapping problems -
             // see comment in Workspace._windowAdded
             let activationEvent = Clutter.get_current_event();
-            let id = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            this._windowAddedLater = Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
+                delete this._windowAddedLater;
                 this.emit('activate', activationEvent);
                 return GLib.SOURCE_REMOVE;
             });
-            GLib.Source.set_name_by_id(id, '[azTaskbar] this.emit');
         }
     }
 
@@ -672,9 +683,14 @@ class azTaskbar_WindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
             this.activateTimeoutId = 0;
         }
 
-        if (this._cloneTextureId > 0) {
-            GLib.source_remove(this._cloneTextureId);
-            this._cloneTextureId = 0;
+        if (this._cloneTextureLater) {
+            Meta.later_remove(this._cloneTextureLater);
+            delete this._cloneTextureLater;
+        }
+
+        if (this._windowAddedLater) {
+            Meta.later_remove(this._windowAddedLater);
+            delete this._windowAddedLater;
         }
 
         if (this._windowAddedId > 0) {

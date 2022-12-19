@@ -37,7 +37,8 @@ var AppDisplayBox = GObject.registerClass(
 class azTaskbar_AppDisplayBox extends St.ScrollView {
     _init(settings, monitor) {
         super._init({
-            style_class: 'hfade'
+            style_class: 'hfade',
+            enable_mouse_scrolling: false
         });
         this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
