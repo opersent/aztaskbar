@@ -804,7 +804,7 @@ class extends Adw.PreferencesPage {
                 try {
                     acceptHandler(dialog.get_file().get_path());
                 } catch(e) {
-                    log('DesktopClock - Filechooser error: ' + e);
+                    log('AppsIconTaskbar - Filechooser error: ' + e);
                 }
             }
             dialog.destroy();
