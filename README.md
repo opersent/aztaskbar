@@ -38,6 +38,7 @@ Additional credits:
 * Large parts of the window preview feature copied from Dash to Dock extension and modified for this extensions needs.
 * AppIcon mouse scroll cycle window logic borrowed from Dash to Panel (https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430)
 * Window peeking feature based on code from Dash to Panel
+* Panel Location feature based on code from Just Perfection extension
 
 -----
 
