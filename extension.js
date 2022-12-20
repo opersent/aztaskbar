@@ -615,6 +615,7 @@ function deletePanels(){
     panelBoxes = null;
 }
 
+//Based on code from Just Perfection extension
 function setPanelsLocation(){
     const panelLocation = settings.get_enum('panel-location');
 
