@@ -53,6 +53,7 @@ var Panel = GObject.registerClass(
             this._setPanelMenu('quickSettings', imports.ui.panel.QuickSettings, this._rightBox);
 
         this._setPanelMenu('dateMenu', imports.ui.dateMenu.DateMenuButton, this._centerBox);
+        this._setPanelMenu('appMenu', imports.ui.panel.AppMenuButton, this._leftBox);
         this._setPanelMenu('activities', imports.ui.panel.ActivitiesButton, this._leftBox);
     }
 
@@ -263,7 +264,7 @@ var Panel = GObject.registerClass(
         Me.persistentStorage[propName] = Me.persistentStorage[propName] || [];
 
         if (!Me.persistentStorage[propName].length) {
-            Me.persistentStorage[propName].push(new constr());
+            Me.persistentStorage[propName].push(new constr(this));
         }
 
         return Me.persistentStorage[propName].pop();
@@ -276,6 +277,7 @@ var Panel = GObject.registerClass(
             this._removePanelMenu('quickSettings');
 
         this._removePanelMenu('activities');
+        this._removePanelMenu('appMenu');
         this._removePanelMenu('dateMenu');
     }
 

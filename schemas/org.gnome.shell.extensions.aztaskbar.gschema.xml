@@ -57,6 +57,26 @@
             <summary>Change the height of GNOME top panel</summary>
             <description>Change the height of GNOME top panel.</description>
         </key>
+        <key type="b" name="show-panel-appmenu-button">
+            <default>false</default>
+            <summary>Show/Hide the app menu button in panel</summary>
+            <description>Show/Hide  the app menu button in panel.</description>
+        </key>
+        <key type="b" name="show-panel-activities-button">
+            <default>true</default>
+            <summary>Show/Hide the activities button in panel</summary>
+            <description>Show/Hide  the activities button in panel.</description>
+        </key>
+        <key type="b" name="show-running-apps">
+            <default>true</default>
+            <summary>Show/Hide running apps icons</summary>
+            <description>Show/Hide running apps icons.</description>
+        </key>
+        <key type="b" name="favorites">
+            <default>true</default>
+            <summary>Show GNOME favorites as AppIcons</summary>
+            <description>Show GNOME favorites as AppIcons.</description>
+        </key>
         <key type="(bi)" name="show-apps-button">
             <default>(false, 0)</default>
             <summary>Enable a Show Apps Button. 0 = left, 1 = right</summary>
@@ -116,11 +136,6 @@
             <default>'rgb(53, 132, 228)'</default>
             <summary>AppIcon focused indicator color</summary>
             <description>AppIcon focused indicator color.</description>
-        </key>
-        <key type="b" name="favorites">
-            <default>true</default>
-            <summary>Show GNOME favorites as AppIcons</summary>
-            <description>Show GNOME favorites as AppIcons.</description>
         </key>
         <key type="b" name="tool-tips">
             <default>true</default>

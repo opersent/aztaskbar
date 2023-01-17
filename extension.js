@@ -63,8 +63,20 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.mainBox.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this.add_actor(this.mainBox);
 
+        this._setConnections();
+        //If appDisplayBox position is moved in the main panel, updateIconGeometry
+        this.connect("notify::position", () => this._updateIconGeometry());
+        this.connect("destroy", () => this._destroy());
+        this._connectWorkspaceSignals();
+    }
+
+    _setConnections(){
+        this._disconnectWorkspaceSignals();
+        this._clearConnections();
         this._connections = new Map();
+
         this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::show-running-apps', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
         this._connections.set(this._settings.connect('changed::show-apps-button', () => this._queueRedisplay()), this._settings);
         this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
@@ -83,11 +95,18 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(global.display.connect('window-marked-urgent', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-demands-attention', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(Main.layoutManager.connect('startup-complete', this._queueRedisplay.bind(this)), Main.layoutManager);
+    }
 
-        //If appDisplayBox position is moved in the main panel, updateIconGeometry
-        this.connect("notify::position", () => this._updateIconGeometry());
-        this.connect("destroy", () => this._destroy());
-        this._connectWorkspaceSignals();
+    _clearConnections(){
+        if(!this._connections)
+            return;
+
+        this._connections.forEach((object, id) => {
+            object.disconnect(id);
+            id = null;
+        });
+
+        this._connections = null;
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex){
@@ -257,6 +276,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         const panelsOnAllMonitors = this._settings.get_boolean('panel-on-all-monitors');
         const monitorsCount = (isolateMonitors && !panelsOnAllMonitors) ? Main.layoutManager.monitors.length : 1;
         const sortedMonitors = this._sortMonitors();
+        const showRunningApps = this._settings.get_boolean('show-running-apps');
 
         let positionIndex = 0;
 
@@ -281,7 +301,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                     showFavorites = (isolateMonitors ? i === 0 : true);
             }
 
-            const runningApps = this._getRunningApps();
+            const runningApps = showRunningApps ? this._getRunningApps() : [];
             let filteredRunningApps = runningApps.filter(app => Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
             //The list of AppIcons to be shown on the taskbar.
@@ -464,12 +484,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._disconnectWorkspaceSignals();
         this.removeWindowPreviewCloseTimeout();
 
-        this._connections.forEach((object, id) => {
-            object.disconnect(id);
-            id = null;
-        });
-
-        this._connections = null;
+        this._clearConnections();
         this.showAppsIcon.destroy();
         this.appIconsCache.forEach((appIcon, appID) => {
             appIcon.stopAllAnimations();
@@ -537,14 +552,32 @@ function enable() {
         Theming.updateStylesheet(settings);
     }), settings);
     extensionConnections.set(settings.connect('changed::isolate-monitors', () => resetPanels()), settings);
+    
+    extensionConnections.set(settings.connect('changed::show-panel-activities-button', () => setPanelMenuButtonsVisibility()), settings);
+    extensionConnections.set(settings.connect('changed::show-panel-appmenu-button', () => setPanelMenuButtonsVisibility()), settings);
+
     extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
     extensionConnections.set(Main.layoutManager.connect('monitors-changed', () => resetPanels()), Main.layoutManager);
 
-    Main.panel.statusArea.appMenu.container.hide();
     Main.panel.add_style_class_name("azTaskbar-panel");
 
     createPanels();
     setPanelsLocation();
+    setPanelMenuButtonsVisibility();
+}
+
+function setPanelMenuButtonsVisibility(){
+    const showAppMenuButton = settings.get_boolean('show-panel-appmenu-button');
+    const showActivitiesButton = settings.get_boolean('show-panel-activities-button');
+
+    Main.panel.statusArea.appMenu.container.visible = showAppMenuButton;
+    Main.panel.statusArea.activities.container.visible = showActivitiesButton;
+
+    panelBoxes.forEach(panelBox => {
+        panelBox.panel.statusArea.appMenu.container.visible = showAppMenuButton;
+        panelBox.panel.statusArea.activities.container.visible = showActivitiesButton;
+    });
+
 }
 
 function disable() {
@@ -558,6 +591,9 @@ function disable() {
 
     if (!Main.overview.visible && !Main.sessionMode.isLocked)
         Main.panel.statusArea.appMenu.container.show();
+
+    if(!Main.sessionMode.isLocked)
+        Main.panel.statusArea.activities.container.show();
 
     Main.panel.remove_style_class_name("azTaskbar-panel");
 
@@ -585,6 +621,8 @@ function init() {
 function resetPanels(){
     deletePanels();
     createPanels();
+    setPanelsLocation();
+    setPanelMenuButtonsVisibility();
 }
 
 function createPanels(){

@@ -215,7 +215,7 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
     _init(settings) {
         super._init(settings);
 
-        this.tooltipLabel.text = _('Show Applications');
+        this.tooltipLabel.text = _('Show All Apps');
         this.bind_property('checked', Main.overview.dash.showAppsButton, 'checked', GObject.BindingFlags.BIDIRECTIONAL);
         this.connect("notify::checked", () => this._onChecked());
         this.updateIcon();

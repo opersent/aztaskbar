@@ -23,7 +23,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         this._settings = settings;
 
         let generalGroup = new Adw.PreferencesGroup({
-            title: _("General")
+            title: _("Taskbar Behavior"),
         });
         this.add(generalGroup);
 
@@ -88,9 +88,10 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
 
         let showAppsButtonRow = new Adw.ActionRow({
-            title: _('Show Apps Button'),
+            title: `<i>${_('Show All Apps')}</i> ${'Button'}`,
             activatable_widget: showAppsButtonSwitch
         });
+        showAppsButtonRow.use_markup = true;
         showAppsButtonRow.add_suffix(showAppsButtonSwitch);
         showAppsButtonRow.add_suffix(new Gtk.Separator({
             orientation: Gtk.Orientation.VERTICAL,
@@ -105,7 +106,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             valign: Gtk.Align.CENTER
         });
         let windowTitleRow = new Adw.ActionRow({
-            title: _("Show Focused Window Title"),
+            title: _("Show App Title on Focused App Icon"),
             activatable_widget: windowTitleSwitch
         });
         windowTitleSwitch.set_active(this._settings.get_boolean('show-window-titles'));
@@ -119,7 +120,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             valign: Gtk.Align.CENTER
         });
         let favoritesRow = new Adw.ActionRow({
-            title: _("Favorites"),
+            title: _("Show Favorites"),
             activatable_widget: favoritesSwitch
         });
         favoritesSwitch.set_active(this._settings.get_boolean('favorites'));
@@ -128,6 +129,17 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
         favoritesRow.add_suffix(favoritesSwitch);
         generalGroup.add(favoritesRow);
+
+        let runningAppsRow = new Adw.ExpanderRow({
+            title: _("Show Running Apps"),
+            show_enable_switch: true,
+            expanded: false,
+            enable_expansion: this._settings.get_boolean('show-running-apps')
+        });
+        runningAppsRow.connect('notify::enable-expansion', (widget) => {
+            this._settings.set_boolean('show-running-apps', widget.enable_expansion);
+        });
+        generalGroup.add(runningAppsRow);
 
         let isolateWorkspacesSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -141,7 +153,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_boolean('isolate-workspaces', widget.get_active());
         });
         isolateWorkspacesRow.add_suffix(isolateWorkspacesSwitch);
-        generalGroup.add(isolateWorkspacesRow);
+        runningAppsRow.add_row(isolateWorkspacesRow);
 
         let isolateMonitorsSwitch = new Gtk.Switch({
             valign: Gtk.Align.CENTER
@@ -155,7 +167,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
             this._settings.set_boolean('isolate-monitors', widget.get_active());
         });
         isolateMonitorsRow.add_suffix(isolateMonitorsSwitch);
-        generalGroup.add(isolateMonitorsRow);
+        runningAppsRow.add_row(isolateMonitorsRow);
 
         let panelGroup = new Adw.PreferencesGroup({
             title: _("Panel")
@@ -233,6 +245,35 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         panelHeightRow.add_suffix(panelHeightSpinButton);
         panelHeightSwitch.set_active(panelHeightOverride);
         panelGroup.add(panelHeightRow);
+
+        let activitiesSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let activitiesRow = new Adw.ActionRow({
+            title: _("Show Activities Button"),
+            activatable_widget: activitiesSwitch
+        });
+        activitiesSwitch.set_active(this._settings.get_boolean('show-panel-activities-button'));
+        activitiesSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('show-panel-activities-button', widget.get_active());
+        });
+        activitiesRow.add_suffix(activitiesSwitch);
+        panelGroup.add(activitiesRow);
+
+        let appMenuSwitch = new Gtk.Switch({
+            valign: Gtk.Align.CENTER
+        });
+        let appMenuRow = new Adw.ActionRow({
+            title: _("Show App Menu Button"),
+            subtitle: _("Panel menu button that shows focused app"),
+            activatable_widget: appMenuSwitch
+        });
+        appMenuSwitch.set_active(this._settings.get_boolean('show-panel-appmenu-button'));
+        appMenuSwitch.connect('notify::active', (widget) => {
+            this._settings.set_boolean('show-panel-appmenu-button', widget.get_active());
+        });
+        appMenuRow.add_suffix(appMenuSwitch);
+        panelGroup.add(appMenuRow);
 
         let iconGroup = new Adw.PreferencesGroup({
             title: _("App Icons")
@@ -591,7 +632,7 @@ class azTaskbar_WindowPreviewOptions extends Gtk.Window {
 });
 
 var AboutPage = GObject.registerClass(
-class extends Adw.PreferencesPage {
+class AzTaskbar_AboutPage extends Adw.PreferencesPage {
     _init() {
         super._init({
             title: _('About'),
