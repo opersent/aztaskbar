@@ -88,7 +88,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         });
 
         let showAppsButtonRow = new Adw.ActionRow({
-            title: `<i>${_('Show All Apps')}</i> ${'Button'}`,
+            title: _("Show Apps Button"),
             activatable_widget: showAppsButtonSwitch
         });
         showAppsButtonRow.use_markup = true;
