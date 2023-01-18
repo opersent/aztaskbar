@@ -8,7 +8,7 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
 var Panel = GObject.registerClass(
-    class azTaskbar_Panel extends St.Widget {
+class azTaskbar_Panel extends St.Widget {
     _init(monitor) {
         super._init({
             name: 'panel',
@@ -61,7 +61,7 @@ var Panel = GObject.registerClass(
         if (this.monitor)
             return [0, this.monitor.width];
 
-        return [0,  0];
+        return [0, 0];
     }
 
     vfunc_allocate(box) {
@@ -92,14 +92,11 @@ var Panel = GObject.registerClass(
         childBox.y1 = 0;
         childBox.y2 = allocHeight;
         if (this.get_text_direction() == Clutter.TextDirection.RTL) {
-            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth),
-                                                         leftNaturalWidth),
-                                   0);
+            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth), leftNaturalWidth), 0);
             childBox.x2 = allocWidth;
         } else {
             childBox.x1 = 0;
-            childBox.x2 = Math.min(Math.floor(sideWidth),
-                                   leftNaturalWidth);
+            childBox.x2 = Math.min(Math.floor(sideWidth), leftNaturalWidth);
         }
         this._leftBox.allocate(childBox);
 
@@ -113,12 +110,9 @@ var Panel = GObject.registerClass(
         childBox.y2 = allocHeight;
         if (this.get_text_direction() == Clutter.TextDirection.RTL) {
             childBox.x1 = 0;
-            childBox.x2 = Math.min(Math.floor(sideWidth),
-                                   rightNaturalWidth);
+            childBox.x2 = Math.min(Math.floor(sideWidth), rightNaturalWidth);
         } else {
-            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth),
-                                                         rightNaturalWidth),
-                                   0);
+            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth), rightNaturalWidth), 0);
             childBox.x2 = allocWidth;
         }
         this._rightBox.allocate(childBox);
@@ -222,10 +216,10 @@ var Panel = GObject.registerClass(
         return allWindowsByStacking.find(metaWindow => {
             let rect = metaWindow.get_frame_rect();
             return metaWindow.get_monitor() === this.monitor.index &&
-                   metaWindow.showing_on_its_workspace() &&
-                   metaWindow.get_window_type() != Meta.WindowType.DESKTOP &&
-                   metaWindow.maximized_vertically &&
-                   stageX > rect.x && stageX < rect.x + rect.width;
+                metaWindow.showing_on_its_workspace() &&
+                metaWindow.get_window_type() != Meta.WindowType.DESKTOP &&
+                metaWindow.maximized_vertically &&
+                stageX > rect.x && stageX < rect.x + rect.width;
         });
     }
 
@@ -248,8 +242,8 @@ var Panel = GObject.registerClass(
 
             //calling this.statusArea[propName].destroy(); is buggy for now, gnome-shell never
             //destroys those panel menus...
-            //since we can't destroy the menu (hence properly disconnect its signals), let's 
-            //store it so the next time a panel needs one of its kind, we can reuse it instead 
+            //since we can't destroy the menu (hence properly disconnect its signals), let's
+            //store it so the next time a panel needs one of its kind, we can reuse it instead
             //of creating a new one
             let panelMenu = this.statusArea[propName];
 
@@ -270,7 +264,7 @@ var Panel = GObject.registerClass(
         return Me.persistentStorage[propName].pop();
     }
 
-    disable(){
+    disable() {
         if (Config.PACKAGE_VERSION < '43')
             this._removePanelMenu('aggregateMenu');
         else

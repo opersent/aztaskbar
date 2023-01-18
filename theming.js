@@ -1,18 +1,18 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const {Gio, GLib, St} = imports.gi;
+const { Gio, GLib, St } = imports.gi;
 const Enums = Me.imports.enums;
 
-function getStylesheetFile(){
+function getStylesheetFile() {
     try {
         const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), ".local/share/azTaskbar"]);
         const stylesheetPath = GLib.build_filenamev([directoryPath, "stylesheet.css"]);
 
         let dir = Gio.File.new_for_path(directoryPath);
-        if(!dir.query_exists(null))
+        if (!dir.query_exists(null))
             dir.make_directory(null);
 
         let stylesheet = Gio.File.new_for_path(stylesheetPath);
-        if(!stylesheet.query_exists(null))
+        if (!stylesheet.query_exists(null))
             stylesheet.create(Gio.FileCreateFlags.NONE, null);
 
         return stylesheet;
@@ -22,18 +22,18 @@ function getStylesheetFile(){
     }
 }
 
-function unloadStylesheet(){
-    if(!Me.customStylesheet)
+function unloadStylesheet() {
+    if (!Me.customStylesheet)
         return;
 
     let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
     theme.unload_stylesheet(Me.customStylesheet);
 }
 
-function updateStylesheet(settings){
+function updateStylesheet(settings) {
     let stylesheet = Me.customStylesheet;
 
-    if(!stylesheet){
+    if (!stylesheet) {
         log("AppIcons Taskbar - Custom stylesheet error!");
         return;
     }
@@ -42,29 +42,29 @@ function updateStylesheet(settings){
     const panelLocation = settings.get_enum('panel-location');
 
     let customStylesheetCSS = '';
-    
-    if(overridePanelHeight){
+
+    if (overridePanelHeight) {
         customStylesheetCSS += `.azTaskbar-panel{
             height: ${panelHeight}px;
         }`;
 
-        if(panelLocation === Enums.PanelLocation.BOTTOM){
+        if (panelLocation === Enums.PanelLocation.BOTTOM) {
             customStylesheetCSS += `.azTaskbar-bottom-panel #overview{
                 margin-bottom: ${panelHeight}px;
             }`;
         }
     }
-    else{
+    else {
         customStylesheetCSS += `.azTaskbar-bottom-panel #overview{
             margin-bottom: 24px;
         }`;
     }
 
-    try{
+    try {
         let bytes = new GLib.Bytes(customStylesheetCSS);
 
         stylesheet.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null, (stylesheet, res) => {
-            if(!stylesheet.replace_contents_finish(res))
+            if (!stylesheet.replace_contents_finish(res))
                 throw new Error("AppIcons Taskbar - Error replacing contents of custom stylesheet file.");
 
             let theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
@@ -76,7 +76,7 @@ function updateStylesheet(settings){
             return true;
         });
     }
-    catch(e){
+    catch (e) {
         log("AppIcons Taskbar - Error updating custom stylesheet. " + e.message);
         return false;
     }

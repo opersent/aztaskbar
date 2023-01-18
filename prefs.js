@@ -1,7 +1,7 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-const {Adw, Gdk, Gio, GLib, GObject, Gtk} = imports.gi;
+const { Adw, Gdk, Gio, GLib, GObject, Gtk } = imports.gi;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
@@ -70,7 +70,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         showAppsButtonSwitch.connect('notify::active', (widget) => {
             let [oldEnabled_, oldValue] = this._settings.get_value('show-apps-button').deep_unpack();
             this._settings.set_value('show-apps-button', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
-            if(widget.get_active())
+            if (widget.get_active())
                 showAppsButtonCombo.set_sensitive(true);
             else
                 showAppsButtonCombo.set_sensitive(false);
@@ -209,7 +209,7 @@ class azTaskbar_GeneralPage extends Adw.PreferencesPage {
         panelHeightSwitch.connect('notify::active', (widget) => {
             let [oldEnabled_, oldValue] = this._settings.get_value('main-panel-height').deep_unpack();
             this._settings.set_value('main-panel-height', new GLib.Variant('(bi)', [widget.get_active(), oldValue]));
-            if(widget.get_active())
+            if (widget.get_active())
                 panelHeightSpinButton.set_sensitive(true);
             else
                 panelHeightSpinButton.set_sensitive(false);
@@ -686,7 +686,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         }));
         infoGroup.add(projectVersionRow);
 
-        if(Me.metadata.commit){
+        if (Me.metadata.commit) {
             let commitRow = new Adw.ActionRow({
                 title: _('Git Commit')
             });
@@ -754,7 +754,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
                 filename => {
                     if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
                         let settingsFile = Gio.File.new_for_path(filename);
-                        let [ success_, pid, stdin, stdout, stderr] =
+                        let [success_, pid, stdin, stdout, stderr] =
                             GLib.spawn_async_with_pipes(
                                 null,
                                 ['dconf', 'load', SCHEMA_PATH],
@@ -779,7 +779,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         saveButton.connect('clicked', () => {
             this._showFileChooser(
                 `${_('Save')} ${_('Settings')}`,
-                { action: Gtk.FileChooserAction.SAVE},
+                { action: Gtk.FileChooserAction.SAVE },
                 "_Save",
                 filename => {
                     let file = Gio.file_new_for_path(filename);
@@ -813,7 +813,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         this.add(gnuSoftwareGroup);
     }
 
-    _createLinkRow(title, uri){
+    _createLinkRow(title, uri) {
         let image = new Gtk.Image({
             icon_name: 'adw-external-link-symbolic',
             valign: Gtk.Align.CENTER
@@ -841,10 +841,10 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         dialog.add_button(acceptBtn, Gtk.ResponseType.ACCEPT);
 
         dialog.connect("response", (self, response) => {
-            if(response === Gtk.ResponseType.ACCEPT){
+            if (response === Gtk.ResponseType.ACCEPT) {
                 try {
                     acceptHandler(dialog.get_file().get_path());
-                } catch(e) {
+                } catch (e) {
                     log('AppsIconTaskbar - Filechooser error: ' + e);
                 }
             }
@@ -861,7 +861,7 @@ function init() {
 
 function fillPreferencesWindow(window) {
     let iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
-    if(!iconTheme.get_search_path().includes(Me.path + "/media"))
+    if (!iconTheme.get_search_path().includes(Me.path + "/media"))
         iconTheme.add_search_path(Me.path + "/media");
 
     const settings = ExtensionUtils.getSettings();

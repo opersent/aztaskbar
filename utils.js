@@ -1,16 +1,16 @@
 const { Clutter } = imports.gi;
 
 function getInterestingWindows(settings, windows, monitorIndex) {
-    if(settings.get_boolean('isolate-workspaces')){
+    if (settings.get_boolean('isolate-workspaces')) {
         const activeWorkspace = global.workspace_manager.get_active_workspace();
-        windows = windows.filter(function(w) {
+        windows = windows.filter(function (w) {
             const inWorkspace = w.get_workspace() === activeWorkspace;
             return inWorkspace;
         });
     }
 
-    if(settings.get_boolean('isolate-monitors')){
-        windows = windows.filter(function(w) {
+    if (settings.get_boolean('isolate-monitors')) {
+        windows = windows.filter(function (w) {
             return w.get_monitor() === monitorIndex;
         });
     }
@@ -21,7 +21,7 @@ function getInterestingWindows(settings, windows, monitorIndex) {
 /**
  * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
  */
- function ensureActorVisibleInScrollView(scrollView, actor) {
+function ensureActorVisibleInScrollView(scrollView, actor) {
     let adjustment = scrollView.hscroll.adjustment;
     let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 

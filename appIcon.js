@@ -76,22 +76,22 @@ class azTaskbar_BaseButton extends St.Button {
         Main.layoutManager.addChrome(this.tooltipLabel);
     }
 
-    updateIcon(){
+    updateIcon() {
         throw new GObject.NotImplementedError();
     }
 
-    _onHover()  {
+    _onHover() {
         throw new GObject.NotImplementedError();
     }
 
-    _onPressed()  {
-        if(this.pressed)
+    _onPressed() {
+        if (this.pressed)
             this._box.add_style_class_name('pressed');
         else
             this._box.remove_style_class_name('pressed');
 
         const icon = this._iconBin.get_child();
-        if(!icon)
+        if (!icon)
             return;
 
         icon.ease({
@@ -106,7 +106,7 @@ class azTaskbar_BaseButton extends St.Button {
     }
 
     showLabel() {
-        if(!this._settings.get_boolean('tool-tips'))
+        if (!this._settings.get_boolean('tool-tips'))
             return;
 
         this.tooltipLabel.opacity = 0;
@@ -137,7 +137,7 @@ class azTaskbar_BaseButton extends St.Button {
             height: labelHeight
         });
 
-        if(workArea.contains_rect(labelBelowIconRect))
+        if (workArea.contains_rect(labelBelowIconRect))
             y = labelBelowIconRect.y;
         else
             y = stageY - labelHeight - offset;
@@ -160,20 +160,20 @@ class azTaskbar_BaseButton extends St.Button {
         });
     }
 
-    _onDestroy(){
+    _onDestroy() {
         this.tooltipLabel.remove_all_transitions();
         this.tooltipLabel.hide();
         this.tooltipLabel.destroy();
         this._settings.disconnect(this._iconSizeChangeId);
         this._iconSizeChangeId = null;
 
-        if(this._showWindowTitleId){
+        if (this._showWindowTitleId) {
             this._settings.disconnect(this._showWindowTitleId);
             this._showWindowTitleId = null;
         }
     }
 
-    animateIn(){
+    animateIn() {
         this.ease({
             duration: 150,
             opacity: 255,
@@ -181,18 +181,18 @@ class azTaskbar_BaseButton extends St.Button {
         });
     }
 
-    _animateAppIcon(isMinimized){
-        if(!St.Settings.get().enable_animations)
+    _animateAppIcon(isMinimized) {
+        if (!St.Settings.get().enable_animations)
             return;
 
         const icon = this._iconBin.get_child();
-        if(!icon)
+        if (!icon)
             return;
 
         let translationY = isMinimized ? TRANSLATION_DOWN : TRANSLATION_UP;
 
         const panelLocation = this._settings.get_enum('panel-location');
-        if(panelLocation === Enums.PanelLocation.BOTTOM)
+        if (panelLocation === Enums.PanelLocation.BOTTOM)
             translationY *= -1;
 
         icon.ease({
@@ -221,8 +221,8 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
         this.updateIcon();
     }
 
-    _onChecked(){
-        if(this.checked)
+    _onChecked() {
+        if (this.checked)
             this._box.add_style_pseudo_class('checked');
         else
             this._box.remove_style_pseudo_class('checked');
@@ -230,19 +230,19 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
 
     _onClicked() {
         this.hideLabel();
-        if(Main.overview.visible && this.checked){
+        if (Main.overview.visible && this.checked) {
             this.checked = false;
             Main.overview.toggle();
         }
-        else if(Main.overview.visible && !this.checked)
+        else if (Main.overview.visible && !this.checked)
             this.checked = true;
-        else{
+        else {
             Main.overview.toggle();
             this.checked = true;
         }
     }
 
-    updateIcon(){
+    updateIcon() {
         const icon_size = this._settings.get_int('icon-size');
         let icon = new St.Icon({
             icon_name: 'view-app-grid-symbolic',
@@ -253,7 +253,7 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
     }
 
     _onHover() {
-        if(this.hover)
+        if (this.hover)
             this.showLabel();
         else
             this.hideLabel();
@@ -329,22 +329,22 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
     }
 
-    _onIndicatorSettingChanged(){
+    _onIndicatorSettingChanged() {
         let forceRedraw = true;
         this.setActiveState(forceRedraw);
     }
 
-    _setFocused(){
+    _setFocused() {
         this.appState = Enums.AppState.FOCUSED;
         Utils.ensureActorVisibleInScrollView(this.appDisplayBox, this);
         this._box.add_style_pseudo_class('active');
     }
 
-    setActiveState(forceRedraw){
+    setActiveState(forceRedraw) {
         this.oldAppState = this.appState;
         this._previousNWindows = this._nWindows;
 
-        if(this._dragging || !this.mapped || !this.get_parent()?.mapped)
+        if (this._dragging || !this.mapped || !this.get_parent()?.mapped)
             return;
 
         this._box.style = null;
@@ -352,44 +352,44 @@ class azTaskbar_AppIcon extends BaseButton {
         let showMultiWindowIndicator;
 
         let windows = this.getInterestingWindows();
-        if(windows.length >= 1){
+        if (windows.length >= 1) {
             this._nWindows = windows.length > MAX_MULTI_WINDOW_DASHES ? MAX_MULTI_WINDOW_DASHES : windows.length;
             this.appState = Enums.AppState.RUNNING;
-            if(windows.length > 1)
+            if (windows.length > 1)
                 showMultiWindowIndicator = true;
 
             windows.forEach(window => {
-                if(window.has_focus())
+                if (window.has_focus())
                     this._setFocused();
             });
 
-            if(this.appState === Enums.AppState.RUNNING)
+            if (this.appState === Enums.AppState.RUNNING)
                 this._box.set_style_pseudo_class(null);
         }
-        else{
+        else {
             this._box.set_style_pseudo_class(null);
             this.appState = Enums.AppState.NOT_RUNNING;
         }
 
         this.updateLabel();
 
-        if(this._previousNWindows === undefined)
+        if (this._previousNWindows === undefined)
             this._previousNWindows = this._nWindows;
 
         this._runningIndicator.updateIndicator(forceRedraw, this.oldAppState, this.appState, this._previousNWindows, this._nWindows);
 
-        if(this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
+        if (this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
             this._hideMultiWindowIndicator();
-        else if(showMultiWindowIndicator && !this.multiWindowIndicator.visible)
+        else if (showMultiWindowIndicator && !this.multiWindowIndicator.visible)
             this._showMultiWindowIndicator();
     }
 
-    updateLabel(){
+    updateLabel() {
         const showLabels = this._settings.get_boolean('show-window-titles') && this.appState === Enums.AppState.FOCUSED;
 
         this._box.remove_style_class_name('azTaskbar-BaseIconText');
 
-        if(showLabels){
+        if (showLabels) {
             this._label.show();
             this._box.add_style_class_name('azTaskbar-BaseIconText');
         }
@@ -399,13 +399,13 @@ class azTaskbar_AppIcon extends BaseButton {
         let windows = this.getInterestingWindows();
         const showWindowTitle = windows.length === 1;
 
-        if(this._notifyTitleId && this._singleWindow){
+        if (this._notifyTitleId && this._singleWindow) {
             this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
             this._notifyTitleId = null;
             this._singleWindow = null;
         }
 
-        if(showWindowTitle){
+        if (showWindowTitle) {
             this._singleWindow = windows[0];
             this._notifyTitleId = this._singleWindow.connect(
                 'notify::title', () => this._label.text = this._singleWindow.get_title());
@@ -419,16 +419,16 @@ class azTaskbar_AppIcon extends BaseButton {
         this.hideLabel();
     }
 
-    _setDesaturateEffect(){
+    _setDesaturateEffect() {
         this.desaturateEffect.factor = this._settings.get_double('desaturation-factor');
     }
 
-    _previewMenuOpenStateChanged(menu, isPoppedUp){
-        if (!isPoppedUp){
+    _previewMenuOpenStateChanged(menu, isPoppedUp) {
+        if (!isPoppedUp) {
             this.setForcedHighlight(false);
             this._onMenuPoppedDown();
         }
-        else{
+        else {
             this.hideLabel();
             this.setForcedHighlight(true);
         }
@@ -450,7 +450,7 @@ class azTaskbar_AppIcon extends BaseButton {
                 break;
         }
 
-        if(scrollAction === Enums.ScrollAction.CYCLE && direction){
+        if (scrollAction === Enums.ScrollAction.CYCLE && direction) {
             if (!this._scrollTimeOutId) {
                 this._scrollTimeOutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
                     this._scrollTimeOutId = null;
@@ -458,7 +458,7 @@ class azTaskbar_AppIcon extends BaseButton {
                 });
 
                 let windows = this.getInterestingWindows();
-                if(windows.length <= 1)
+                if (windows.length <= 1)
                     return;
 
                 this._removePreviewMenuTimeout();
@@ -471,7 +471,7 @@ class azTaskbar_AppIcon extends BaseButton {
             return;
     }
 
-    _onDestroy(){
+    _onDestroy() {
         this.stopAllAnimations();
 
         this._disconnectWindowMinimizeEvent();
@@ -483,7 +483,7 @@ class azTaskbar_AppIcon extends BaseButton {
             this._scrollTimeOutId = null;
         }
 
-        if(this._notifyTitleId){
+        if (this._notifyTitleId) {
             this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
             this._notifyTitleId = null;
         }
@@ -519,12 +519,12 @@ class azTaskbar_AppIcon extends BaseButton {
         super._onDestroy();
     }
 
-    updateIcon(){
+    updateIcon() {
         let iconSize = this._settings.get_int('icon-size');
         this._iconBin.remove_style_class_name('azTaskbar-symbolic-icon');
 
         let appIconStyle = this._settings.get_enum('icon-style');
-        if(appIconStyle === Enums.AppIconStyle.SYMBOLIC)
+        if (appIconStyle === Enums.AppIconStyle.SYMBOLIC)
             this._iconBin.add_style_class_name('azTaskbar-symbolic-icon');
 
         let icon = this.app.create_icon_texture(iconSize);
@@ -533,13 +533,13 @@ class azTaskbar_AppIcon extends BaseButton {
 
         let indicatorSize = Math.max(5, Math.round(iconSize / 4));
 
-        if(indicatorSize % 2 === 0)
+        if (indicatorSize % 2 === 0)
             indicatorSize++;
 
         this.multiWindowIndicator.icon_size = indicatorSize;
     }
 
-    updateAppIcon(){
+    updateAppIcon() {
         this.setActiveState();
         this.updateIconGeometry();
         this._onWindowsChanged();
@@ -566,14 +566,14 @@ class azTaskbar_AppIcon extends BaseButton {
         });
     }
 
-    stopAllAnimations(){
+    stopAllAnimations() {
         this._box.style = 'transition-duration: 0ms;';
         this._box.remove_all_transitions();
         this._runningIndicator.endAnimation();
 
         let icon = this._iconBin.get_child();
 
-        if(!icon)
+        if (!icon)
             return;
 
         icon.remove_all_transitions();
@@ -611,21 +611,21 @@ class azTaskbar_AppIcon extends BaseButton {
         this._highlightFavorites(true);
     }
 
-    _highlightFavorites(highlight){
+    _highlightFavorites(highlight) {
         const visibleItems = this.mainBox.get_children();
         for (const item of visibleItems) {
-            if(highlight && item.isFavorite)
+            if (highlight && item.isFavorite)
                 item.add_style_class_name('azTaskbar-favorite');
             else
                 item.remove_style_class_name('azTaskbar-favorite');
         }
     }
 
-    calculateFavoritesIndicies(){
+    calculateFavoritesIndicies() {
         const children = this.mainBox.get_children();
         let appFavoritesIdicies = [];
         children.map(child => {
-            if(child.isFavorite)
+            if (child.isFavorite)
                 appFavoritesIdicies.push(children.indexOf(child));
         });
         this.firstFavIndex = appFavoritesIdicies[0];
@@ -656,15 +656,15 @@ class azTaskbar_AppIcon extends BaseButton {
         this.updateIconGeometry();
     }
 
-    _cancelActions(){
+    _cancelActions() {
         if (this._draggable)
             this._draggable.fakeRelease();
         this.fake_release();
     }
 
-    _removeDragMonitor(){
+    _removeDragMonitor() {
         this._dragging = false;
-        if(this._dragMonitor){
+        if (this._dragMonitor) {
             DND.removeDragMonitor(this._dragMonitor);
             this._dragMonitor = null;
         }
@@ -709,7 +709,7 @@ class azTaskbar_AppIcon extends BaseButton {
     }
 
     _setPreviewPopupTimeout() {
-        if(!this._settings.get_boolean('window-previews'))
+        if (!this._settings.get_boolean('window-previews'))
             return;
 
         this._removePreviewMenuTimeout();
@@ -746,7 +746,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._removeMenuTimeout();
         this.hideLabel();
 
-        if(this._menu?.isOpen)
+        if (this._menu?.isOpen)
             return;
 
         this.activate(button);
@@ -764,7 +764,7 @@ class azTaskbar_AppIcon extends BaseButton {
             this._menu.blockSourceEvents = true;
             this._menu.setApp(this.app);
             this._connections.set(this._menu.connect('open-state-changed', (menu, isPoppedUp) => {
-                if (!isPoppedUp){
+                if (!isPoppedUp) {
                     this.setForcedHighlight(false);
                     this._onMenuPoppedDown();
                 }
@@ -785,7 +785,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._removePreviewMenuTimeout();
     }
 
-    _onWindowsChanged(){
+    _onWindowsChanged() {
         if (this._cycleWindowList && this._cycleWindowList.length !== this.getInterestingWindows().length) {
             this._clearCycleWindow();
             this._cycleWindowList = null;
@@ -794,7 +794,7 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connectWindowMinimizeEvent()
     }
 
-    _disconnectWindowMinimizeEvent(){
+    _disconnectWindowMinimizeEvent() {
         let windows = this.getInterestingWindows();
         windows.forEach(window => {
             if (window._windowMinimizeId > 0) {
@@ -804,7 +804,7 @@ class azTaskbar_AppIcon extends BaseButton {
         });
     }
 
-    _connectWindowMinimizeEvent(){
+    _connectWindowMinimizeEvent() {
         this._windowList = this.getInterestingWindows();
         this._windowList.forEach(window => {
             if (window._windowMinimizeId > 0) {
@@ -822,7 +822,7 @@ class azTaskbar_AppIcon extends BaseButton {
         }
     }
 
-    _clearCycleWindow(){
+    _clearCycleWindow() {
         this._cycleWindowList?.forEach(window => {
             delete window.cycled;
         });
@@ -840,56 +840,56 @@ class azTaskbar_AppIcon extends BaseButton {
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
     }
 
-    _cycleWindows(windows, scrollDirection){
+    _cycleWindows(windows, scrollDirection) {
         windows = windows.sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
 
         const clickActionSetting = this._settings.get_enum('click-action');
         const cycleMinimize = clickActionSetting === Enums.ClickAction.CYCLE_MINIMIZE;
-        if(!scrollDirection && clickActionSetting === Enums.ClickAction.NO_TOGGLE_CYCLE || clickActionSetting === Enums.ClickAction.CYCLE)
+        if (!scrollDirection && clickActionSetting === Enums.ClickAction.NO_TOGGLE_CYCLE || clickActionSetting === Enums.ClickAction.CYCLE)
             scrollDirection = true;
-        if(scrollDirection){
+        if (scrollDirection) {
             //mouse scroll cycle window logic borrowed from Dash to Panel
             //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
             let windowIndex = windows.indexOf(global.display.focus_window);
             let nextWindowIndex = windowIndex < 0 ? 0 :
-                                    windowIndex + (scrollDirection == 'up' ? -1 : 1);
+                windowIndex + (scrollDirection == 'up' ? -1 : 1);
 
-            if(nextWindowIndex === windows.length)
+            if (nextWindowIndex === windows.length)
                 nextWindowIndex = 0;
-            else if(nextWindowIndex < 0)
+            else if (nextWindowIndex < 0)
                 nextWindowIndex = windows.length - 1;
 
-            if(windowIndex != nextWindowIndex){
+            if (windowIndex != nextWindowIndex) {
                 Main.activateWindow(windows[nextWindowIndex]);
             }
             return true;
         }
-        else if(cycleMinimize){
+        else if (cycleMinimize) {
             //start a timer that clears cycle state after x amount of time
             this._setCylceWindowsTimeout();
 
-            if(!this._cycleWindowList)
+            if (!this._cycleWindowList)
                 this._cycleWindowList = windows;
 
             let cycled = this._cycleWindowList.filter(window => {
-                if(window.cycled)
+                if (window.cycled)
                     return window;
             });
-            if(cycled.length === this._cycleWindowList.length){
+            if (cycled.length === this._cycleWindowList.length) {
                 this._cycleWindowList.forEach(window => {
                     window.minimize();
                     window.cycled = false;
                 });
                 return true;
             }
-            for(let i = 0; i < this._cycleWindowList.length; i++){
+            for (let i = 0; i < this._cycleWindowList.length; i++) {
                 let window = this._cycleWindowList[i];
-                if(window.has_focus() && !window.cycled){
+                if (window.has_focus() && !window.cycled) {
                     window.cycled = true;
                 }
-                if(!window.cycled){
+                if (!window.cycled) {
                     window.cycled = true;
                     Main.activateWindow(window);
                     break;
@@ -912,34 +912,34 @@ class azTaskbar_AppIcon extends BaseButton {
 
         Main.overview.hide();
 
-        if (this.app.state === Shell.AppState.STOPPED || openNewWindow){
+        if (this.app.state === Shell.AppState.STOPPED || openNewWindow) {
             let isMinimized = false;
             this._animateAppIcon(isMinimized);
         }
 
         if (openNewWindow)
             this.app.open_new_window(-1);
-        else{
-            if(windows.length > 1){
-                if(!this._cycleWindows(windows)){
+        else {
+            if (windows.length > 1) {
+                if (!this._cycleWindows(windows)) {
                     this._removePreviewMenuTimeout();
                     this._removeMenuTimeout();
                     this.hideLabel();
                     this._previewMenu?.popup();
                 }
             }
-            else if(windows.length === 1){
+            else if (windows.length === 1) {
                 const window = windows[0];
-                if(this._settings.get_enum('click-action') === Enums.ClickAction.NO_TOGGLE_CYCLE)
+                if (this._settings.get_enum('click-action') === Enums.ClickAction.NO_TOGGLE_CYCLE)
                     Main.activateWindow(window);
-                else if(window.minimized || !window.has_focus()){
+                else if (window.minimized || !window.has_focus()) {
                     Main.activateWindow(window);
                 }
                 else
                     window.minimize();
             }
             //a favorited app is running, but no interesting windows on current workspace/monitor
-            else if(this.app.state === Shell.AppState.RUNNING){
+            else if (this.app.state === Shell.AppState.RUNNING) {
                 let isMinimized = false;
                 this._animateAppIcon(isMinimized);
                 this.app.open_new_window(-1);
@@ -952,9 +952,9 @@ class azTaskbar_AppIcon extends BaseButton {
     _onHover() {
         if (this.hover) {
             let windowCount = this.getInterestingWindows().length;
-            if(windowCount >= 1)
+            if (windowCount >= 1)
                 this._setPreviewPopupTimeout();
-            if(!this.menuManager.activeMenu)
+            if (!this.menuManager.activeMenu)
                 this.showLabel();
             Utils.ensureActorVisibleInScrollView(this.appDisplayBox, this);
         }
@@ -976,15 +976,15 @@ class azTaskbar_AppIcon extends BaseButton {
     _windowPreviews() {
         if (this._previewMenu?.isOpen)
             return;
-        else{
+        else {
             this._removeMenuTimeout();
             this._cancelActions();
             this._previewMenu?.popup();
         }
     }
 
-    _showMultiWindowIndicator(){
-        if(this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR)
+    _showMultiWindowIndicator() {
+        if (this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR)
             return;
 
         this.multiWindowIndicator.remove_all_transitions();

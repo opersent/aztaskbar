@@ -69,6 +69,7 @@
   spacing: 6px;
   padding: 0px;
   margin: 2px 0px 4px 3px;
+  max-height: 35px;
 }
 
 .azTaskbar-window-preview-close-button{
