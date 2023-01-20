@@ -4,6 +4,24 @@
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
+.azTaskbar-notification-badge{
+  color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 0, 0, .85);
+  padding: 0.1em 0.1em;
+  border-color: rgba(0, 0, 0, 0.7);
+  border-width: 1px;
+  border-radius: 999px;
+  font-weight: bold;
+  text-align: center;
+  margin: 1px 0px;
+}
+
+.azTaskbar-progress-bar {
+  /* Customization of the progress bar style, e.g.:
+    -progress-bar-background: rgba(0.8, 0.8, 0.8, 1);
+  */
+}
+
 .azTaskbar-Separator{
   background-color: rgba(211, 211, 211, 0.5);
   margin: 0px 3px;
@@ -69,7 +87,6 @@
   spacing: 6px;
   padding: 0px;
   margin: 2px 0px 4px 3px;
-  max-height: 35px;
 }
 
 .azTaskbar-window-preview-close-button{

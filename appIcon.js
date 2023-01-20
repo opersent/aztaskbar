@@ -3,6 +3,7 @@ const { Clutter, GLib, GObject, Graphene, Meta, Shell, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
+const { AppIconBadges } = Me.imports.appIconBadges;
 const { AppIconIndicator } = Me.imports.appIconIndicator;
 const { AppMenu } = imports.ui.appMenu;
 const DND = imports.ui.dnd;
@@ -302,6 +303,8 @@ class azTaskbar_AppIcon extends BaseButton {
         this.multiWindowIndicator.hide();
         this._overlayGroup.add_actor(this.multiWindowIndicator);
 
+        this.notificationBadges = new AppIconBadges(this);
+
         this.tooltipLabel.text = app.get_name();
         this._label.text = app.get_name();
 
@@ -487,6 +490,8 @@ class azTaskbar_AppIcon extends BaseButton {
             this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
             this._notifyTitleId = null;
         }
+
+        this.notificationBadges.destroy();
 
         this._connections.forEach((object, id) => {
             object.disconnect(id);

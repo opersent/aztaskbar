@@ -14,6 +14,7 @@ const { Panel } = Me.imports.panel;
 const PopupMenu = imports.ui.popupMenu;
 const Signals = imports.signals;
 const Theming = Me.imports.theming;
+const UnityLauncherAPI = Me.imports.unityLauncherAPI;
 const Utils = Me.imports.utils;
 const { WindowPreviewMenuManager } = Me.imports.windowPreview;
 
@@ -549,6 +550,8 @@ class azTaskbar_PanelBox extends St.BoxLayout {
 function enable() {
     settings = ExtensionUtils.getSettings();
 
+    Me.remoteModel = new UnityLauncherAPI.LauncherEntryRemoteModel();
+
     global.azTaskbar = {};
     Signals.addSignalMethods(global.azTaskbar);
 
@@ -611,6 +614,9 @@ function disable() {
 
     Theming.unloadStylesheet();
     delete Me.customStylesheet;
+
+    Me.remoteModel.destroy();
+    delete Me.remoteModel;
 
     extensionConnections.forEach((object, id) => {
         object.disconnect(id);
