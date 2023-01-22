@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-18 07:57-0500\n"
-"PO-Revision-Date: 2023-01-18 23:52+1000\n"
+"POT-Creation-Date: 2023-01-22 08:29-0500\n"
+"PO-Revision-Date: 2023-01-23 00:03+1000\n"
 "Last-Translator: Ser82-png <asvmail.as@gmail.com>\n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -19,307 +19,325 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.0.1\n"
 
-#: appIcon.js:218
+#: appIcon.js:225
 msgid "Show All Apps"
 msgstr "Показывать все приложения"
 
 #: prefs.js:9
-msgid "App Icons Taskbar"
-msgstr "App Icons Taskbar"
-
-#: prefs.js:10
 msgid "Show running apps and favorites on the main panel"
 msgstr "Показ запущенных и избранных приложений на главной панели"
 
-#: prefs.js:18 prefs.js:743 prefs.js:751 prefs.js:781
+#: prefs.js:17
 msgid "Settings"
 msgstr "Настройки"
 
-#: prefs.js:26
+#: prefs.js:25
 msgid "Taskbar Behavior"
 msgstr "Поведение панели задач"
 
-#: prefs.js:31 prefs.js:82
+#: prefs.js:30 prefs.js:81
 msgid "Left"
 msgstr "Слева"
 
-#: prefs.js:32
+#: prefs.js:31
 msgid "Center"
 msgstr "В центре"
 
-#: prefs.js:33 prefs.js:83
+#: prefs.js:32 prefs.js:82
 msgid "Right"
 msgstr "Справа"
 
-#: prefs.js:35
+#: prefs.js:34
 msgid "Position in Panel"
 msgstr "Расположение на панели"
 
-#: prefs.js:58
+#: prefs.js:57
 msgid "Position Offset"
 msgstr "Смещение положения"
 
-#: prefs.js:59
+#: prefs.js:58
 msgid "Offset the position within the above selected box"
 msgstr "Сместить положение в пределах диапазона выбранного выше"
 
-#: prefs.js:91
+#: prefs.js:90
 msgid "Show Apps Button"
 msgstr "Показывать кнопку «Приложения»"
 
-#: prefs.js:109
+#: prefs.js:108
 msgid "Show App Title on Focused App Icon"
 msgstr "Показывать на значке название приложения, находящегося в фокусе"
 
-#: prefs.js:123
+#: prefs.js:122
 msgid "Show Favorites"
 msgstr "Показывать избранные приложения"
 
-#: prefs.js:134
+#: prefs.js:133
 msgid "Show Running Apps"
 msgstr "Показывать запущенные приложения"
 
-#: prefs.js:148
+#: prefs.js:147
 msgid "Isolate Workspaces"
 msgstr "Изолировать рабочие пространства"
 
-#: prefs.js:162
+#: prefs.js:161
 msgid "Isolate Monitors"
 msgstr "Изолировать мониторы"
 
-#: prefs.js:173
+#: prefs.js:172
 msgid "Panel"
 msgstr "Панель"
 
-#: prefs.js:178 prefs.js:356
+#: prefs.js:177 prefs.js:355
 msgid "Top"
 msgstr "Сверху"
 
-#: prefs.js:179 prefs.js:357
+#: prefs.js:178 prefs.js:356
 msgid "Bottom"
 msgstr "Снизу"
 
-#: prefs.js:181
+#: prefs.js:180
 msgid "Panel Location"
 msgstr "Расположение панели"
 
-#: prefs.js:194
+#: prefs.js:193
 msgid "Show Panels on All Monitors"
 msgstr "Показывать панель на всех мониторах"
 
-#: prefs.js:236
+#: prefs.js:235
 msgid "Panel Height"
 msgstr "Высота панели"
 
-#: prefs.js:253
+#: prefs.js:252
 msgid "Show Activities Button"
 msgstr "Показывать кнопку «Обзор»"
 
-#: prefs.js:267
+#: prefs.js:266
 msgid "Show App Menu Button"
 msgstr "Показывать кнопку меню приложения"
 
-#: prefs.js:268
+#: prefs.js:267
 msgid "Panel menu button that shows focused app"
 msgstr "Кнопка меню приложения, находящегося в фокусе"
 
-#: prefs.js:279
+#: prefs.js:278
 msgid "App Icons"
 msgstr "Значки приложений"
 
-#: prefs.js:297
+#: prefs.js:296
 msgid "Icon Size"
 msgstr "Размер значка"
 
-#: prefs.js:317
+#: prefs.js:316
 msgid "Icon Desaturate Factor"
 msgstr "Коэффициент обесцвечивания значка"
 
-#: prefs.js:324
+#: prefs.js:323
 msgid "Regular"
 msgstr "Обычные"
 
-#: prefs.js:325
+#: prefs.js:324
 msgid "Symbolic"
 msgstr "Символьные"
 
-#: prefs.js:327
+#: prefs.js:326
 msgid "Icon Style"
 msgstr "Стиль значков"
 
-#: prefs.js:328
+#: prefs.js:327
 msgid "Icon themes may not have a symbolic icon for every app"
 msgstr ""
 "Темы значков могут содержать символические значки не для всех приложений"
 
-#: prefs.js:338 prefs.js:343
+#: prefs.js:337 prefs.js:342
 msgid "Indicator"
 msgstr "Индикатор"
 
-#: prefs.js:344
+#: prefs.js:343
 msgid "Multi-Dashes"
 msgstr "Мульти-чёрточки"
 
-#: prefs.js:346
+#: prefs.js:345
 msgid "Multi-Window Indicator Style"
 msgstr "Стиль многооконного индикатора"
 
-#: prefs.js:359
+#: prefs.js:358
 msgid "Indicator Location"
 msgstr "Расположение индикатора"
 
-#: prefs.js:380
+#: prefs.js:379
 msgid "Running Indicator Color"
 msgstr "Цвет индикатора запущенного приложения"
 
-#: prefs.js:399
+#: prefs.js:398
 msgid "Focused Indicator Color"
 msgstr "Цвет индикатора приложения, находящегося в фокусе"
 
-#: prefs.js:411
+#: prefs.js:410
 msgid "Actions"
 msgstr "Действия"
 
-#: prefs.js:418
+#: prefs.js:417
 msgid "Click Actions"
 msgstr "Действия при щелчке мышью"
 
-#: prefs.js:423
+#: prefs.js:422
 msgid "Toggle / Cycle"
 msgstr "Переключение / По кругу"
 
-#: prefs.js:424
+#: prefs.js:423
 msgid "Toggle / Cycle + Minimize"
 msgstr "Переключение / По кругу + Свернуть"
 
-#: prefs.js:425
+#: prefs.js:424
 msgid "Toggle / Preview"
 msgstr "Переключение / Просмотр"
 
-#: prefs.js:426
+#: prefs.js:425
 msgid "Cycle"
 msgstr "По кругу"
 
-#: prefs.js:433
+#: prefs.js:432
 msgid "Left Click"
 msgstr "Щелчок левой кнопкой мыши"
 
-#: prefs.js:434
+#: prefs.js:433
 msgid "Modify Left Click Action of Running App Icons"
 msgstr ""
 "Изменить действие щелчка левой кнопкой мыши на значках запущенных приложений"
 
-#: prefs.js:444
+#: prefs.js:443
 msgid "Scroll Actions"
 msgstr "Действия прокрутки"
 
-#: prefs.js:449
+#: prefs.js:448
 msgid "Cycle Windows"
 msgstr "Окна по кругу"
 
-#: prefs.js:450
+#: prefs.js:449
 msgid "No Action"
 msgstr "Нет действий"
 
-#: prefs.js:452
+#: prefs.js:451
 msgid "Scroll Action"
 msgstr "Действие прокрутки"
 
-#: prefs.js:462
+#: prefs.js:461
 msgid "Hover Actions"
 msgstr "Действия при наведении"
 
-#: prefs.js:470
+#: prefs.js:469
 msgid "Tool-Tips"
 msgstr "Подсказки"
 
-#: prefs.js:492 prefs.js:524
+#: prefs.js:491 prefs.js:523
 msgid "Window Previews"
 msgstr "Окна предварительного просмотра"
 
-#: prefs.js:511
+#: prefs.js:510
 msgid "Window Preview Options"
 msgstr "Параметры окна предварительного просмотра"
 
-#: prefs.js:542
+#: prefs.js:541
 msgid "Show Window Previews Delay"
 msgstr "Задержка при показе окна предварительного просмотра"
 
-#: prefs.js:543
+#: prefs.js:542
 msgid "Time in ms to show the window preview"
 msgstr "Время в мс для отображения окна предварительного просмотра"
 
-#: prefs.js:563
+#: prefs.js:562
 msgid "Hide Window Previews Delay"
 msgstr "Задержка до скрытия окна предварительного просмотра"
 
-#: prefs.js:564
+#: prefs.js:563
 msgid "Time in ms to hide the window preview"
 msgstr "Время в мс для скрытия окна предварительного просмотра"
 
-#: prefs.js:571 prefs.js:579
+#: prefs.js:570 prefs.js:578
 msgid "Window Peeking"
 msgstr "Быстрый просмотр окна"
 
-#: prefs.js:580
+#: prefs.js:579
 msgid "Hovering a window preview will focus desired window"
 msgstr "Наведение на окно предварительного просмотра выведет нужное окно"
 
-#: prefs.js:604
+#: prefs.js:603
 msgid "Window Peeking Delay"
 msgstr "Задержка при выводе быстрого просмотра окна"
 
-#: prefs.js:605
+#: prefs.js:604
 msgid "Time in ms to trigger window peek"
 msgstr "Время в мс для запуска быстрого просмотра окна"
 
-#: prefs.js:625
+#: prefs.js:624
 msgid "Window Peeking Opacity"
 msgstr "Непрозрачность при быстром просмотре окна"
 
-#: prefs.js:626
+#: prefs.js:625
 msgid "Opacity of non-focused windows during a window peek"
 msgstr "Непрозрачность несфокусированных окон во время быстрого просмотра"
 
-#: prefs.js:638
+#: prefs.js:637
 msgid "About"
 msgstr "О расширении"
 
-#: prefs.js:681
-msgid "Version"
-msgstr "Версия"
+#: prefs.js:657
+msgid "App Icons Taskbar"
+msgstr "App Icons Taskbar"
 
-#: prefs.js:691
+#: prefs.js:680
+msgid "App Icons Taskbar Version"
+msgstr "Версия App Icons Taskbar"
+
+#: prefs.js:690
 msgid "Git Commit"
 msgstr "Git Commit"
 
-#: prefs.js:701
+#: prefs.js:700
 msgid "GNOME Version"
 msgstr "Версия GNOME"
 
-#: prefs.js:710
+#: prefs.js:709
 msgid "OS Name"
 msgstr "Название ОС"
 
-#: prefs.js:723
+#: prefs.js:722
 msgid "Windowing System"
 msgstr "Оконная система"
 
-#: prefs.js:731
-msgid "GitLab"
-msgstr "GitLab"
+#: prefs.js:730
+msgid "App Icons Taskbar GitLab"
+msgstr "App Icons Taskbar на GitLab"
 
-#: prefs.js:734
+#: prefs.js:733
 msgid "Donate via PayPal"
 msgstr "Пожертвовать через PayPal"
 
-#: prefs.js:746 prefs.js:751
+#: prefs.js:742
+msgid "App Icons Taskbar Settings"
+msgstr "Настройки App Icons Taskbar"
+
+#: prefs.js:745
 msgid "Load"
 msgstr "Загрузить"
 
-#: prefs.js:776 prefs.js:781
+#: prefs.js:750
+msgid "Load Settings"
+msgstr "Загрузить настройки"
+
+#: prefs.js:775
 msgid "Save"
 msgstr "Сохранить"
+
+#: prefs.js:780
+msgid "Save Settings"
+msgstr "Сохранить настройки"
+
+#~ msgid "Version"
+#~ msgstr "Версия"
+
+#~ msgid "GitLab"
+#~ msgstr "GitLab"
 
 #~ msgid "Show Applications"
 #~ msgstr "Показывать приложения"
