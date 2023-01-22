@@ -6,7 +6,6 @@ const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 
 const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${Me.metadata.name}&source=url`;
-const PROJECT_TITLE = _('App Icons Taskbar');
 const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
 const PROJECT_IMAGE = 'aztaskbar-logo';
 const SCHEMA_PATH = '/org/gnome/shell/extensions/aztaskbar/';
@@ -655,7 +654,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         });
 
         let projectTitleLabel = new Gtk.Label({
-            label: _(PROJECT_TITLE),
+            label: _('App Icons Taskbar'),
             css_classes: ['title-1'],
             vexpand: true,
             valign: Gtk.Align.FILL
@@ -678,7 +677,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         let infoGroup = new Adw.PreferencesGroup();
 
         let projectVersionRow = new Adw.ActionRow({
-            title: `${PROJECT_TITLE} ${_('Version')}`,
+            title: _('App Icons Taskbar Version'),
         });
         projectVersionRow.add_suffix(new Gtk.Label({
             label: Me.metadata.version.toString(),
@@ -728,7 +727,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         }));
         infoGroup.add(sessionTypeRow);
 
-        let gitlabRow = this._createLinkRow(`${PROJECT_TITLE} ${_('GitLab')}`, Me.metadata.url);
+        let gitlabRow = this._createLinkRow(_('App Icons Taskbar GitLab'), Me.metadata.url);
         infoGroup.add(gitlabRow);
 
         let donateRow = this._createLinkRow(_('Donate via PayPal'), PAYPAL_LINK);
@@ -740,7 +739,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         //Save/Load Settings----------------------------------------------------------
         let settingsGroup = new Adw.PreferencesGroup();
         let settingsRow = new Adw.ActionRow({
-            title: `${PROJECT_TITLE} ${_('Settings')}`,
+            title: _('App Icons Taskbar Settings'),
         });
         let loadButton = new Gtk.Button({
             label: _('Load'),
@@ -748,7 +747,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         });
         loadButton.connect('clicked', () => {
             this._showFileChooser(
-                `${_('Load')} ${_('Settings')}`,
+                _('Load Settings'),
                 { action: Gtk.FileChooserAction.OPEN },
                 "_Open",
                 filename => {
@@ -778,7 +777,7 @@ class AzTaskbar_AboutPage extends Adw.PreferencesPage {
         });
         saveButton.connect('clicked', () => {
             this._showFileChooser(
-                `${_('Save')} ${_('Settings')}`,
+                _('Save Settings'),
                 { action: Gtk.FileChooserAction.SAVE },
                 "_Save",
                 filename => {
