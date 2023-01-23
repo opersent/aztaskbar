@@ -17,6 +17,12 @@ const MAX_MULTI_WINDOW_DASHES = 3;
 const TRANSLATION_UP = 3;
 const TRANSLATION_DOWN = -3;
 
+const tracker = Shell.WindowTracker.get_default();
+
+function isWindowUrgent(w) {
+    return w.urgent || w.demandsAttention || w._manualUrgency;
+}
+
 var BaseButton = GObject.registerClass(
 class azTaskbar_BaseButton extends St.Button {
     _init(settings) {
@@ -261,8 +267,14 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
     }
 });
 
-var AppIcon = GObject.registerClass(
-class azTaskbar_AppIcon extends BaseButton {
+var AppIcon = GObject.registerClass({
+    Properties: {
+        'urgent': GObject.ParamSpec.boolean(
+            'urgent', 'urgent', 'urgent',
+            GObject.ParamFlags.READWRITE,
+            false),
+    }
+}, class azTaskbar_AppIcon extends BaseButton {
     _init(appDisplayBox, app, monitorIndex, positionIndex, isFavorite) {
         super._init(appDisplayBox._settings);
 
@@ -303,8 +315,6 @@ class azTaskbar_AppIcon extends BaseButton {
         this.multiWindowIndicator.hide();
         this._overlayGroup.add_actor(this.multiWindowIndicator);
 
-        this.notificationBadges = new AppIconBadges(this);
-
         this.tooltipLabel.text = app.get_name();
         this._label.text = app.get_name();
 
@@ -318,6 +328,36 @@ class azTaskbar_AppIcon extends BaseButton {
         this.updateLabel();
         this._connectWindowMinimizeEvent();
 
+        this.notificationBadges = new AppIconBadges(this);
+
+        this.connect('notify::urgent', () => {
+            this._clearUrgentConnections(true);
+
+            const iconBin = this._iconBin;
+            const icon = iconBin.get_child();
+    
+            this._removeAnimateUrgentId();
+
+            if(!icon)
+                return;
+
+            if (this.urgent) {
+                this._animateUrgent(icon);
+                this._animateUrgentId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+                    this._animateUrgent(icon);
+                    return GLib.SOURCE_CONTINUE;
+                });
+            } else {
+                icon.remove_all_transitions();
+                icon.ease({
+                    translation_y: 0,
+                    duration: 300,
+                    mode: Clutter.AnimationMode.EASE_IN_QUAD,
+                });
+            }
+        });
+        this._urgentWindows = new Set();
+
         this._connections = new Map();
         this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this._onIndicatorSettingChanged()), this._settings);
         this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
@@ -327,9 +367,103 @@ class azTaskbar_AppIcon extends BaseButton {
         this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
         this._connections.set(this._settings.connect('changed::icon-style', () => this.updateIcon()), this._settings);
         this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
+        this._connections.set(global.display.connect('window-marked-urgent', (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
+        this._connections.set(global.display.connect('window-demands-attention', (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
         this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
+
+        this._urgentConnections = new Map();
+    }
+
+    _animateUrgent(icon){
+        icon.ease({
+            duration: 150,
+            translation_y: -3,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                icon.ease({
+                    duration: 150,
+                    translation_y: 3,
+                    mode: Clutter.AnimationMode.EASE_IN_OUT_QUAD,
+                    autoReverse: true,
+                    repeatCount: 2,
+                    onComplete: () => {
+                        icon.ease({
+                            translation_y: 0,
+                            mode: Clutter.AnimationMode.EASE_IN_QUAD,
+                            duration: 150,
+                        });
+                    }
+                });
+            },
+        });
+    }
+
+    _removeAnimateUrgentId(){
+        if(this._animateUrgentId){
+            GLib.source_remove(this._animateUrgentId);
+            this._animateUrgentId = null;
+        }
+    }
+
+    _clearUrgentConnections(createNew){
+        this._urgentConnections.forEach((object, id) => {
+            object.disconnect(id);
+            id = null;
+        });
+
+        if(createNew)
+            this._urgentConnections = new Map();
+    }
+
+    ownsWindow(window) {
+        const interestingWindows = this.getInterestingWindows();
+        return interestingWindows.includes(window);
+    }
+
+    _updateUrgentWindows(interestingWindows) {
+        this._clearUrgentConnections(true);
+
+        this._urgentWindows.clear();
+        if (interestingWindows === undefined)
+            interestingWindows = this.getInterestingWindows();
+        interestingWindows.filter(isWindowUrgent).forEach(win => this._addUrgentWindow(win));
+        this.urgent = !!this._urgentWindows.size;
+    }
+
+    _onWindowDemandsAttention(window) {
+        if (this.ownsWindow(window) && isWindowUrgent(window))
+            this._addUrgentWindow(window);
+    }
+
+    _addUrgentWindow(window) {
+        if (this._urgentWindows.has(window))
+            return;
+
+        if (window._manualUrgency && window.has_focus()) {
+            delete window._manualUrgency;
+            return;
+        }
+
+        this._urgentWindows.add(window);
+        this.urgent = true;
+
+        const onDemandsAttentionChanged = () => {
+            if (!isWindowUrgent(window))
+                this._updateUrgentWindows();
+        };
+
+        if (window.demandsAttention)
+            this._urgentConnections.set(window.connect('notify::demands-attention', () => onDemandsAttentionChanged()), window);
+        if (window.urgent)
+            this._urgentConnections.set(window.connect('notify::urgent', () => onDemandsAttentionChanged()), window);
+        if (window._manualUrgency) {
+            this._urgentConnections.set(window.connect('focus', () => {
+                delete window._manualUrgency;
+                onDemandsAttentionChanged();
+            }), window);
+        }
     }
 
     _onIndicatorSettingChanged() {
@@ -476,6 +610,8 @@ class azTaskbar_AppIcon extends BaseButton {
 
     _onDestroy() {
         this.stopAllAnimations();
+        this._removeAnimateUrgentId();
+        this._clearUrgentConnections(true);
 
         this._disconnectWindowMinimizeEvent();
         this._menu?.close();

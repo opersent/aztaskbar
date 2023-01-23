@@ -97,8 +97,6 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('window-left-monitor', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('window-marked-urgent', this._queueRedisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('window-demands-attention', this._queueRedisplay.bind(this)), global.display);
         this._connections.set(Main.layoutManager.connect('startup-complete', this._queueRedisplay.bind(this)), Main.layoutManager);
     }
 

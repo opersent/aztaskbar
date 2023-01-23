@@ -6,16 +6,6 @@
 
 const Gio = imports.gi.Gio;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Dbusmenu = haveDBusMenu();
-
-function haveDBusMenu() {
-    try {
-        return imports.gi.Dbusmenu;
-    } catch (e) {
-        log(`Failed to import DBusMenu, quicklists are not avaialble: ${e}`);
-        return null;
-    }
-}
 
 var LauncherEntryRemoteModel = class azTaskbar_LauncherEntryRemoteModel {
     constructor() {
@@ -125,37 +115,10 @@ var LauncherEntryRemoteModel = class azTaskbar_LauncherEntryRemoteModel {
             remoteMap.set(appId, remote = Object.assign({}, launcherEntryDefaults));
         }
         for (const name in properties) {
-            if (name === 'quicklist' && Dbusmenu) {
-                const quicklistPath = properties[name].unpack();
-                if (quicklistPath && (!remote._quicklistMenuClient || remote._quicklistMenuClient.dbus_object !== quicklistPath)) {
-                    remote.quicklist = null;
-                    let menuClient = remote._quicklistMenuClient;
-                    if (menuClient) {
-                        menuClient.dbus_object = quicklistPath;
-                    } else {
-                        // This property should not be enumerable
-                        Object.defineProperty(remote, '_quicklistMenuClient', {
-                            writable: true,
-                            value: menuClient = new Dbusmenu.Client({ dbus_name: senderName, dbus_object: quicklistPath }),
-                        });
-                    }
-                    const handler = () => {
-                        const root = menuClient.get_root();
-                        if (remote.quicklist !== root) {
-                            remote.quicklist = root;
-                            if (sourceStack.isTop(remote)) {
-                                sourceStack.target.quicklist = root;
-                                sourceStack.target._emitChangedEvents(['quicklist']);
-                            }
-                        }
-                    };
-                    menuClient.connect(Dbusmenu.CLIENT_SIGNAL_ROOT_CHANGED, handler);
-                }
-            } else {
+            if (name !== 'quicklist') {
                 remote[name] = properties[name].unpack();
             }
         }
-
         const sourceStack = this._lookupStackById(appId);
         sourceStack.target._emitChangedEvents(sourceStack.update(remote));
     }

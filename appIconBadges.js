@@ -89,9 +89,11 @@ class azTaskbar_AppIconBadges extends St.Bin {
             this._settings);
 
         this._updateLocations();
+
+        this.connect('destroy', () => this._onDestroy());
     }
 
-    destroy() {
+    _onDestroy() {
         this._connections.forEach((object, id) => {
             object.disconnect(id);
             id = null;

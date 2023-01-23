@@ -35,9 +35,12 @@ App Icons Taskbar is provided free of charge. If you enjoy using this extension 
 **@[AndrewZaech](https://gitlab.com/AndrewZaech) - Project Maintainer and Developer**
 
 Additional credits:
-* Large parts of the window preview feature copied from Dash to Dock extension and modified for this extensions needs.
-* AppIcon mouse scroll cycle window logic borrowed from Dash to Panel (https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430)
-* Window peeking feature based on code from Dash to Panel
+* Significant portions of this project are based on code from [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel) and [Dash to Dock](https://github.com/micheleg/dash-to-dock)
+    * Window Previews - Dash to Dock
+    * UnityLauncher - Dash to Dock
+    * Urgent Window logic - Dash to Dock
+    * AppIcon mouse scroll cycle window logic - Dash to Panel
+    * Window peeking feature - Dash to Panel
 * Panel Location feature based on code from Just Perfection extension
 
 -----
