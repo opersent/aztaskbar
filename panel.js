@@ -8,7 +8,7 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
 var Panel = GObject.registerClass(
-class azTaskbar_Panel extends St.Widget {
+class azTaskbarPanel extends St.Widget {
     _init(monitor) {
         super._init({
             name: 'panel',
@@ -92,11 +92,14 @@ class azTaskbar_Panel extends St.Widget {
         childBox.y1 = 0;
         childBox.y2 = allocHeight;
         if (this.get_text_direction() == Clutter.TextDirection.RTL) {
-            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth), leftNaturalWidth), 0);
+            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth),
+                leftNaturalWidth),
+                0);
             childBox.x2 = allocWidth;
         } else {
             childBox.x1 = 0;
-            childBox.x2 = Math.min(Math.floor(sideWidth), leftNaturalWidth);
+            childBox.x2 = Math.min(Math.floor(sideWidth),
+                leftNaturalWidth);
         }
         this._leftBox.allocate(childBox);
 
@@ -110,9 +113,12 @@ class azTaskbar_Panel extends St.Widget {
         childBox.y2 = allocHeight;
         if (this.get_text_direction() == Clutter.TextDirection.RTL) {
             childBox.x1 = 0;
-            childBox.x2 = Math.min(Math.floor(sideWidth), rightNaturalWidth);
+            childBox.x2 = Math.min(Math.floor(sideWidth),
+                rightNaturalWidth);
         } else {
-            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth), rightNaturalWidth), 0);
+            childBox.x1 = Math.max(allocWidth - Math.min(Math.floor(sideWidth),
+                rightNaturalWidth),
+                0);
             childBox.x2 = allocWidth;
         }
         this._rightBox.allocate(childBox);

@@ -137,15 +137,30 @@
             <summary>AppIcon focused indicator color</summary>
             <description>AppIcon focused indicator color.</description>
         </key>
+        <key type="b" name="dance-urgent">
+            <default>true</default>
+            <summary>Dance AppIcons when marked Urgent</summary>
+            <description>Dance AppIcons when marked Urgent.</description>
+        </key>
+        <key type="b" name="unity-badges">
+            <default>true</default>
+            <summary>Enable Unity Badges Counter on AppIcons</summary>
+            <description>Enable Unity Badges Counter on AppIcons.</description>
+        </key>
+        <key type="b" name="unity-progress-bars">
+            <default>true</default>
+            <summary>Enable Unity Progress Bars on AppIcons</summary>
+            <description>Enable Unity Progress Bars on AppIcons.</description>
+        </key>
+        <key type="b" name="notification-badges">
+            <default>true</default>
+            <summary>Enable Notification Badges Counter on AppIcons</summary>
+            <description>Enable Notification Badges Counter on AppIcons.</description>
+        </key>
         <key type="b" name="tool-tips">
             <default>true</default>
             <summary>Show tool-tips for AppIcons</summary>
             <description>Show tool-tips for AppIcons.</description>
-        </key>
-        <key type="b" name="show-window-titles">
-            <default>false</default>
-            <summary>Show window titles on AppIcons</summary>
-            <description>Show window titles on AppIcons.</description>
         </key>
         <key type="i" name="icon-size">
             <default>26</default>

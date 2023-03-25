@@ -1,16 +1,17 @@
-const { Clutter } = imports.gi;
+/* eslint-disable no-unused-vars */
+const { Clutter, Meta } = imports.gi;
 
 function getInterestingWindows(settings, windows, monitorIndex) {
     if (settings.get_boolean('isolate-workspaces')) {
         const activeWorkspace = global.workspace_manager.get_active_workspace();
-        windows = windows.filter(function (w) {
+        windows = windows.filter(w => {
             const inWorkspace = w.get_workspace() === activeWorkspace;
             return inWorkspace;
         });
     }
 
     if (settings.get_boolean('isolate-monitors')) {
-        windows = windows.filter(function (w) {
+        windows = windows.filter(w => {
             return w.get_monitor() === monitorIndex;
         });
     }
@@ -22,21 +23,21 @@ function getInterestingWindows(settings, windows, monitorIndex) {
  * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
  */
 function ensureActorVisibleInScrollView(scrollView, actor) {
-    let adjustment = scrollView.hscroll.adjustment;
+    const { adjustment } = scrollView.hscroll;
     let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 
     let offset = 0;
-    let hfade = scrollView.get_effect("fade");
+    const hfade = scrollView.get_effect('fade');
     if (hfade)
         offset = hfade.fade_margins.left;
 
     let box = actor.get_allocation_box();
-    let x1 = box.x1, x2 = box.x2;
+    let { x1 } = box, { x2 } = box;
 
     let parent = actor.get_parent();
-    while (parent != scrollView) {
+    while (parent !== scrollView) {
         if (!parent)
-            throw new Error("actor not in scroll view");
+            throw new Error('actor not in scroll view');
 
         box = parent.get_allocation_box();
         x1 += box.x1;
@@ -55,4 +56,16 @@ function ensureActorVisibleInScrollView(scrollView, actor) {
         mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         duration: 100,
     });
+}
+
+function laterAdd(laterType, callback) {
+    return global.compositor?.get_laters?.().add(laterType, callback) ??
+        Meta.later_add(laterType, callback);
+}
+
+function laterRemove(id) {
+    if (global.compositor?.get_laters)
+        global.compositor?.get_laters().remove(id);
+    else
+        Meta.later_remove(id);
 }

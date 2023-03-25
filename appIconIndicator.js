@@ -1,20 +1,21 @@
+/* exported AppIconIndicator */
+
 const { Clutter, GLib, GObject, St } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-const { AppMenu } = imports.ui.appMenu;
 const Enums = Me.imports.enums;
 
-//Time between animation ticks (ms)
+// Time between animation ticks (ms)
 const ANIMATION_INTERVAL = 10;
-//How many times the animation will tick (total 150ms animation)
+// How many times the animation will tick (total 150ms animation)
 const ANIMATION_TICKS = 15;
 
 const INDICATOR_RADIUS = 1.5;
 const DEGREES = Math.PI / 180;
 
 var AppIconIndicator = GObject.registerClass(
-class azTaskbar_AppIconIndicator extends St.DrawingArea {
+class azTaskbarAppIconIndicator extends St.DrawingArea {
     _init(appIcon) {
         super._init({
             x_expand: true,
@@ -34,7 +35,8 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
     }
 
     _setAnimationState(oldWindows, windows) {
-        const dashesEnabled = this._settings.get_enum('multi-window-indicator-style') === Enums.MultiWindowIndicatorStyle.MULTI_DASH;
+        const dashesEnabled = this._settings.get_enum('multi-window-indicator-style') ===
+                              Enums.MultiWindowIndicatorStyle.MULTI_DASH;
 
         if (dashesEnabled && (windows > 1 || windows < oldWindows))
             this._animationState = Enums.AnimationState.ANIMATE_DASHES;
@@ -50,7 +52,9 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
     }
 
     updateIndicator(forceRedraw, oldAppState, appState, oldWindows, windows) {
-        const needsRepaint = oldAppState !== appState || (oldAppState === appState && oldWindows !== windows) || forceRedraw;
+        const needsRepaint = oldAppState !== appState ||
+                            (oldAppState === appState && oldWindows !== windows) ||
+                            forceRedraw;
 
         if (!needsRepaint)
             return;
@@ -78,10 +82,7 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
 
         let dashWidth = this._appIcon.width / 10;
 
-        if (appState === Enums.AppState.FOCUSED && this._settings.get_boolean('show-window-titles'))
-            this._indicatorSpacing = 17 * scaleFactor;
-        else
-            this._indicatorSpacing = 5 * scaleFactor;
+        this._indicatorSpacing = 5 * scaleFactor;
 
         this._toDrawCount = windows - oldWindows;
 
@@ -92,25 +93,28 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
 
         this._toDrawCount = Math.abs(this._toDrawCount);
 
-        if (appState === Enums.AppState.FOCUSED && singleWindowRemains)
+        if (appState === Enums.AppState.FOCUSED && singleWindowRemains) {
             this._indicatorWidth = this._appIcon.width / 4;
-        else if (oldAppState === Enums.AppState.RUNNING && singleWindowStart)
+        } else if (oldAppState === Enums.AppState.RUNNING && singleWindowStart) {
             this._indicatorWidth = dashWidth;
-        else if (appState === Enums.AppState.FOCUSED && singleWindowStart) {
+        } else if (appState === Enums.AppState.FOCUSED && singleWindowStart) {
             this._indicatorWidth = dashWidth;
             dashWidth = this._appIcon.width / 4;
-        }
-        else
+        } else {
             this._indicatorWidth = dashWidth;
+        }
 
-        this._desiredIndicatorWidth = (windows * this._indicatorWidth) + ((windows - 1) * this._indicatorSpacing);
-        this._startIndicatorWidth = (oldWindows * dashWidth) + ((oldWindows - 1) * this._indicatorSpacing);
-        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) / ANIMATION_TICKS;
+        this._desiredIndicatorWidth = (windows * this._indicatorWidth) +
+                                      ((windows - 1) * this._indicatorSpacing);
+        this._startIndicatorWidth = (oldWindows * dashWidth) + ((oldWindows - 1) *
+                                    this._indicatorSpacing);
+        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) /
+                                    ANIMATION_TICKS;
     }
 
     _startSingleAnimation(appState) {
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let radius = INDICATOR_RADIUS * scaleFactor;
+        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const radius = INDICATOR_RADIUS * scaleFactor;
 
         if (appState === Enums.AppState.NOT_RUNNING)
             this._desiredIndicatorWidth = -radius;
@@ -119,7 +123,8 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
         else if (appState === Enums.AppState.FOCUSED)
             this._desiredIndicatorWidth = this._appIcon.width / 4;
 
-        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) / ANIMATION_TICKS;
+        this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) /
+                                    ANIMATION_TICKS;
     }
 
     _animate() {
@@ -151,27 +156,29 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
     }
 
     vfunc_repaint() {
-        let width = this._startIndicatorWidth;
+        const width = this._startIndicatorWidth;
 
-        let color = Clutter.color_from_string((this._indicatorColor ?? 'transparent'))[1];
+        const [bool_, color] = Clutter.color_from_string(this._indicatorColor ?? 'transparent');
 
-        let [areaWidth, areaHeight] = this.get_surface_size();
-        let cr = this.get_context();
+        const [areaWidth, areaHeight] = this.get_surface_size();
+        const cr = this.get_context();
 
-        let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        let radius = INDICATOR_RADIUS * scaleFactor;
+        const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const radius = INDICATOR_RADIUS * scaleFactor;
 
         if (width <= -radius)
             return;
 
         let x = 0;
-        let y = ((this._settings.get_enum('indicator-location') === Enums.IndicatorLocation.TOP) ? 0 : (areaHeight - (radius * 2)) / 2);
+
+        const indicatorLocation = this._settings.get_enum('indicator-location');
+        const y = indicatorLocation === Enums.IndicatorLocation.TOP ? 0 : (areaHeight - (radius * 2)) / 2;
 
         Clutter.cairo_set_source_color(cr, color);
 
         if (this._animationState === Enums.AnimationState.ANIMATE_DASHES) {
             cr.translate((areaWidth - width) / 2, y);
-            //draw the previous visible indicators
+            // draw the previous visible indicators
             for (let i = 0; i < this._indicatorCount; i++) {
                 cr.newSubPath();
                 x = i * this._indicatorWidth + i * this._indicatorSpacing;
@@ -179,7 +186,7 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
                 cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * DEGREES, 90 * DEGREES);
                 cr.closePath();
             }
-            //draw the new indicator
+            // draw the new indicator
             for (let i = 0; i < this._toDrawCount; i++) {
                 cr.newSubPath();
                 x = width - this._indicatorWidth;
@@ -187,8 +194,7 @@ class azTaskbar_AppIconIndicator extends St.DrawingArea {
                 cr.arc(x + this._indicatorWidth, y + radius, radius, -90 * DEGREES, 90 * DEGREES);
                 cr.closePath();
             }
-        }
-        else {
+        } else {
             cr.translate((areaWidth - width) / 2, y);
             cr.newSubPath();
             cr.arc(x, y + radius, radius, 90 * DEGREES, -90 * DEGREES);

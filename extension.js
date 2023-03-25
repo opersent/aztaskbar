@@ -1,25 +1,24 @@
+/* eslint-disable no-unused-vars */
 const { Clutter, GLib, GObject, Shell, St } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 const AppFavorites = imports.ui.appFavorites;
-const { AppIconIndicator } = Me.imports.appIconIndicator;
 const { AppIcon, ShowAppsIcon } = Me.imports.appIcon;
 const BoxPointer = imports.ui.boxpointer;
 const DND = imports.ui.dnd;
 const Enums = Me.imports.enums;
 const Main = imports.ui.main;
+const { NotificationsMonitor } = Me.imports.notificationsMonitor;
 const { Panel } = Me.imports.panel;
-const PopupMenu = imports.ui.popupMenu;
 const Signals = imports.signals;
 const Theming = Me.imports.theming;
 const UnityLauncherAPI = Me.imports.unityLauncherAPI;
 const Utils = Me.imports.utils;
 const { WindowPreviewMenuManager } = Me.imports.windowPreview;
 
-let settings, appDisplayBox, extensionConnections, panelBoxes, _workareasChangedId;
-let tracker = Shell.WindowTracker.get_default();
+let settings, primaryAppDisplayBox, extensionConnections, panelBoxes, _workareasChangedId;
 
 function getDropTarget(box, x) {
     const visibleItems = box.get_children();
@@ -29,18 +28,18 @@ function getDropTarget(box, x) {
         if (x < childBox.x1 || x > childBox.x2)
             continue;
 
-        return { item: item, index: visibleItems.indexOf(item) };
+        return { item, index: visibleItems.indexOf(item) };
     }
 
     return { item: null, index: -1 };
 }
 
 var AppDisplayBox = GObject.registerClass(
-class azTaskbar_AppDisplayBox extends St.ScrollView {
-    _init(settings, monitor) {
+class azTaskbarAppDisplayBox extends St.ScrollView {
+    _init(monitor) {
         super._init({
             style_class: 'hfade',
-            enable_mouse_scrolling: false
+            enable_mouse_scrolling: false,
         });
         this.set_policy(St.PolicyType.EXTERNAL, St.PolicyType.NEVER);
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
@@ -69,9 +68,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this.add_actor(this.mainBox);
 
         this._setConnections();
-        //If appDisplayBox position is moved in the main panel, updateIconGeometry
-        this.connect("notify::position", () => this._updateIconGeometry());
-        this.connect("destroy", () => this._destroy());
+        // If appDisplayBox position is moved in the main panel, updateIconGeometry
+        this.connect('notify::position', () => this._updateIconGeometry());
+        this.connect('destroy', () => this._destroy());
         this._connectWorkspaceSignals();
     }
 
@@ -80,12 +79,18 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         this._clearConnections();
         this._connections = new Map();
 
-        this._connections.set(this._settings.connect('changed::isolate-workspaces', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::show-running-apps', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::favorites', () => this._queueRedisplay()), this._settings);
-        this._connections.set(this._settings.connect('changed::show-apps-button', () => this._queueRedisplay()), this._settings);
-        this._connections.set(AppFavorites.getAppFavorites().connect('changed', () => this._queueRedisplay()), AppFavorites.getAppFavorites());
-        this._connections.set(this._appSystem.connect('app-state-changed', () => this._queueRedisplay()), this._appSystem);
+        this._connections.set(this._settings.connect('changed::isolate-workspaces',
+            () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::show-running-apps',
+            () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::favorites',
+            () => this._queueRedisplay()), this._settings);
+        this._connections.set(this._settings.connect('changed::show-apps-button',
+            () => this._queueRedisplay()), this._settings);
+        this._connections.set(AppFavorites.getAppFavorites().connect('changed',
+            () => this._queueRedisplay()), AppFavorites.getAppFavorites());
+        this._connections.set(this._appSystem.connect('app-state-changed',
+            () => this._queueRedisplay()), this._appSystem);
         this._connections.set(this._appSystem.connect('installed-changed', () => {
             AppFavorites.getAppFavorites().reload();
             this._queueRedisplay();
@@ -94,10 +99,14 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             this._connectWorkspaceSignals();
             this._queueRedisplay();
         }), global.window_manager);
-        this._connections.set(global.display.connect('window-entered-monitor', this._queueRedisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('window-left-monitor', this._queueRedisplay.bind(this)), global.display);
-        this._connections.set(global.display.connect('restacked', this._queueRedisplay.bind(this)), global.display);
-        this._connections.set(Main.layoutManager.connect('startup-complete', this._queueRedisplay.bind(this)), Main.layoutManager);
+        this._connections.set(global.display.connect('window-entered-monitor',
+            this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('window-left-monitor',
+            this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(global.display.connect('restacked',
+            this._queueRedisplay.bind(this)), global.display);
+        this._connections.set(Main.layoutManager.connect('startup-complete',
+            this._queueRedisplay.bind(this)), Main.layoutManager);
     }
 
     _clearConnections() {
@@ -113,46 +122,46 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex) {
-        const isFavorite = newApp.isFavorite;
-        const app = newApp.app;
+        const { isFavorite } = newApp;
+        const { app } = newApp;
         const appID = `${app.get_id()} - ${monitorIndex}`;
 
-        let item = this.appIconsCache.get(appID);
+        const item = this.appIconsCache.get(appID);
 
-        //If a favorited app is running when extension starts,
-        //the corresponding AppIcon may initially be created with isFavorite = false.
-        //Check if isFavorite changed, and create new AppIcon if true.
+        // If a favorited app is running when extension starts,
+        // the corresponding AppIcon may initially be created with isFavorite = false.
+        // Check if isFavorite changed, and create new AppIcon if true.
         const favoriteChanged = item && item.isFavorite !== isFavorite;
 
         if (item && !favoriteChanged) {
             item.isSet = true;
             return item;
-        }
-        else if (item && favoriteChanged) {
+        } else if (item && favoriteChanged) {
             this.appIconsCache.delete(appID);
             item.destroy();
         }
 
-        let appIcon = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
+        const appIcon = new AppIcon(this, app, monitorIndex, positionIndex, isFavorite);
         appIcon.isSet = true;
         this.appIconsCache.set(appID, appIcon);
         return appIcon;
     }
 
     handleDragOver(source, actor, x, _y, _time) {
-        let dropTarget = getDropTarget(this.mainBox, x);
-        let dropTargetItem = dropTarget.item;
-        let index = dropTarget.index;
+        const dropTarget = getDropTarget(this.mainBox, x);
+        const dropTargetItem = dropTarget.item;
+        const { index } = dropTarget;
 
         if (!dropTargetItem)
             return DND.DragMotionResult.NO_DROP;
 
         source.dragMonitorIndex = dropTargetItem.monitorIndex ?? -1;
         source.dragPos = index;
-        let inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) && source.dragPos <= source.lastFavIndex;
+        const inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) &&
+                                source.dragPos <= source.lastFavIndex;
 
-        let id = source.app.get_id();
-        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+        const id = source.app.get_id();
+        const favorites = AppFavorites.getAppFavorites().getFavoriteMap();
         let noDrop = id in favorites;
 
         if (source.app.is_window_backed() || !global.settings.is_writable('favorite-apps'))
@@ -162,20 +171,20 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             if (inFavoriteRange && noDrop && !source.isFavorite)
                 return DND.DragMotionResult.NO_DROP;
 
-            //Drop target location not on same monitor as source, but in fav range
+            // 1. If drop target location not on same monitor as source, but in fav range.
+            // 2. else if source has been moved to favorite range from different monitor,
+            // return to last location.
             if (!source.isFavorite && inFavoriteRange) {
                 if (!source.lastPositionIndex)
                     source.lastPositionIndex = this.mainBox.get_children().indexOf(source);
                 this.mainBox.remove_child(source);
                 this.mainBox.insert_child_at_index(source, index);
-            }
-            //source has been moved to favorite range from different monitor, return to last location.
-            else if (dropTargetItem.monitorIndex !== source.monitorIndex && !inFavoriteRange && source.lastPositionIndex) {
+            } else if (dropTargetItem.monitorIndex !== source.monitorIndex &&
+                    !inFavoriteRange && source.lastPositionIndex) {
                 this.mainBox.remove_child(source);
                 this.mainBox.insert_child_at_index(source, source.lastPositionIndex);
                 source.lastPositionIndex = null;
-            }
-            else if (dropTargetItem.monitorIndex === source.monitorIndex) {
+            } else if (dropTargetItem.monitorIndex === source.monitorIndex) {
                 this.mainBox.remove_child(source);
                 this.mainBox.insert_child_at_index(source, index);
             }
@@ -193,14 +202,15 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     acceptDrop(source, _actor, x, _y, _time) {
-        let dropTarget = getDropTarget(this.mainBox, x);
-        let dropTargetItem = dropTarget.item;
+        const dropTarget = getDropTarget(this.mainBox, x);
+        const dropTargetItem = dropTarget.item;
 
-        let id = source.app.get_id();
-        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
-        let srcIsFavorite = id in favorites;
-        let favPos = source.dragPos - source.firstFavIndex;
-        let inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) && source.dragPos <= source.lastFavIndex;
+        const id = source.app.get_id();
+        const favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+        const srcIsFavorite = id in favorites;
+        const favPos = source.dragPos - source.firstFavIndex;
+        const inFavoriteRange = source.dragPos >= (source.firstFavIndex - 1) &&
+                                source.dragPos <= source.lastFavIndex;
 
         if (!srcIsFavorite && dropTargetItem.monitorIndex !== source.monitorIndex && !inFavoriteRange)
             return false;
@@ -212,8 +222,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                 AppFavorites.getAppFavorites().removeFavorite(id);
             else
                 AppFavorites.getAppFavorites().moveFavoriteToPos(id, favPos);
-        }
-        else if (inFavoriteRange) {
+        } else if (inFavoriteRange) {
             if (srcIsFavorite)
                 AppFavorites.getAppFavorites().moveFavoriteToPos(id, favPos);
             else
@@ -228,16 +237,15 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
      * use this function from Dash to Panel instead,
     */
     _getRunningApps() {
-        let tracker = Shell.WindowTracker.get_default();
-        let windows = global.get_window_actors();
-        let apps = [];
+        const tracker = Shell.WindowTracker.get_default();
+        const windows = global.get_window_actors();
+        const apps = [];
 
         for (let i = 0, l = windows.length; i < l; ++i) {
-            let app = tracker.get_window_app(windows[i].metaWindow);
+            const app = tracker.get_window_app(windows[i].metaWindow);
 
-            if (app && apps.indexOf(app) < 0) {
+            if (app && apps.indexOf(app) < 0)
                 apps.push(app);
-            }
         }
 
         return apps;
@@ -248,7 +256,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     _sortMonitors() {
-        let sortedMonitors = [...Main.layoutManager.monitors];
+        const sortedMonitors = [...Main.layoutManager.monitors];
         sortedMonitors.sort((a, b) => {
             return a.x > b.x;
         });
@@ -265,11 +273,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                     monitorIndex: actor.monitorIndex,
                     app: actor.app,
                 });
-            }
-            else if (actor instanceof ShowAppsIcon) {
+            } else if (actor instanceof ShowAppsIcon) {
                 this.mainBox.remove_child(actor);
-            }
-            else {
+            } else {
                 this.mainBox.remove_child(actor);
                 actor.destroy();
             }
@@ -277,7 +283,8 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         const isolateMonitors = this._settings.get_boolean('isolate-monitors');
         const panelsOnAllMonitors = this._settings.get_boolean('panel-on-all-monitors');
-        const monitorsCount = (isolateMonitors && !panelsOnAllMonitors) ? Main.layoutManager.monitors.length : 1;
+        const monitorsCount = isolateMonitors &&
+                              !panelsOnAllMonitors ? Main.layoutManager.monitors.length : 1;
         const sortedMonitors = this._sortMonitors();
         const showRunningApps = this._settings.get_boolean('show-running-apps');
 
@@ -286,7 +293,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         for (let i = 0; i < monitorsCount; i++) {
             const monitorIndex = panelsOnAllMonitors ? this._monitor.index : sortedMonitors[i].index;
 
-            //Filter out any AppIcons that have moved to a different monitor
+            // Filter out any AppIcons that have moved to a different monitor
             appIconsOnTaskbar = appIconsOnTaskbar.filter(appIcon => {
                 return appIcon.monitorIndex === monitorIndex;
             });
@@ -297,50 +304,49 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             let showFavorites;
             if (!this._settings.get_boolean('favorites'))
                 showFavorites = false;
-            else {
-                if (panelsOnAllMonitors)
-                    showFavorites = monitorIndex === Main.layoutManager.primaryIndex;
-                else
-                    showFavorites = (isolateMonitors ? i === 0 : true);
-            }
+            else if (panelsOnAllMonitors)
+                showFavorites = monitorIndex === Main.layoutManager.primaryIndex;
+            else
+                showFavorites = isolateMonitors ? i === 0 : true;
 
             const runningApps = showRunningApps ? this._getRunningApps() : [];
-            let filteredRunningApps = runningApps.filter(app => Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
+            const filteredRunningApps = runningApps.filter(app =>
+                Utils.getInterestingWindows(this._settings, app.get_windows(), monitorIndex).length);
 
-            //The list of AppIcons to be shown on the taskbar.
-            let appIconsList = [];
+            // The list of AppIcons to be shown on the taskbar.
+            const appIconsList = [];
 
             if (showFavorites) {
-                let favsArray = appFavorites.getFavorites();
-                for (let i = 0; i < favsArray.length; i++) {
+                const favsArray = appFavorites.getFavorites();
+                for (let j = 0; j < favsArray.length; j++) {
                     appIconsList.push({
-                        app: favsArray[i],
+                        app: favsArray[j],
                         isFavorite: true,
                     });
                 }
             }
 
-            //To preserve the order of AppIcons already on the taskbar,
-            //remove any AppIcons already on the taskbar from filteredRunningApps list,
-            //and then push to appIconsList.
+            // To preserve the order of AppIcons already on the taskbar,
+            // remove any AppIcons already on the taskbar from filteredRunningApps list,
+            // and then push to appIconsList.
             appIconsOnTaskbar.forEach(appIcon => {
-                const app = appIcon.app;
+                const { app } = appIcon;
                 const index = filteredRunningApps.indexOf(app);
+
+                // if AppIcon not found in filteredRunningApps apps list,
+                // check if entry exists in this.appIconsCache
+                // if it does, it's no longer needed - destroy it
                 if (index > -1) {
-                    const [app] = filteredRunningApps.splice(index, 1);
-                    if (!showFavorites || !(app.get_id() in favorites)) {
+                    const [runningApp] = filteredRunningApps.splice(index, 1);
+                    if (!showFavorites || !(runningApp.get_id() in favorites)) {
                         appIconsList.push({
-                            app,
-                            isFavorite: false
+                            app: runningApp,
+                            isFavorite: false,
                         });
                     }
-                }
-                //if AppIcon not found in filteredRunningApps apps list,
-                //check if entry exists in this.appIconsCache
-                //if it does, it's no longer needed - destroy it
-                else if (!showFavorites || !(app.get_id() in favorites)) {
+                } else if (!showFavorites || !(app.get_id() in favorites)) {
                     const appID = `${app.get_id()} - ${monitorIndex}`;
-                    let item = this.appIconsCache.get(appID);
+                    const item = this.appIconsCache.get(appID);
                     if (item) {
                         this.appIconsCache.delete(appID);
                         item.destroy();
@@ -348,59 +354,56 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
                 }
             });
 
-            //Add any remaining running apps to appIconsList
+            // Add any remaining running apps to appIconsList
             filteredRunningApps.forEach(app => {
                 if (!showFavorites || !(app.get_id() in favorites)) {
                     appIconsList.push({
                         app,
-                        isFavorite: false
+                        isFavorite: false,
                     });
                 }
             });
 
-            if (appIconsList.length > 0) {
-                appIconsList.forEach(appIcon => {
-                    let item = this._createAppItem(appIcon, monitorIndex, positionIndex);
-                    const parent = item.get_parent();
+            for (let j = 0; j < appIconsList.length; j++) {
+                const appIcon = appIconsList[j];
+                const item = this._createAppItem(appIcon, monitorIndex, positionIndex);
+                const parent = item.get_parent();
 
-                    if (parent && item.positionIndex !== positionIndex) {
-                        item.positionIndex = positionIndex;
-                        item.stopAllAnimations();
-                        this.mainBox.remove_child(item);
-                        this.mainBox.insert_child_at_index(item, positionIndex);
-                        if (item.opacity !== 255)
-                            item.animateIn();
-                    }
-                    else if (!parent) {
-                        item.opacity = 0;
-                        this.mainBox.insert_child_at_index(item, positionIndex);
+                if (parent && item.positionIndex !== positionIndex) {
+                    item.positionIndex = positionIndex;
+                    item.stopAllAnimations();
+                    this.mainBox.remove_child(item);
+                    this.mainBox.insert_child_at_index(item, positionIndex);
+                    if (item.opacity !== 255)
                         item.animateIn();
-                    }
+                } else if (!parent) {
+                    item.opacity = 0;
+                    this.mainBox.insert_child_at_index(item, positionIndex);
+                    item.animateIn();
+                }
 
-                    positionIndex++;
-                });
+                positionIndex++;
             }
         }
 
         this.appIconsCache.forEach((appIcon, appID) => {
             if (appIcon.isSet) {
                 appIcon.updateAppIcon();
-            }
-            else {
+            } else {
                 this.appIconsCache.delete(appID);
                 appIcon.destroy();
             }
         });
 
-        let children = this.mainBox.get_children();
+        const children = this.mainBox.get_children();
         let insertedSeparators = 0;
         for (let i = 1; i < children.length; i++) {
             const appIcon = children[i];
             const previousAppIcon = children[i - 1];
-            //if the previous AppIcon has different monitorIndex, add a separator.
+            // if the previous AppIcon has different monitorIndex, add a separator.
             if (previousAppIcon && appIcon.monitorIndex !== previousAppIcon.monitorIndex) {
-                let separator = new St.Widget({
-                    style_class: "azTaskbar-Separator",
+                const separator = new St.Widget({
+                    style_class: 'azTaskbar-Separator',
                     x_align: Clutter.ActorAlign.FILL,
                     y_align: Clutter.ActorAlign.CENTER,
                     width: 1,
@@ -411,7 +414,9 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
             }
         }
 
-        let [showAppsButton, showAppsButtonPosition] = this._settings.get_value('show-apps-button').deep_unpack();
+        const [showAppsButton, showAppsButtonPosition] =
+            this._settings.get_value('show-apps-button').deep_unpack();
+
         if (showAppsButton) {
             if (showAppsButtonPosition === Enums.ShowAppsButtonPosition.LEFT)
                 this.mainBox.insert_child_at_index(this.showAppsIcon, 0);
@@ -433,8 +438,10 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 
         this._lastWorkspace = currentWorkspace;
 
-        this._workspaceWindowAddedId = this._lastWorkspace.connect('window-added', () => this._queueRedisplay());
-        this._workspaceWindowRemovedId = this._lastWorkspace.connect('window-removed', () => this._queueRedisplay());
+        this._workspaceWindowAddedId = this._lastWorkspace.connect('window-added',
+            () => this._queueRedisplay());
+        this._workspaceWindowRemovedId = this._lastWorkspace.connect('window-removed',
+            () => this._queueRedisplay());
     }
 
     _disconnectWorkspaceSignals() {
@@ -447,18 +454,16 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
     }
 
     updateIcon() {
-        this.appIconsCache.forEach((appIcon, appID) => {
-            if (appIcon.isSet) {
+        this.appIconsCache.forEach((appIcon, _appID) => {
+            if (appIcon.isSet)
                 appIcon.updateIcon();
-            }
         });
     }
 
     _updateIconGeometry() {
-        this.appIconsCache.forEach((appIcon, appID) => {
-            if (appIcon.isSet) {
+        this.appIconsCache.forEach((appIcon, _appID) => {
+            if (appIcon.isSet)
                 appIcon.updateIconGeometry();
-            }
         });
     }
 
@@ -473,17 +478,18 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
         if (this._windowPreviewCloseTimeoutId > 0)
             return;
 
-        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('window-previews-hide-timeout'), () => {
-            let activePreview = this.menuManager.activeMenu;
-            if (activePreview)
-                activePreview.close(BoxPointer.PopupAnimation.FULL);
+        this._windowPreviewCloseTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            this._settings.get_int('window-previews-hide-timeout'), () => {
+                const activePreview = this.menuManager.activeMenu;
+                if (activePreview)
+                    activePreview.close(BoxPointer.PopupAnimation.FULL);
 
-            this._windowPreviewCloseTimeoutId = 0;
-            return GLib.SOURCE_REMOVE;
-        });
+                this._windowPreviewCloseTimeoutId = 0;
+                return GLib.SOURCE_REMOVE;
+            });
     }
 
-    removeChangeWindowPreviewTimeout(){
+    removeChangeWindowPreviewTimeout() {
         if (this.changeWindowPreviewTimeoutId > 0) {
             GLib.source_remove(this.changeWindowPreviewTimeoutId);
             this.changeWindowPreviewTimeoutId = 0;
@@ -507,7 +513,7 @@ class azTaskbar_AppDisplayBox extends St.ScrollView {
 });
 
 var PanelBox = GObject.registerClass(
-class azTaskbar_PanelBox extends St.BoxLayout {
+class azTaskbarPanelBox extends St.BoxLayout {
     _init(monitor) {
         super._init({
             name: 'panelBox',
@@ -517,7 +523,7 @@ class azTaskbar_PanelBox extends St.BoxLayout {
         this.monitor = monitor;
         this.panel = new Panel(monitor, this);
         this.add_child(this.panel);
-        this.appDisplayBox = new AppDisplayBox(settings, monitor);
+        this.appDisplayBox = new AppDisplayBox(monitor);
 
         Main.layoutManager.addChrome(this, {
             affectsStruts: true,
@@ -534,8 +540,8 @@ class azTaskbar_PanelBox extends St.BoxLayout {
             this.set_size(this.monitor.width, -1);
             return;
         }
-        let bottomX = this.monitor.x;
-        let bottomY = this.monitor.y + this.monitor.height - this.height;
+        const bottomX = this.monitor.x;
+        const bottomY = this.monitor.y + this.monitor.height - this.height;
         this.set_position(bottomX, bottomY);
         this.set_size(this.monitor.width, -1);
     }
@@ -543,12 +549,13 @@ class azTaskbar_PanelBox extends St.BoxLayout {
     get index() {
         return this.monitor.index;
     }
-})
+});
 
 function enable() {
     settings = ExtensionUtils.getSettings();
 
     Me.remoteModel = new UnityLauncherAPI.LauncherEntryRemoteModel();
+    Me.notificationsMonitor = new NotificationsMonitor();
 
     global.azTaskbar = {};
     Signals.addSignalMethods(global.azTaskbar);
@@ -557,22 +564,29 @@ function enable() {
     Theming.updateStylesheet(settings);
 
     extensionConnections = new Map();
-    extensionConnections.set(settings.connect('changed::position-in-panel', () => addAppDisplayBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::position-offset', () => addAppDisplayBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::panel-on-all-monitors', () => resetPanels()), settings);
+    extensionConnections.set(settings.connect('changed::position-in-panel',
+        () => addAppDisplayBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::position-offset',
+        () => addAppDisplayBoxToPanel()), settings);
+    extensionConnections.set(settings.connect('changed::panel-on-all-monitors',
+        () => resetPanels()), settings);
     extensionConnections.set(settings.connect('changed::panel-location', () => {
         setPanelsLocation();
         Theming.updateStylesheet(settings);
     }), settings);
     extensionConnections.set(settings.connect('changed::isolate-monitors', () => resetPanels()), settings);
 
-    extensionConnections.set(settings.connect('changed::show-panel-activities-button', () => setPanelMenuButtonsVisibility()), settings);
-    extensionConnections.set(settings.connect('changed::show-panel-appmenu-button', () => setPanelMenuButtonsVisibility()), settings);
+    extensionConnections.set(settings.connect('changed::show-panel-activities-button',
+        () => setPanelMenuButtonsVisibility()), settings);
+    extensionConnections.set(settings.connect('changed::show-panel-appmenu-button',
+        () => setPanelMenuButtonsVisibility()), settings);
 
-    extensionConnections.set(settings.connect('changed::main-panel-height', () => Theming.updateStylesheet(settings)), settings);
-    extensionConnections.set(Main.layoutManager.connect('monitors-changed', () => resetPanels()), Main.layoutManager);
+    extensionConnections.set(settings.connect('changed::main-panel-height',
+        () => Theming.updateStylesheet(settings)), settings);
+    extensionConnections.set(Main.layoutManager.connect('monitors-changed',
+        () => resetPanels()), Main.layoutManager);
 
-    Main.panel.add_style_class_name("azTaskbar-panel");
+    Main.panel.add_style_class_name('azTaskbar-panel');
 
     createPanels();
     setPanelsLocation();
@@ -590,10 +604,10 @@ function setPanelMenuButtonsVisibility() {
         panelBox.panel.statusArea.appMenu.container.visible = showAppMenuButton;
         panelBox.panel.statusArea.activities.container.visible = showActivitiesButton;
     });
-
 }
 
 function disable() {
+    log('aztaskbar - disable()');
     if (_workareasChangedId) {
         global.display.disconnect(_workareasChangedId);
         _workareasChangedId = null;
@@ -608,13 +622,16 @@ function disable() {
     if (!Main.sessionMode.isLocked)
         Main.panel.statusArea.activities.container.show();
 
-    Main.panel.remove_style_class_name("azTaskbar-panel");
+    Main.panel.remove_style_class_name('azTaskbar-panel');
 
     Theming.unloadStylesheet();
     delete Me.customStylesheet;
 
     Me.remoteModel.destroy();
     delete Me.remoteModel;
+
+    Me.notificationsMonitor.destroy();
+    delete Me.notificationsMonitor;
 
     extensionConnections.forEach((object, id) => {
         object.disconnect(id);
@@ -644,13 +661,12 @@ function resetPanels() {
 function createPanels() {
     panelBoxes = [];
 
-    appDisplayBox = new AppDisplayBox(settings, Main.layoutManager.primaryMonitor);
+    primaryAppDisplayBox = new AppDisplayBox(Main.layoutManager.primaryMonitor);
 
     if (settings.get_boolean('panel-on-all-monitors')) {
         Main.layoutManager.monitors.forEach(monitor => {
-            if (monitor !== Main.layoutManager.primaryMonitor) {
+            if (monitor !== Main.layoutManager.primaryMonitor)
                 panelBoxes.push(new PanelBox(monitor));
-            }
         });
         global.azTaskbar.panels = panelBoxes;
         global.azTaskbar.emit('panels-created');
@@ -660,8 +676,8 @@ function createPanels() {
 }
 
 function deletePanels() {
-    appDisplayBox.destroy();
-    appDisplayBox = null;
+    primaryAppDisplayBox.destroy();
+    primaryAppDisplayBox = null;
     panelBoxes.forEach(panelBox => {
         panelBox.panel.disable();
         panelBox.destroy();
@@ -669,7 +685,7 @@ function deletePanels() {
     panelBoxes = null;
 }
 
-//Based on code from Just Perfection extension
+// Based on code from Just Perfection extension
 function setPanelsLocation() {
     const panelLocation = settings.get_enum('panel-location');
 
@@ -688,14 +704,14 @@ function setPanelsLocation() {
         return;
     }
 
-    let bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+    const bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
     mainPanelBox.set_position(mainMonitor.x, bottomY);
     Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
 
     if (!_workareasChangedId) {
         _workareasChangedId = global.display.connect('workareas-changed', () => {
-            let bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
-            mainPanelBox.set_position(mainMonitor.x, bottomY);
+            const newBottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+            mainPanelBox.set_position(mainMonitor.x, newBottomY);
             Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
         });
     }
@@ -703,26 +719,26 @@ function setPanelsLocation() {
 
 function addAppDisplayBoxToPanel() {
     panelBoxes.forEach(panelBox => {
-        const panel = panelBox.panel;
-        const appDisplayBox = panelBox.appDisplayBox;
+        const { panel } = panelBox;
+        const { appDisplayBox } = panelBox;
         setAppDisplayBoxPosition(panel, appDisplayBox);
     });
 
-    setAppDisplayBoxPosition(Main.panel, appDisplayBox);
+    setAppDisplayBoxPosition(Main.panel, primaryAppDisplayBox);
 }
 
 function setAppDisplayBoxPosition(panel, appDisplayBox) {
     const offset = settings.get_int('position-offset');
-    let parent = appDisplayBox.get_parent();
+    const parent = appDisplayBox.get_parent();
     if (parent)
         parent.remove_actor(appDisplayBox);
 
-    if (settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT)
+    if (settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT) {
         panel._leftBox.insert_child_at_index(appDisplayBox, offset);
-    else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER)
+    } else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER) {
         panel._centerBox.insert_child_at_index(appDisplayBox, offset);
-    else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
-        let nChildren = panel._rightBox.get_n_children();
+    } else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
+        const nChildren = panel._rightBox.get_n_children();
         const order = Math.clamp(nChildren - offset, 0, nChildren);
         panel._rightBox.insert_child_at_index(appDisplayBox, order);
     }

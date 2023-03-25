@@ -1,3 +1,4 @@
+/* exported ShowAppsIcon, AppIcon */
 const { Clutter, GLib, GObject, Graphene, Meta, Shell, St } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -17,14 +18,12 @@ const MAX_MULTI_WINDOW_DASHES = 3;
 const TRANSLATION_UP = 3;
 const TRANSLATION_DOWN = -3;
 
-const tracker = Shell.WindowTracker.get_default();
-
 function isWindowUrgent(w) {
     return w.urgent || w.demandsAttention || w._manualUrgency;
 }
 
 var BaseButton = GObject.registerClass(
-class azTaskbar_BaseButton extends St.Button {
+class azTaskbarBaseButton extends St.Button {
     _init(settings) {
         super._init({
             reactive: true,
@@ -42,23 +41,16 @@ class azTaskbar_BaseButton extends St.Button {
             style_class: 'azTaskbar-BaseIcon',
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
-            y_align: Clutter.ActorAlign.FILL
+            y_align: Clutter.ActorAlign.FILL,
         });
         this.bind_property('hover', this._box, 'hover', GObject.BindingFlags.SYNC_CREATE);
 
         this._iconBin = new St.Bin({
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
-            y_align: Clutter.ActorAlign.FILL
+            y_align: Clutter.ActorAlign.FILL,
         });
         this._box.add_child(this._iconBin);
-
-        this._label = new St.Label({
-            y_expand: true,
-            y_align: Clutter.ActorAlign.CENTER
-        });
-        this._box.add_child(this._label);
-        this._label.hide();
 
         this._overlayGroup = new Clutter.Actor({
             layout_manager: new Clutter.BinLayout(),
@@ -119,7 +111,7 @@ class azTaskbar_BaseButton extends St.Button {
         this.tooltipLabel.opacity = 0;
         this.tooltipLabel.show();
 
-        let [stageX, stageY] = this.get_transformed_position();
+        const [stageX, stageY] = this.get_transformed_position();
 
         const itemWidth = this.allocation.get_width();
         const itemHeight = this.allocation.get_height();
@@ -129,19 +121,19 @@ class azTaskbar_BaseButton extends St.Button {
         const offset = 6;
         const xOffset = Math.floor((itemWidth - labelWidth) / 2);
 
-        let monitorIndex = Main.layoutManager.findIndexForActor(this);
-        let workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
+        const monitorIndex = Main.layoutManager.findIndexForActor(this);
+        const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
 
-        let x, y;
-        x = Math.clamp(stageX + xOffset, 0 + offset, workArea.x + workArea.width - labelWidth - offset);
+        let y;
+        const x = Math.clamp(stageX + xOffset, 0 + offset, workArea.x + workArea.width - labelWidth - offset);
 
-        //Check if should place tool-tip above or below app icon
-        //Needed in case user has moved the panel to bottom of screen
-        let labelBelowIconRect = new Meta.Rectangle({
+        // Check if should place tool-tip above or below app icon
+        // Needed in case user has moved the panel to bottom of screen
+        const labelBelowIconRect = new Meta.Rectangle({
             x,
             y: stageY + itemHeight + offset,
             width: labelWidth,
-            height: labelHeight
+            height: labelHeight,
         });
 
         if (workArea.contains_rect(labelBelowIconRect))
@@ -218,13 +210,14 @@ class azTaskbar_BaseButton extends St.Button {
 });
 
 var ShowAppsIcon = GObject.registerClass(
-class azTaskbar_ShowAppsIcon extends BaseButton {
+class azTaskbarShowAppsIcon extends BaseButton {
     _init(settings) {
         super._init(settings);
 
         this.tooltipLabel.text = _('Show All Apps');
-        this.bind_property('checked', Main.overview.dash.showAppsButton, 'checked', GObject.BindingFlags.BIDIRECTIONAL);
-        this.connect("notify::checked", () => this._onChecked());
+        this.bind_property('checked', Main.overview.dash.showAppsButton,
+            'checked', GObject.BindingFlags.BIDIRECTIONAL);
+        this.connect('notify::checked', () => this._onChecked());
         this.updateIcon();
     }
 
@@ -240,21 +233,20 @@ class azTaskbar_ShowAppsIcon extends BaseButton {
         if (Main.overview.visible && this.checked) {
             this.checked = false;
             Main.overview.toggle();
-        }
-        else if (Main.overview.visible && !this.checked)
+        } else if (Main.overview.visible && !this.checked) {
             this.checked = true;
-        else {
+        } else {
             Main.overview.toggle();
             this.checked = true;
         }
     }
 
     updateIcon() {
-        const icon_size = this._settings.get_int('icon-size');
-        let icon = new St.Icon({
+        const iconSize = this._settings.get_int('icon-size');
+        const icon = new St.Icon({
             icon_name: 'view-app-grid-symbolic',
-            icon_size: icon_size,
-            pivot_point: new Graphene.Point({ x: 0.5, y: 0.5 })
+            icon_size: iconSize,
+            pivot_point: new Graphene.Point({ x: 0.5, y: 0.5 }),
         });
         this._iconBin.set_child(icon);
     }
@@ -273,8 +265,8 @@ var AppIcon = GObject.registerClass({
             'urgent', 'urgent', 'urgent',
             GObject.ParamFlags.READWRITE,
             false),
-    }
-}, class azTaskbar_AppIcon extends BaseButton {
+    },
+}, class azTaskbarAppIcon extends BaseButton {
     _init(appDisplayBox, app, monitorIndex, positionIndex, isFavorite) {
         super._init(appDisplayBox._settings);
 
@@ -316,7 +308,6 @@ var AppIcon = GObject.registerClass({
         this._overlayGroup.add_actor(this.multiWindowIndicator);
 
         this.tooltipLabel.text = app.get_name();
-        this._label.text = app.get_name();
 
         this._menu = null;
         this._menuTimeoutId = 0;
@@ -325,7 +316,6 @@ var AppIcon = GObject.registerClass({
         this.menuManager.addMenu(this._previewMenu);
 
         this.updateIcon();
-        this.updateLabel();
         this._connectWindowMinimizeEvent();
 
         this.notificationBadges = new AppIconBadges(this);
@@ -335,13 +325,13 @@ var AppIcon = GObject.registerClass({
 
             const iconBin = this._iconBin;
             const icon = iconBin.get_child();
-    
+
             this._removeAnimateUrgentId();
 
-            if(!icon)
+            if (!icon)
                 return;
 
-            if (this.urgent) {
+            if (this.urgent && this._settings.get_boolean('dance-urgent')) {
                 this._animateUrgent(icon);
                 this._animateUrgentId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
                     this._animateUrgent(icon);
@@ -359,24 +349,33 @@ var AppIcon = GObject.registerClass({
         this._urgentWindows = new Set();
 
         this._connections = new Map();
-        this._connections.set(this._settings.connect('changed::multi-window-indicator-style', () => this._onIndicatorSettingChanged()), this._settings);
-        this._connections.set(this._settings.connect('changed::show-window-titles', () => this.setActiveState()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-location', () => this._onIndicatorSettingChanged()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-running', () => this._onIndicatorSettingChanged()), this._settings);
-        this._connections.set(this._settings.connect('changed::indicator-color-focused', () => this._onIndicatorSettingChanged()), this._settings);
-        this._connections.set(this._settings.connect('changed::desaturation-factor', () => this._setDesaturateEffect()), this._settings);
-        this._connections.set(this._settings.connect('changed::icon-style', () => this.updateIcon()), this._settings);
-        this._connections.set(global.display.connect('notify::focus-window', () => this.setActiveState()), global.display);
-        this._connections.set(global.display.connect('window-marked-urgent', (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
-        this._connections.set(global.display.connect('window-demands-attention', (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
+        this._connections.set(this._settings.connect('changed::multi-window-indicator-style',
+            () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-location',
+            () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-running',
+            () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::indicator-color-focused',
+            () => this._onIndicatorSettingChanged()), this._settings);
+        this._connections.set(this._settings.connect('changed::desaturation-factor',
+            () => this._setDesaturateEffect()), this._settings);
+        this._connections.set(this._settings.connect('changed::icon-style',
+            () => this.updateIcon()), this._settings);
+        this._connections.set(global.display.connect('notify::focus-window',
+            () => this.setActiveState()), global.display);
+        this._connections.set(global.display.connect('window-marked-urgent',
+            (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
+        this._connections.set(global.display.connect('window-demands-attention',
+            (_dpy, window) => this._onWindowDemandsAttention(window)), global.display);
         this._connections.set(this.app.connect('windows-changed', () => this._onWindowsChanged()), this.app);
         this._connections.set(this.connect('scroll-event', this._onMouseScroll.bind(this)), this);
-        this._connections.set(this._previewMenu.connect('open-state-changed', this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
+        this._connections.set(this._previewMenu.connect('open-state-changed',
+            this._previewMenuOpenStateChanged.bind(this)), this._previewMenu);
 
         this._urgentConnections = new Map();
     }
 
-    _animateUrgent(icon){
+    _animateUrgent(icon) {
         icon.ease({
             duration: 150,
             translation_y: -3,
@@ -394,26 +393,26 @@ var AppIcon = GObject.registerClass({
                             mode: Clutter.AnimationMode.EASE_IN_QUAD,
                             duration: 150,
                         });
-                    }
+                    },
                 });
             },
         });
     }
 
-    _removeAnimateUrgentId(){
-        if(this._animateUrgentId){
+    _removeAnimateUrgentId() {
+        if (this._animateUrgentId) {
             GLib.source_remove(this._animateUrgentId);
             this._animateUrgentId = null;
         }
     }
 
-    _clearUrgentConnections(createNew){
+    _clearUrgentConnections(createNew) {
         this._urgentConnections.forEach((object, id) => {
             object.disconnect(id);
             id = null;
         });
 
-        if(createNew)
+        if (createNew)
             this._urgentConnections = new Map();
     }
 
@@ -454,10 +453,14 @@ var AppIcon = GObject.registerClass({
                 this._updateUrgentWindows();
         };
 
-        if (window.demandsAttention)
-            this._urgentConnections.set(window.connect('notify::demands-attention', () => onDemandsAttentionChanged()), window);
-        if (window.urgent)
-            this._urgentConnections.set(window.connect('notify::urgent', () => onDemandsAttentionChanged()), window);
+        if (window.demandsAttention) {
+            this._urgentConnections.set(window.connect('notify::demands-attention',
+                () => onDemandsAttentionChanged()), window);
+        }
+        if (window.urgent) {
+            this._urgentConnections.set(window.connect('notify::urgent',
+                () => onDemandsAttentionChanged()), window);
+        }
         if (window._manualUrgency) {
             this._urgentConnections.set(window.connect('focus', () => {
                 delete window._manualUrgency;
@@ -467,7 +470,7 @@ var AppIcon = GObject.registerClass({
     }
 
     _onIndicatorSettingChanged() {
-        let forceRedraw = true;
+        const forceRedraw = true;
         this.setActiveState(forceRedraw);
     }
 
@@ -488,9 +491,10 @@ var AppIcon = GObject.registerClass({
 
         let showMultiWindowIndicator;
 
-        let windows = this.getInterestingWindows();
+        const windows = this.getInterestingWindows();
         if (windows.length >= 1) {
-            this._nWindows = windows.length > MAX_MULTI_WINDOW_DASHES ? MAX_MULTI_WINDOW_DASHES : windows.length;
+            this._nWindows = windows.length > MAX_MULTI_WINDOW_DASHES
+                ? MAX_MULTI_WINDOW_DASHES : windows.length;
             this.appState = Enums.AppState.RUNNING;
             if (windows.length > 1)
                 showMultiWindowIndicator = true;
@@ -502,54 +506,22 @@ var AppIcon = GObject.registerClass({
 
             if (this.appState === Enums.AppState.RUNNING)
                 this._box.set_style_pseudo_class(null);
-        }
-        else {
+        } else {
             this._box.set_style_pseudo_class(null);
             this.appState = Enums.AppState.NOT_RUNNING;
         }
 
-        this.updateLabel();
-
         if (this._previousNWindows === undefined)
             this._previousNWindows = this._nWindows;
 
-        this._runningIndicator.updateIndicator(forceRedraw, this.oldAppState, this.appState, this._previousNWindows, this._nWindows);
+        this._runningIndicator.updateIndicator(forceRedraw, this.oldAppState,
+            this.appState, this._previousNWindows, this._nWindows);
 
-        if (this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
+        if (this._settings.get_enum('multi-window-indicator-style') !==
+            Enums.MultiWindowIndicatorStyle.INDICATOR || !showMultiWindowIndicator)
             this._hideMultiWindowIndicator();
         else if (showMultiWindowIndicator && !this.multiWindowIndicator.visible)
             this._showMultiWindowIndicator();
-    }
-
-    updateLabel() {
-        const showLabels = this._settings.get_boolean('show-window-titles') && this.appState === Enums.AppState.FOCUSED;
-
-        this._box.remove_style_class_name('azTaskbar-BaseIconText');
-
-        if (showLabels) {
-            this._label.show();
-            this._box.add_style_class_name('azTaskbar-BaseIconText');
-        }
-        else
-            this._label.hide();
-
-        let windows = this.getInterestingWindows();
-        const showWindowTitle = windows.length === 1;
-
-        if (this._notifyTitleId && this._singleWindow) {
-            this._notifyTitleId = this._singleWindow.disconnect(this._notifyTitleId);
-            this._notifyTitleId = null;
-            this._singleWindow = null;
-        }
-
-        if (showWindowTitle) {
-            this._singleWindow = windows[0];
-            this._notifyTitleId = this._singleWindow.connect(
-                'notify::title', () => this._label.text = this._singleWindow.get_title());
-            this._label.text = this._singleWindow.get_title();
-        }
-        else
-            this._label.text = this.app.get_name();
     }
 
     _onClicked() {
@@ -564,27 +536,26 @@ var AppIcon = GObject.registerClass({
         if (!isPoppedUp) {
             this.setForcedHighlight(false);
             this._onMenuPoppedDown();
-        }
-        else {
+        } else {
             this.hideLabel();
             this.setForcedHighlight(true);
         }
     }
 
     _onMouseScroll(actor, event) {
-        let scrollAction = this._settings.get_enum('scroll-action');
+        const scrollAction = this._settings.get_enum('scroll-action');
 
         let direction;
 
         switch (event.get_scroll_direction()) {
-            case Clutter.ScrollDirection.UP:
-            case Clutter.ScrollDirection.LEFT:
-                direction = 'up';
-                break;
-            case Clutter.ScrollDirection.DOWN:
-            case Clutter.ScrollDirection.RIGHT:
-                direction = 'down';
-                break;
+        case Clutter.ScrollDirection.UP:
+        case Clutter.ScrollDirection.LEFT:
+            direction = 'up';
+            break;
+        case Clutter.ScrollDirection.DOWN:
+        case Clutter.ScrollDirection.RIGHT:
+            direction = 'down';
+            break;
         }
 
         if (scrollAction === Enums.ScrollAction.CYCLE && direction) {
@@ -594,7 +565,7 @@ var AppIcon = GObject.registerClass({
                     return GLib.SOURCE_REMOVE;
                 });
 
-                let windows = this.getInterestingWindows();
+                const windows = this.getInterestingWindows();
                 if (windows.length <= 1)
                     return;
 
@@ -604,8 +575,6 @@ var AppIcon = GObject.registerClass({
                 this._cycleWindows(windows, direction);
             }
         }
-        else
-            return;
     }
 
     _onDestroy() {
@@ -649,9 +618,9 @@ var AppIcon = GObject.registerClass({
             this._dragMonitor = null;
         }
 
-        if (this._draggable) {
+        if (this._draggable)
             this._draggable = null;
-        }
+
 
         this._removeMenuTimeout();
         this._removePreviewMenuTimeout();
@@ -661,14 +630,14 @@ var AppIcon = GObject.registerClass({
     }
 
     updateIcon() {
-        let iconSize = this._settings.get_int('icon-size');
+        const iconSize = this._settings.get_int('icon-size');
         this._iconBin.remove_style_class_name('azTaskbar-symbolic-icon');
 
-        let appIconStyle = this._settings.get_enum('icon-style');
+        const appIconStyle = this._settings.get_enum('icon-style');
         if (appIconStyle === Enums.AppIconStyle.SYMBOLIC)
             this._iconBin.add_style_class_name('azTaskbar-symbolic-icon');
 
-        let icon = this.app.create_icon_texture(iconSize);
+        const icon = this.app.create_icon_texture(iconSize);
         icon.pivot_point = new Graphene.Point({ x: 0.5, y: 0.5 });
         this._iconBin.set_child(icon);
 
@@ -696,12 +665,12 @@ var AppIcon = GObject.registerClass({
             return;
 
         this.get_allocation_box();
-        let rect = new Meta.Rectangle();
+        const rect = new Meta.Rectangle();
 
         [rect.x, rect.y] = this.get_transformed_position();
         [rect.width, rect.height] = this.get_transformed_size();
 
-        let windows = this.getInterestingWindows();
+        const windows = this.getInterestingWindows();
         windows.forEach(w => {
             w.set_icon_geometry(rect);
         });
@@ -712,7 +681,7 @@ var AppIcon = GObject.registerClass({
         this._box.remove_all_transitions();
         this._runningIndicator.endAnimation();
 
-        let icon = this._iconBin.get_child();
+        const icon = this._iconBin.get_child();
 
         if (!icon)
             return;
@@ -764,8 +733,8 @@ var AppIcon = GObject.registerClass({
 
     calculateFavoritesIndicies() {
         const children = this.mainBox.get_children();
-        let appFavoritesIdicies = [];
-        children.map(child => {
+        const appFavoritesIdicies = [];
+        children.forEach(child => {
             if (child.isFavorite)
                 appFavoritesIdicies.push(children.indexOf(child));
         });
@@ -773,7 +742,7 @@ var AppIcon = GObject.registerClass({
         this.lastFavIndex = appFavoritesIdicies[appFavoritesIdicies.length - 1];
     }
 
-    _onDragMotion(dragEvent) {
+    _onDragMotion() {
         return DND.DragMotionResult.CONTINUE;
     }
 
@@ -855,11 +824,12 @@ var AppIcon = GObject.registerClass({
 
         this._removePreviewMenuTimeout();
 
-        this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, this._settings.get_int('window-previews-show-timeout'), () => {
-            this._previewMenuTimeoutId = 0;
-            this._windowPreviews();
-            return GLib.SOURCE_REMOVE;
-        });
+        this._previewMenuTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            this._settings.get_int('window-previews-show-timeout'), () => {
+                this._previewMenuTimeoutId = 0;
+                this._windowPreviews();
+                return GLib.SOURCE_REMOVE;
+            });
         GLib.Source.set_name_by_id(this._previewMenuTimeoutId, '[azTaskbar] this.previewPopupMenu');
     }
 
@@ -871,9 +841,9 @@ var AppIcon = GObject.registerClass({
         if (this._previewMenu?.isOpen)
             this._previewMenu.close();
 
-        if (buttonEvent.button === 1)
+        if (buttonEvent.button === 1) {
             this._setPopupTimeout();
-        else if (buttonEvent.button === 3) {
+        } else if (buttonEvent.button === 3) {
             this.hideLabel();
             this.popupMenu();
             return Clutter.EVENT_STOP;
@@ -932,11 +902,11 @@ var AppIcon = GObject.registerClass({
             this._cycleWindowList = null;
         }
 
-        this._connectWindowMinimizeEvent()
+        this._connectWindowMinimizeEvent();
     }
 
     _disconnectWindowMinimizeEvent() {
-        let windows = this.getInterestingWindows();
+        const windows = this.getInterestingWindows();
         windows.forEach(window => {
             if (window._windowMinimizeId > 0) {
                 window.disconnect(window._windowMinimizeId);
@@ -952,7 +922,8 @@ var AppIcon = GObject.registerClass({
                 window.disconnect(window._windowMinimizeId);
                 window._windowMinimizeId = 0;
             }
-            window._windowMinimizeId = window.connect('notify::minimized', () => this._animateAppIcon(window.minimized));
+            window._windowMinimizeId = window.connect('notify::minimized',
+                () => this._animateAppIcon(window.minimized));
         });
     }
 
@@ -969,7 +940,7 @@ var AppIcon = GObject.registerClass({
         });
     }
 
-    _setCylceWindowsTimeout(windows) {
+    _setCylceWindowsTimeout() {
         this._removeCylceWindowsTimeout();
 
         this._cylceWindowsTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
@@ -988,33 +959,33 @@ var AppIcon = GObject.registerClass({
 
         const clickActionSetting = this._settings.get_enum('click-action');
         const cycleMinimize = clickActionSetting === Enums.ClickAction.CYCLE_MINIMIZE;
-        if (!scrollDirection && clickActionSetting === Enums.ClickAction.NO_TOGGLE_CYCLE || clickActionSetting === Enums.ClickAction.CYCLE)
+        if (!scrollDirection && clickActionSetting === Enums.ClickAction.NO_TOGGLE_CYCLE ||
+            clickActionSetting === Enums.ClickAction.CYCLE)
             scrollDirection = true;
         if (scrollDirection) {
-            //mouse scroll cycle window logic borrowed from Dash to Panel
-            //https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
-            let windowIndex = windows.indexOf(global.display.focus_window);
-            let nextWindowIndex = windowIndex < 0 ? 0 :
-                windowIndex + (scrollDirection == 'up' ? -1 : 1);
+            // mouse scroll cycle window logic borrowed from Dash to Panel
+            // https://github.com/home-sweet-gnome/dash-to-panel/blob/master/utils.js#L415-L430
+            const windowIndex = windows.indexOf(global.display.focus_window);
+            let nextWindowIndex = windowIndex < 0 ? 0
+                : windowIndex + (scrollDirection === 'up' ? -1 : 1);
 
             if (nextWindowIndex === windows.length)
                 nextWindowIndex = 0;
             else if (nextWindowIndex < 0)
                 nextWindowIndex = windows.length - 1;
 
-            if (windowIndex != nextWindowIndex) {
+            if (windowIndex !== nextWindowIndex)
                 Main.activateWindow(windows[nextWindowIndex]);
-            }
+
             return true;
-        }
-        else if (cycleMinimize) {
-            //start a timer that clears cycle state after x amount of time
+        } else if (cycleMinimize) {
+            // start a timer that clears cycle state after x amount of time
             this._setCylceWindowsTimeout();
 
             if (!this._cycleWindowList)
                 this._cycleWindowList = windows;
 
-            let cycled = this._cycleWindowList.filter(window => {
+            const cycled = this._cycleWindowList.filter(window => {
                 if (window.cycled)
                     return window;
             });
@@ -1026,10 +997,10 @@ var AppIcon = GObject.registerClass({
                 return true;
             }
             for (let i = 0; i < this._cycleWindowList.length; i++) {
-                let window = this._cycleWindowList[i];
-                if (window.has_focus() && !window.cycled) {
+                const window = this._cycleWindowList[i];
+                if (window.has_focus() && !window.cycled)
                     window.cycled = true;
-                }
+
                 if (!window.cycled) {
                     window.cycled = true;
                     Main.activateWindow(window);
@@ -1042,64 +1013,59 @@ var AppIcon = GObject.registerClass({
     }
 
     activate(button) {
-        let event = Clutter.get_current_event();
-        let modifiers = event ? event.get_state() : 0;
-        let windows = this.getInterestingWindows();
-        let isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
-        let isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) != 0;
-        let openNewWindow = this.app.can_open_new_window() &&
-                            this.app.state === Shell.AppState.RUNNING &&
-                            (isCtrlPressed || isMiddleButton);
+        const event = Clutter.get_current_event();
+        const modifiers = event ? event.get_state() : 0;
+        const windows = this.getInterestingWindows();
+        const isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
+        const isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) !== 0;
+        const openNewWindow = this.app.can_open_new_window() &&
+            this.app.state === Shell.AppState.RUNNING &&
+            (isCtrlPressed || isMiddleButton);
 
         Main.overview.hide();
 
         if (this.app.state === Shell.AppState.STOPPED || openNewWindow) {
-            let isMinimized = false;
+            const isMinimized = false;
             this._animateAppIcon(isMinimized);
         }
 
-        if (openNewWindow)
+        if (openNewWindow) {
             this.app.open_new_window(-1);
-        else {
-            if (windows.length > 1) {
-                if (!this._cycleWindows(windows)) {
-                    this._removePreviewMenuTimeout();
-                    this._removeMenuTimeout();
-                    this.hideLabel();
-                    this._previewMenu?.popup();
-                }
+        } else if (windows.length > 1) {
+            if (!this._cycleWindows(windows)) {
+                this._removePreviewMenuTimeout();
+                this._removeMenuTimeout();
+                this.hideLabel();
+                this._previewMenu?.popup();
             }
-            else if (windows.length === 1) {
-                const window = windows[0];
-                if (this._settings.get_enum('click-action') === Enums.ClickAction.NO_TOGGLE_CYCLE)
-                    Main.activateWindow(window);
-                else if (window.minimized || !window.has_focus()) {
-                    Main.activateWindow(window);
-                }
-                else
-                    window.minimize();
-            }
-            //a favorited app is running, but no interesting windows on current workspace/monitor
-            else if (this.app.state === Shell.AppState.RUNNING) {
-                let isMinimized = false;
-                this._animateAppIcon(isMinimized);
-                this.app.open_new_window(-1);
-            }
+        } else if (windows.length === 1) {
+            const window = windows[0];
+            if (this._settings.get_enum('click-action') === Enums.ClickAction.NO_TOGGLE_CYCLE)
+                Main.activateWindow(window);
+            else if (window.minimized || !window.has_focus())
+                Main.activateWindow(window);
+
             else
-                this.app.activate();
+                window.minimize();
+        } else if (this.app.state === Shell.AppState.RUNNING) {
+            // a favorited app is running, but no interesting windows on current workspace/monitor
+            const isMinimized = false;
+            this._animateAppIcon(isMinimized);
+            this.app.open_new_window(-1);
+        } else {
+            this.app.activate();
         }
     }
 
     _onHover() {
         if (this.hover) {
-            let windowCount = this.getInterestingWindows().length;
+            const windowCount = this.getInterestingWindows().length;
             if (windowCount >= 1)
                 this._setPreviewPopupTimeout();
             if (!this.menuManager.activeMenu)
                 this.showLabel();
             Utils.ensureActorVisibleInScrollView(this.appDisplayBox, this);
-        }
-        else {
+        } else {
             this._removePreviewMenuTimeout();
             this._removeMenuTimeout();
             this.hideLabel();
@@ -1115,9 +1081,7 @@ var AppIcon = GObject.registerClass({
     }
 
     _windowPreviews() {
-        if (this._previewMenu?.isOpen)
-            return;
-        else {
+        if (this._previewMenu && !this._previewMenu.isOpen) {
             this._removeMenuTimeout();
             this._cancelActions();
             this._previewMenu?.popup();
@@ -1125,7 +1089,8 @@ var AppIcon = GObject.registerClass({
     }
 
     _showMultiWindowIndicator() {
-        if (this._settings.get_enum('multi-window-indicator-style') !== Enums.MultiWindowIndicatorStyle.INDICATOR)
+        if (this._settings.get_enum('multi-window-indicator-style') !==
+                Enums.MultiWindowIndicatorStyle.INDICATOR)
             return;
 
         this.multiWindowIndicator.remove_all_transitions();
@@ -1139,7 +1104,7 @@ var AppIcon = GObject.registerClass({
     }
 
     _hideMultiWindowIndicator() {
-        this.multiWindowIndicator.remove_all_transitions()
+        this.multiWindowIndicator.remove_all_transitions();
         this.multiWindowIndicator.ease({
             opacity: 0,
             duration: 100,
