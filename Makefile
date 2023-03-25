@@ -1,7 +1,7 @@
 # Basic Makefile
 
 UUID = aztaskbar@aztaskbar.gitlab.com
-BASE_MODULES = appIcon.js appIconIndicator.js appIconBadges.js enums.js extension.js LICENSE metadata.json panel.js README.md stylesheet.css theming.js unityLauncherAPI.js utils.js windowPreview.js
+BASE_MODULES = appIcon.js appIconIndicator.js appIconBadges.js enums.js extension.js LICENSE metadata.json notificationsMonitor.js panel.js README.md stylesheet.css theming.js unityLauncherAPI.js utils.js windowPreview.js
 TRANSLATABLE_MODULES = prefs.js
 
 TOLOCALIZE = $(TRANSLATABLE_MODULES)
