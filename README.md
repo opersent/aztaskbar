@@ -38,6 +38,7 @@ Additional credits:
 * Significant portions of this project are based on code from [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel) and [Dash to Dock](https://github.com/micheleg/dash-to-dock)
     * Window Previews - Dash to Dock
     * UnityLauncher - Dash to Dock
+    * Notifications Monitor - Dash to Dock
     * Urgent Window logic - Dash to Dock
     * AppIcon mouse scroll cycle window logic - Dash to Panel
     * Window peeking feature - Dash to Panel
