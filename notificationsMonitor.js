@@ -11,7 +11,7 @@ const { signals: Signals } = imports;
 const { Gio } = imports.gi;
 const { main: Main } = imports.ui;
 
-var NotificationsMonitor = class NotificationsManagerImpl {
+var NotificationsMonitor = class azTaskbarNotificationsManager {
     constructor() {
         this._settings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.notifications',
