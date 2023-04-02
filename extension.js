@@ -51,7 +51,6 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
 
         this.menuManager = new WindowPreviewMenuManager(this);
-        this.changeWindowPreviewTimeoutId = 0;
 
         this._appSystem = Shell.AppSystem.get_default();
         this.appIconsCache = new Map();
@@ -489,17 +488,9 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
             });
     }
 
-    removeChangeWindowPreviewTimeout() {
-        if (this.changeWindowPreviewTimeoutId > 0) {
-            GLib.source_remove(this.changeWindowPreviewTimeoutId);
-            this.changeWindowPreviewTimeoutId = 0;
-        }
-    }
-
     _destroy() {
         this._disconnectWorkspaceSignals();
         this.removeWindowPreviewCloseTimeout();
-        this.removeChangeWindowPreviewTimeout();
 
         this._clearConnections();
         this.showAppsIcon.destroy();
@@ -607,7 +598,6 @@ function setPanelMenuButtonsVisibility() {
 }
 
 function disable() {
-    log('aztaskbar - disable()');
     if (_workareasChangedId) {
         global.display.disconnect(_workareasChangedId);
         _workareasChangedId = null;

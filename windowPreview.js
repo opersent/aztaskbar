@@ -41,6 +41,11 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
     constructor(owner, grabParams) {
         super(owner, grabParams);
         this._owner = owner;
+        this._changeWindowPreviewTimeoutId = 0;
+
+        this._owner.connect('destroy', () => {
+            this.removeChangeWindowPreviewTimeout();
+        });
     }
 
     _onCapturedEvent(actor, event) {
@@ -63,14 +68,15 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
 
             if (hoveredMenu && hoveredMenu !== menu) {
                 // Add a timeout delay to prevent instantly opening a different Window Preview Menu.
-                // This timeout Id will be removed when this._owner is destroyed.
-                // See extension.js 'AppDisplayBox' destroy event.
-                this._owner.changeWindowPreviewTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300,
-                    () => {
-                        if (this._isActorHovered(targetActor))
-                            this._changeMenu(hoveredMenu);
-                        return GLib.SOURCE_REMOVE;
-                    });
+                this.removeChangeWindowPreviewTimeout();
+
+                this._changeWindowPreviewTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+                    if (this._isActorHovered(targetActor))
+                        this._changeMenu(hoveredMenu);
+
+                    this._changeWindowPreviewTimeoutId = 0;
+                    return GLib.SOURCE_REMOVE;
+                });
             }
         } else if ((event.type() === Clutter.EventType.BUTTON_PRESS ||
             event.type() === Clutter.EventType.TOUCH_BEGIN) &&
@@ -89,6 +95,13 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
         }
 
         return false;
+    }
+
+    removeChangeWindowPreviewTimeout() {
+        if (this._changeWindowPreviewTimeoutId > 0) {
+            GLib.source_remove(this._changeWindowPreviewTimeoutId);
+            this._changeWindowPreviewTimeoutId = 0;
+        }
     }
 };
 
