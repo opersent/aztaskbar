@@ -44,7 +44,7 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
         this._changeWindowPreviewTimeoutId = 0;
 
         this._owner.connect('destroy', () => {
-            this.removeChangeWindowPreviewTimeout();
+            this._removeChangeWindowPreviewTimeout();
         });
     }
 
@@ -68,7 +68,7 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
 
             if (hoveredMenu && hoveredMenu !== menu) {
                 // Add a timeout delay to prevent instantly opening a different Window Preview Menu.
-                this.removeChangeWindowPreviewTimeout();
+                this._removeChangeWindowPreviewTimeout();
 
                 this._changeWindowPreviewTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
                     if (this._isActorHovered(targetActor))
@@ -97,7 +97,7 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
         return false;
     }
 
-    removeChangeWindowPreviewTimeout() {
+    _removeChangeWindowPreviewTimeout() {
         if (this._changeWindowPreviewTimeoutId > 0) {
             GLib.source_remove(this._changeWindowPreviewTimeoutId);
             this._changeWindowPreviewTimeoutId = 0;

@@ -34,8 +34,22 @@ var NotificationsMonitor = class azTaskbarNotificationsManager {
         this._updateState();
     }
 
+    _disconnectMessageTray() {
+        if (this._sourceAddedId) {
+            Main.messageTray.disconnect(this._sourceAddedId);
+            this._sourceAddedId = null;
+        }
+
+        if (this._sourceRemovedId) {
+            Main.messageTray.disconnect(this._sourceRemovedId);
+            this._sourceRemovedId = null;
+        }
+    }
+
     destroy() {
         this.emit('destroy');
+
+        this._disconnectMessageTray();
 
         if (this._showBannersId) {
             this._settings.disconnect(this._showBannersId);
@@ -65,15 +79,7 @@ var NotificationsMonitor = class azTaskbarNotificationsManager {
                     () => this._checkNotifications());
             }
         } else {
-            if (this._sourceAddedId) {
-                Main.messageTray.disconnect(this._sourceAddedId);
-                this._sourceAddedId = null;
-            }
-
-            if (this._sourceRemovedId) {
-                Main.messageTray.disconnect(this._sourceRemovedId);
-                this._sourceRemovedId = null;
-            }
+            this._disconnectMessageTray();
         }
 
         this._checkNotifications();
