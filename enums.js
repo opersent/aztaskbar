@@ -23,6 +23,10 @@ var ClickAction = {
     CYCLE_MINIMIZE: 1,
     PREVIEW: 2,
     NO_TOGGLE_CYCLE: 3,
+    RAISE: 4,
+    MINIMIZE: 5,
+    QUIT: 6,
+    LAUNCH: 7,
 };
 
 var ScrollAction = {

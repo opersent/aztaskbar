@@ -572,7 +572,7 @@ var AppIcon = GObject.registerClass({
                 this._removePreviewMenuTimeout();
                 this._removeMenuTimeout();
                 this.hideLabel();
-                this._cycleWindows(windows, direction);
+                this._cycleWindows(windows, null, direction);
             }
         }
     }
@@ -952,15 +952,14 @@ var AppIcon = GObject.registerClass({
         GLib.Source.set_name_by_id(this._cylceWindowsTimeoutId, '[azTaskbar] cycleWindows');
     }
 
-    _cycleWindows(windows, scrollDirection) {
+    _cycleWindows(windows, clickAction, scrollDirection) {
         windows = windows.sort((a, b) => {
             return a.get_stable_sequence() > b.get_stable_sequence();
         });
 
-        const clickActionSetting = this._settings.get_enum('click-action');
-        const cycleMinimize = clickActionSetting === Enums.ClickAction.CYCLE_MINIMIZE;
-        if (!scrollDirection && clickActionSetting === Enums.ClickAction.NO_TOGGLE_CYCLE ||
-            clickActionSetting === Enums.ClickAction.CYCLE)
+        const cycleMinimize = clickAction === Enums.ClickAction.CYCLE_MINIMIZE;
+        if (!scrollDirection && clickAction === Enums.ClickAction.NO_TOGGLE_CYCLE ||
+            clickAction === Enums.ClickAction.CYCLE)
             scrollDirection = true;
         if (scrollDirection) {
             // mouse scroll cycle window logic borrowed from Dash to Panel
@@ -1016,23 +1015,73 @@ var AppIcon = GObject.registerClass({
         const event = Clutter.get_current_event();
         const modifiers = event ? event.get_state() : 0;
         const windows = this.getInterestingWindows();
+
         const isMiddleButton = button && button === Clutter.BUTTON_MIDDLE;
         const isCtrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK) !== 0;
-        const openNewWindow = this.app.can_open_new_window() &&
-            this.app.state === Shell.AppState.RUNNING &&
-            (isCtrlPressed || isMiddleButton);
+        const isShiftPressed = (modifiers & Clutter.ModifierType.SHIFT_MASK) !== 0;
 
-        Main.overview.hide();
+        const openNewWindow = this.app.can_open_new_window() &&
+            this.app.state === Shell.AppState.RUNNING && isCtrlPressed;
 
         if (this.app.state === Shell.AppState.STOPPED || openNewWindow) {
             const isMinimized = false;
             this._animateAppIcon(isMinimized);
         }
 
+        Main.overview.hide();
+
         if (openNewWindow) {
             this.app.open_new_window(-1);
-        } else if (windows.length > 1) {
-            if (!this._cycleWindows(windows)) {
+            return;
+        }
+
+        let clickAction;
+
+        if (isMiddleButton) {
+            clickAction = isShiftPressed ? this._settings.get_enum('shift-middle-click-action')
+                : this._settings.get_enum('middle-click-action');
+        } else {
+            clickAction = this._settings.get_enum('click-action');
+        }
+
+        switch (clickAction) {
+        case Enums.ClickAction.CYCLE: case Enums.ClickAction.CYCLE_MINIMIZE:
+        case Enums.ClickAction.NO_TOGGLE_CYCLE: case Enums.ClickAction.PREVIEW:
+            this._cycleThroughWindows(windows, clickAction);
+            break;
+        case Enums.ClickAction.RAISE:
+            for (let i = 0; i < windows.length; i++)
+                Main.activateWindow(windows[i]);
+            break;
+        case Enums.ClickAction.MINIMIZE:
+            for (let i = 0; i < windows.length; i++) {
+                const w = windows[i];
+                w.minimize();
+            }
+            break;
+        case Enums.ClickAction.QUIT:
+            for (let i = 0; i < windows.length; i++)
+                windows[i].delete(global.get_current_time());
+            break;
+        case Enums.ClickAction.LAUNCH: {
+            const isMinimized = false;
+            if (this.app.can_open_new_window() && this.app.state === Shell.AppState.RUNNING) {
+                this._animateAppIcon(isMinimized);
+                this.app.open_new_window(-1);
+            } else if (windows.length && !this.app.can_open_new_window()) {
+                Main.activateWindow(windows[0]);
+            } else {
+                this._animateAppIcon(isMinimized);
+                this.app.activate();
+            }
+            break;
+        }
+        }
+    }
+
+    _cycleThroughWindows(windows, clickAction) {
+        if (windows.length > 1) {
+            if (!this._cycleWindows(windows, clickAction)) {
                 this._removePreviewMenuTimeout();
                 this._removeMenuTimeout();
                 this.hideLabel();
@@ -1040,15 +1089,13 @@ var AppIcon = GObject.registerClass({
             }
         } else if (windows.length === 1) {
             const window = windows[0];
-            if (this._settings.get_enum('click-action') === Enums.ClickAction.NO_TOGGLE_CYCLE)
+            if (clickAction === Enums.ClickAction.NO_TOGGLE_CYCLE)
                 Main.activateWindow(window);
             else if (window.minimized || !window.has_focus())
                 Main.activateWindow(window);
-
             else
                 window.minimize();
         } else if (this.app.state === Shell.AppState.RUNNING) {
-            // a favorited app is running, but no interesting windows on current workspace/monitor
             const isMinimized = false;
             this._animateAppIcon(isMinimized);
             this.app.open_new_window(-1);

@@ -488,7 +488,6 @@ class azTaskbarActionsPage extends Adw.PreferencesPage {
         });
         const clickOptionsRow = new Adw.ActionRow({
             title: _('Left Click'),
-            subtitle: _('Modify Left Click Action of Running App Icons'),
             activatable_widget: clickOptionsMenu,
         });
         clickOptionsRow.add_suffix(clickOptionsMenu);
@@ -496,6 +495,45 @@ class azTaskbarActionsPage extends Adw.PreferencesPage {
             this._settings.set_enum('click-action', widget.selected);
         });
         clickActionGroup.add(clickOptionsRow);
+
+        const middleClickOptions = new Gtk.StringList();
+        middleClickOptions.append(_('Toggle / Cycle'));
+        middleClickOptions.append(_('Toggle / Cycle + Minimize'));
+        middleClickOptions.append(_('Toggle / Preview'));
+        middleClickOptions.append(_('Cycle'));
+        middleClickOptions.append(_('Raise'));
+        middleClickOptions.append(_('Minimize'));
+        middleClickOptions.append(_('Quit'));
+        middleClickOptions.append(_('Launch New Instance'));
+        const middleClickOptionsMenu = new Gtk.DropDown({
+            valign: Gtk.Align.CENTER,
+            model: middleClickOptions,
+            selected: this._settings.get_enum('middle-click-action'),
+        });
+        const middleClickOptionsRow = new Adw.ActionRow({
+            title: _('Middle Click'),
+            activatable_widget: middleClickOptionsMenu,
+        });
+        middleClickOptionsRow.add_suffix(middleClickOptionsMenu);
+        middleClickOptionsMenu.connect('notify::selected', widget => {
+            this._settings.set_enum('middle-click-action', widget.selected);
+        });
+        clickActionGroup.add(middleClickOptionsRow);
+
+        const shiftMiddleClickOptionsMenu = new Gtk.DropDown({
+            valign: Gtk.Align.CENTER,
+            model: middleClickOptions,
+            selected: this._settings.get_enum('shift-middle-click-action'),
+        });
+        const shiftMiddleClickOptionsRow = new Adw.ActionRow({
+            title: _('Shift + Middle Click'),
+            activatable_widget: middleClickOptionsMenu,
+        });
+        shiftMiddleClickOptionsRow.add_suffix(shiftMiddleClickOptionsMenu);
+        shiftMiddleClickOptionsMenu.connect('notify::selected', widget => {
+            this._settings.set_enum('shift-middle-click-action', widget.selected);
+        });
+        clickActionGroup.add(shiftMiddleClickOptionsRow);
 
         const scrollActionGroup = new Adw.PreferencesGroup({
             title: _('Scroll Actions'),

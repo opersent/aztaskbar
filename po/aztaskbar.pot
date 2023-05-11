@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-25 08:53-0400\n"
+"POT-Creation-Date: 2023-05-11 12:09-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -201,19 +201,19 @@ msgstr ""
 msgid "Click Actions"
 msgstr ""
 
-#: prefs.js:480
+#: prefs.js:480 prefs.js:500
 msgid "Toggle / Cycle"
 msgstr ""
 
-#: prefs.js:481
+#: prefs.js:481 prefs.js:501
 msgid "Toggle / Cycle + Minimize"
 msgstr ""
 
-#: prefs.js:482
+#: prefs.js:482 prefs.js:502
 msgid "Toggle / Preview"
 msgstr ""
 
-#: prefs.js:483
+#: prefs.js:483 prefs.js:503
 msgid "Cycle"
 msgstr ""
 
@@ -221,134 +221,154 @@ msgstr ""
 msgid "Left Click"
 msgstr ""
 
-#: prefs.js:491
-msgid "Modify Left Click Action of Running App Icons"
+#: prefs.js:504
+msgid "Raise"
 msgstr ""
 
-#: prefs.js:501
-msgid "Scroll Actions"
+#: prefs.js:505
+msgid "Minimize"
 msgstr ""
 
 #: prefs.js:506
-msgid "Cycle Windows"
+msgid "Quit"
 msgstr ""
 
 #: prefs.js:507
+msgid "Launch New Instance"
+msgstr ""
+
+#: prefs.js:514
+msgid "Middle Click"
+msgstr ""
+
+#: prefs.js:529
+msgid "Shift + Middle Click"
+msgstr ""
+
+#: prefs.js:539
+msgid "Scroll Actions"
+msgstr ""
+
+#: prefs.js:544
+msgid "Cycle Windows"
+msgstr ""
+
+#: prefs.js:545
 msgid "No Action"
 msgstr ""
 
-#: prefs.js:509
+#: prefs.js:547
 msgid "Scroll Action"
 msgstr ""
 
-#: prefs.js:519
+#: prefs.js:557
 msgid "Hover Actions"
 msgstr ""
 
-#: prefs.js:527
+#: prefs.js:565
 msgid "Tool-Tips"
 msgstr ""
 
-#: prefs.js:549 prefs.js:581
+#: prefs.js:587 prefs.js:619
 msgid "Window Previews"
 msgstr ""
 
-#: prefs.js:568
+#: prefs.js:606
 msgid "Window Preview Options"
 msgstr ""
 
-#: prefs.js:599
+#: prefs.js:637
 msgid "Show Window Previews Delay"
 msgstr ""
 
-#: prefs.js:600
+#: prefs.js:638
 msgid "Time in ms to show the window preview"
 msgstr ""
 
-#: prefs.js:620
+#: prefs.js:658
 msgid "Hide Window Previews Delay"
 msgstr ""
 
-#: prefs.js:621
+#: prefs.js:659
 msgid "Time in ms to hide the window preview"
 msgstr ""
 
-#: prefs.js:628 prefs.js:636
+#: prefs.js:666 prefs.js:674
 msgid "Window Peeking"
 msgstr ""
 
-#: prefs.js:637
+#: prefs.js:675
 msgid "Hovering a window preview will focus desired window"
 msgstr ""
 
-#: prefs.js:661
+#: prefs.js:699
 msgid "Window Peeking Delay"
 msgstr ""
 
-#: prefs.js:662
+#: prefs.js:700
 msgid "Time in ms to trigger window peek"
 msgstr ""
 
-#: prefs.js:682
+#: prefs.js:720
 msgid "Window Peeking Opacity"
 msgstr ""
 
-#: prefs.js:683
+#: prefs.js:721
 msgid "Opacity of non-focused windows during a window peek"
 msgstr ""
 
-#: prefs.js:695
+#: prefs.js:733
 msgid "About"
 msgstr ""
 
-#: prefs.js:715
+#: prefs.js:753
 msgid "App Icons Taskbar"
 msgstr ""
 
-#: prefs.js:738
+#: prefs.js:776
 msgid "App Icons Taskbar Version"
 msgstr ""
 
-#: prefs.js:748
+#: prefs.js:786
 msgid "Git Commit"
 msgstr ""
 
-#: prefs.js:758
+#: prefs.js:796
 msgid "GNOME Version"
 msgstr ""
 
-#: prefs.js:767
+#: prefs.js:805
 msgid "OS Name"
 msgstr ""
 
-#: prefs.js:780
+#: prefs.js:818
 msgid "Windowing System"
 msgstr ""
 
-#: prefs.js:788
+#: prefs.js:826
 msgid "App Icons Taskbar GitLab"
 msgstr ""
 
-#: prefs.js:791
+#: prefs.js:829
 msgid "Donate via PayPal"
 msgstr ""
 
-#: prefs.js:800
+#: prefs.js:838
 msgid "App Icons Taskbar Settings"
 msgstr ""
 
-#: prefs.js:803
+#: prefs.js:841
 msgid "Load"
 msgstr ""
 
-#: prefs.js:808
+#: prefs.js:846
 msgid "Load Settings"
 msgstr ""
 
-#: prefs.js:836
+#: prefs.js:874
 msgid "Save"
 msgstr ""
 
-#: prefs.js:841
+#: prefs.js:879
 msgid "Save Settings"
 msgstr ""

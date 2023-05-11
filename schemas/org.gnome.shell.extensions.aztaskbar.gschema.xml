@@ -13,6 +13,10 @@
         <value value='1' nick='CYCLE_MINIMIZE'/>
         <value value='2' nick='PREVIEW'/>
         <value value='3' nick='NO_TOGGLE_CYCLE'/>
+        <value value='4' nick='RAISE'/>
+        <value value='5' nick='MINIMIZE'/>
+        <value value='6' nick='QUIT'/>
+        <value value='7' nick='LAUNCH'/>
     </enum>
     <enum id='org.gnome.shell.extensions.aztaskbar.scroll-action'>
         <value value='0' nick='CYCLE'/>
@@ -171,6 +175,16 @@
             <default>'CYCLE_MINIMIZE'</default>
             <summary>Left Click action for running AppIcons</summary>
             <description>Left Click action for running AppIcons.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.click-action" name="middle-click-action">
+            <default>'LAUNCH'</default>
+            <summary>Middle Click action for running AppIcons</summary>
+            <description>Middle Click action for running AppIcons.</description>
+        </key>
+        <key enum="org.gnome.shell.extensions.aztaskbar.click-action" name="shift-middle-click-action">
+            <default>'LAUNCH'</default>
+            <summary>Shift + Middle Click action for running AppIcons</summary>
+            <description>Shift + Middle Click action for running AppIcons.</description>
         </key>
         <key enum="org.gnome.shell.extensions.aztaskbar.scroll-action" name="scroll-action">
             <default>'CYCLE'</default>
