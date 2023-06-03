@@ -8,327 +8,381 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aztaskbar\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-22 08:29-0500\n"
-"PO-Revision-Date: 2023-02-10 13:41+0100\n"
+"POT-Creation-Date: 2023-05-11 12:09-0400\n"
+"PO-Revision-Date: 2023-06-02 17:02+0200\n"
 "Last-Translator: Onno Giesmann <nutzer3105@gmail.com>\n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.1\n"
 
-#: appIcon.js:225
+#: appIcon.js:217
 msgid "Show All Apps"
 msgstr "Alle Anwendungen anzeigen"
 
-#: prefs.js:9
+#: prefs.js:10
 msgid "Show running apps and favorites on the main panel"
 msgstr "Laufende Anwendungen und Favoriten im oberen Panel anzeigen"
 
-#: prefs.js:17
+#: prefs.js:18
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: prefs.js:25
+#: prefs.js:26
 msgid "Taskbar Behavior"
 msgstr "Verhalten der Taskleiste"
 
-#: prefs.js:30 prefs.js:81
+#: prefs.js:31 prefs.js:84
 msgid "Left"
 msgstr "Links"
 
-#: prefs.js:31
+#: prefs.js:32
 msgid "Center"
 msgstr "Mitte"
 
-#: prefs.js:32 prefs.js:82
+#: prefs.js:33 prefs.js:85
 msgid "Right"
 msgstr "Rechts"
 
-#: prefs.js:34
+#: prefs.js:35
 msgid "Position in Panel"
 msgstr "Position im Panel"
 
-#: prefs.js:57
+#: prefs.js:58
 msgid "Position Offset"
 msgstr "Positionsversatz"
 
-#: prefs.js:58
+#: prefs.js:59
 msgid "Offset the position within the above selected box"
 msgstr "Position innerhalb des oben gewählten Bereichs verrücken"
 
-#: prefs.js:90
+#: prefs.js:94
 msgid "Show Apps Button"
 msgstr "Anwendungen-Knopf anzeigen"
 
-#: prefs.js:108
-msgid "Show App Title on Focused App Icon"
-msgstr "Fenstertitel der fokussierten Anwendung anzeigen"
-
-#: prefs.js:122
+#: prefs.js:112
 msgid "Show Favorites"
 msgstr "Favoriten anzeigen"
 
-#: prefs.js:133
+#: prefs.js:123
 msgid "Show Running Apps"
 msgstr "Laufende Anwendungen anzeigen"
 
-#: prefs.js:147
+#: prefs.js:137
 msgid "Isolate Workspaces"
 msgstr "Arbeitsflächen isolieren"
 
-#: prefs.js:161
+#: prefs.js:151
 msgid "Isolate Monitors"
 msgstr "Bildschirme isolieren"
 
-#: prefs.js:172
+#: prefs.js:162
 msgid "Panel"
 msgstr "Panel"
 
-#: prefs.js:177 prefs.js:355
+#: prefs.js:167 prefs.js:362
 msgid "Top"
 msgstr "Oben"
 
-#: prefs.js:178 prefs.js:356
+#: prefs.js:168 prefs.js:363
 msgid "Bottom"
 msgstr "Unten"
 
-#: prefs.js:180
+#: prefs.js:170
 msgid "Panel Location"
 msgstr "Position des Panels"
 
-#: prefs.js:193
+#: prefs.js:183
 msgid "Show Panels on All Monitors"
 msgstr "Panels auf allen Bildschirmen anzeigen"
 
-#: prefs.js:235
+#: prefs.js:228
 msgid "Panel Height"
 msgstr "Höhe des Panels"
 
-#: prefs.js:252
+#: prefs.js:245
 msgid "Show Activities Button"
 msgstr "Aktivitäten-Knopf anzeigen"
 
-#: prefs.js:266
+#: prefs.js:259
 msgid "Show App Menu Button"
 msgstr "Knopf mit Anwendungsmenü anzeigen"
 
-#: prefs.js:267
+#: prefs.js:260
 msgid "Panel menu button that shows focused app"
 msgstr "Zeigt den Menüknopf für das fokussierte Fenster an"
 
-#: prefs.js:278
+#: prefs.js:271
 msgid "App Icons"
 msgstr "Anwendungssymbole"
 
-#: prefs.js:296
+#: prefs.js:289
 msgid "Icon Size"
 msgstr "Symbolgröße"
 
-#: prefs.js:316
+#: prefs.js:309
 msgid "Icon Desaturate Factor"
 msgstr "Symbolentsättigung"
 
-#: prefs.js:323
+#: prefs.js:316
 msgid "Regular"
 msgstr "Normal"
 
-#: prefs.js:324
+#: prefs.js:317
 msgid "Symbolic"
 msgstr "Stilisiert"
 
-#: prefs.js:326
+#: prefs.js:319
 msgid "Icon Style"
 msgstr "Symbolart"
 
-#: prefs.js:327
+#: prefs.js:320
 msgid "Icon themes may not have a symbolic icon for every app"
-msgstr "Nicht alle Symbolthemen enthalten stilisierte Symbole für jede Anwendung"
+msgstr ""
+"Nicht alle Symbolthemen enthalten stilisierte Symbole für jede Anwendung"
 
-#: prefs.js:337 prefs.js:342
+#: prefs.js:334
+msgid "Dance Urgent App Icons"
+msgstr "Anwendungssymbole mit Dringlichkeit tanzen lassen"
+
+#: prefs.js:344 prefs.js:349
 msgid "Indicator"
 msgstr "Indikator"
 
-#: prefs.js:343
+#: prefs.js:350
 msgid "Multi-Dashes"
 msgstr "Mehrere Striche"
 
-#: prefs.js:345
+#: prefs.js:352
 msgid "Multi-Window Indicator Style"
 msgstr "Indikatorstil bei mehreren Fenstern"
 
-#: prefs.js:358
+#: prefs.js:365
 msgid "Indicator Location"
 msgstr "Indikator-Position"
 
-#: prefs.js:379
+#: prefs.js:386
 msgid "Running Indicator Color"
 msgstr "Indikator-Farbe für laufende Anwendung"
 
-#: prefs.js:398
+#: prefs.js:405
 msgid "Focused Indicator Color"
 msgstr "Indikator-Farbe für fokussierte Anwendung"
 
-#: prefs.js:410
+#: prefs.js:412
+msgid "Taskbar Badges"
+msgstr "Taskleisten-Benachrichtigungsabzeichen"
+
+#: prefs.js:421
+msgid "Notification Badges Count"
+msgstr "Abzeichenzähler der Benachrichtigungen"
+
+#: prefs.js:423
+msgid "Adds a badge counter to the App Icon based on GNOME shell notifications"
+msgstr ""
+"Abzeichenzähler zum Anwendungssymbol auf Grundlage der GNOME-Shell "
+"Benachrichtigung hinzufügen"
+
+#: prefs.js:437
+msgid "Unity Badges Count"
+msgstr "Unity-Benachrichtigungsabzeichen"
+
+#: prefs.js:438 prefs.js:453
+msgid "Requires Unity API"
+msgstr "Benötigt Unity-API"
+
+#: prefs.js:452
+msgid "Unity Progress Bars"
+msgstr "Unity-Fortschrittsanzeige"
+
+#: prefs.js:468
 msgid "Actions"
 msgstr "Aktionen"
 
-#: prefs.js:417
+#: prefs.js:475
 msgid "Click Actions"
 msgstr "Aktionen beim Klicken"
 
-#: prefs.js:422
+#: prefs.js:480 prefs.js:500
 msgid "Toggle / Cycle"
 msgstr "Umschalten / Durchwechseln"
 
-#: prefs.js:423
+#: prefs.js:481 prefs.js:501
 msgid "Toggle / Cycle + Minimize"
 msgstr "Umschalten / Durchwechseln + Minimieren"
 
-#: prefs.js:424
+#: prefs.js:482 prefs.js:502
 msgid "Toggle / Preview"
 msgstr "Umschalten / Vorschau"
 
-#: prefs.js:425
+#: prefs.js:483 prefs.js:503
 msgid "Cycle"
 msgstr "Durchwechseln"
 
-#: prefs.js:432
+#: prefs.js:490
 msgid "Left Click"
 msgstr "Linksklick"
 
-#: prefs.js:433
-msgid "Modify Left Click Action of Running App Icons"
-msgstr "Aktion bei Linksklick auf laufende Anwendung anpassen"
+#: prefs.js:504
+msgid "Raise"
+msgstr "Anheben"
 
-#: prefs.js:443
+#: prefs.js:505
+msgid "Minimize"
+msgstr "Minimieren"
+
+#: prefs.js:506
+msgid "Quit"
+msgstr "Beenden"
+
+#: prefs.js:507
+msgid "Launch New Instance"
+msgstr "Neues Fenster öffnen"
+
+#: prefs.js:514
+msgid "Middle Click"
+msgstr "Mittelklick"
+
+#: prefs.js:529
+msgid "Shift + Middle Click"
+msgstr "Umschalttaste + Mittelklick"
+
+#: prefs.js:539
 msgid "Scroll Actions"
 msgstr "Aktionen beim Scrollen"
 
-#: prefs.js:448
+#: prefs.js:544
 msgid "Cycle Windows"
 msgstr "Fenster durchwechseln"
 
-#: prefs.js:449
+#: prefs.js:545
 msgid "No Action"
 msgstr "Keine Aktion"
 
-#: prefs.js:451
+#: prefs.js:547
 msgid "Scroll Action"
 msgstr "Sroll-Aktion"
 
-#: prefs.js:461
+#: prefs.js:557
 msgid "Hover Actions"
 msgstr "Aktionen beim Berühren"
 
-#: prefs.js:469
+#: prefs.js:565
 msgid "Tool-Tips"
 msgstr "Minihilfen"
 
-#: prefs.js:491 prefs.js:523
+#: prefs.js:587 prefs.js:619
 msgid "Window Previews"
 msgstr "Fenster-Vorschauen"
 
-#: prefs.js:510
+#: prefs.js:606
 msgid "Window Preview Options"
 msgstr "Optionen für Fenster-Vorschau"
 
-#: prefs.js:541
+#: prefs.js:637
 msgid "Show Window Previews Delay"
 msgstr "Einblende-Verzögerung der Fenster-Vorschauen"
 
-#: prefs.js:542
+#: prefs.js:638
 msgid "Time in ms to show the window preview"
 msgstr "Zeit in ms, bevor die Fenstervorschau angezeigt wird"
 
-#: prefs.js:562
+#: prefs.js:658
 msgid "Hide Window Previews Delay"
 msgstr "Ausblende-Verzögerung der Fenster-Vorschauen"
 
-#: prefs.js:563
+#: prefs.js:659
 msgid "Time in ms to hide the window preview"
 msgstr "Zeit in ms, nach der die Fenstervorschau ausgeblendet wird"
 
-#: prefs.js:570 prefs.js:578
+#: prefs.js:666 prefs.js:674
 msgid "Window Peeking"
 msgstr "Fenster-Andeutung"
 
-#: prefs.js:579
+#: prefs.js:675
 msgid "Hovering a window preview will focus desired window"
-msgstr "Beim Berühren der Fenster-Vorschau wird das fokussierte Fenster angedeutet"
+msgstr ""
+"Beim Berühren der Fenster-Vorschau wird das fokussierte Fenster angedeutet"
 
-#: prefs.js:603
+#: prefs.js:699
 msgid "Window Peeking Delay"
 msgstr "Verzögerung der Fenster-Andeutung"
 
-#: prefs.js:604
+#: prefs.js:700
 msgid "Time in ms to trigger window peek"
 msgstr "Zeit in ms, bevor das Fenster angedeutet wird"
 
-#: prefs.js:624
+#: prefs.js:720
 msgid "Window Peeking Opacity"
 msgstr "Deckkraft der Fenster-Andeutung"
 
-#: prefs.js:625
+#: prefs.js:721
 msgid "Opacity of non-focused windows during a window peek"
 msgstr "Deckkraft der nicht-fokussierten Fenster während der Fenster-Andeutung"
 
-#: prefs.js:637
+#: prefs.js:733
 msgid "About"
 msgstr "Info"
 
-#: prefs.js:657
+#: prefs.js:753
 msgid "App Icons Taskbar"
 msgstr "App Icons Taskbar"
 
-#: prefs.js:680
+#: prefs.js:776
 msgid "App Icons Taskbar Version"
 msgstr "App Icons Taskbar-Version"
 
-#: prefs.js:690
+#: prefs.js:786
 msgid "Git Commit"
 msgstr "Git-Commit"
 
-#: prefs.js:700
+#: prefs.js:796
 msgid "GNOME Version"
 msgstr "GNOME-Version"
 
-#: prefs.js:709
+#: prefs.js:805
 msgid "OS Name"
 msgstr "Betriebssystem"
 
-#: prefs.js:722
+#: prefs.js:818
 msgid "Windowing System"
 msgstr "Fenstersystem"
 
-#: prefs.js:730
+#: prefs.js:826
 msgid "App Icons Taskbar GitLab"
 msgstr "App Icons Taskbar GitLab"
 
-#: prefs.js:733
+#: prefs.js:829
 msgid "Donate via PayPal"
 msgstr "Spenden über PayPal"
 
-#: prefs.js:742
+#: prefs.js:838
 msgid "App Icons Taskbar Settings"
 msgstr "App Icons Taskbar-Einstellungen"
 
-#: prefs.js:745
+#: prefs.js:841
 msgid "Load"
 msgstr "Laden"
 
-#: prefs.js:750
+#: prefs.js:846
 msgid "Load Settings"
 msgstr "Einstellungen laden"
 
-#: prefs.js:775
+#: prefs.js:874
 msgid "Save"
 msgstr "Speichern"
 
-#: prefs.js:780
+#: prefs.js:879
 msgid "Save Settings"
 msgstr "Einstellungen speichern"
+
+#~ msgid "Modify Left Click Action of Running App Icons"
+#~ msgstr "Aktion bei Linksklick auf laufende Anwendung anpassen"
+
+#~ msgid "Show App Title on Focused App Icon"
+#~ msgstr "Fenstertitel der fokussierten Anwendung anzeigen"
 
 #~ msgid "Show Applications"
 #~ msgstr "Anwendungen anzeigen"
