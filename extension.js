@@ -531,6 +531,7 @@ class azTaskbarPanelBox extends St.BoxLayout {
             this.set_size(this.monitor.width, -1);
             return;
         }
+
         const bottomX = this.monitor.x;
         const bottomY = this.monitor.y + this.monitor.height - this.height;
         this.set_position(bottomX, bottomY);
@@ -576,6 +577,9 @@ function enable() {
         () => Theming.updateStylesheet(settings)), settings);
     extensionConnections.set(Main.layoutManager.connect('monitors-changed',
         () => resetPanels()), Main.layoutManager);
+
+    extensionConnections.set(Main.layoutManager.panelBox.connect('notify::allocation',
+        () => setPanelsLocation(true)), Main.layoutManager.panelBox);
 
     Main.panel.add_style_class_name('azTaskbar-panel');
 
@@ -676,13 +680,14 @@ function deletePanels() {
 }
 
 // Based on code from Just Perfection extension
-function setPanelsLocation() {
+function setPanelsLocation(mainPanelOnly = false) {
     const panelLocation = settings.get_enum('panel-location');
 
     const mainPanelBox = Main.layoutManager.panelBox;
     const mainMonitor = Main.layoutManager.primaryMonitor;
 
-    panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
+    if (!mainPanelOnly)
+        panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
 
     if (panelLocation === Enums.PanelLocation.TOP) {
         if (_workareasChangedId) {
