@@ -320,6 +320,8 @@ var AppIcon = GObject.registerClass({
 
         this.notificationBadges = new AppIconBadges(this);
 
+        this.connect('notify::position', () => this.updateIconGeometry());
+        this.connect('notify::size', () => this.updateIconGeometry());
         this.connect('notify::urgent', () => {
             this._clearUrgentConnections(true);
 
