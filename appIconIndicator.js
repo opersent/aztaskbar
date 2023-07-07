@@ -80,6 +80,9 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
         const singleWindowRemains = oldWindows === 2 && windows === 1;
         const singleWindowStart = oldWindows === 1 && windows === 2;
 
+        if (oldWindows === 0 && windows > 1)
+            oldWindows = 1;
+
         let dashWidth = this._appIcon.width / 10;
 
         this._indicatorSpacing = 5 * scaleFactor;

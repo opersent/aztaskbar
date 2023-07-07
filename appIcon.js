@@ -491,7 +491,7 @@ var AppIcon = GObject.registerClass({
 
         this._box.style = null;
 
-        let showMultiWindowIndicator;
+        let showMultiWindowIndicator = false;
 
         const windows = this.getInterestingWindows();
         if (windows.length >= 1) {
@@ -509,8 +509,10 @@ var AppIcon = GObject.registerClass({
             if (this.appState === Enums.AppState.RUNNING)
                 this._box.set_style_pseudo_class(null);
         } else {
+            this._nWindows = 0;
+            forceRedraw = true;
             this._box.set_style_pseudo_class(null);
-            this.appState = Enums.AppState.NOT_RUNNING;
+            this.oldAppState = this.appState = Enums.AppState.NOT_RUNNING;
         }
 
         if (this._previousNWindows === undefined)
