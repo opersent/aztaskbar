@@ -625,7 +625,6 @@ var AppIcon = GObject.registerClass({
         if (this._draggable)
             this._draggable = null;
 
-
         this._removeMenuTimeout();
         this._removePreviewMenuTimeout();
         this._clearCycleWindow();
@@ -721,7 +720,9 @@ var AppIcon = GObject.registerClass({
         };
         DND.addDragMonitor(this._dragMonitor);
 
-        this._overlayGroup.opacity = 105;
+        this._overlayGroup.ease({
+            opacity: 105,
+        });
         this._highlightFavorites(true);
     }
 
@@ -764,7 +765,7 @@ var AppIcon = GObject.registerClass({
     _endDrag() {
         this._removeDragMonitor();
         this.lastPositionIndex = null;
-        this.undoFade();
+        this.undoDragFade();
         this._highlightFavorites(false);
         this._box.style = null;
         this.updateIconGeometry();
@@ -784,7 +785,7 @@ var AppIcon = GObject.registerClass({
         }
     }
 
-    undoFade() {
+    undoDragFade() {
         this._overlayGroup.ease({
             opacity: 255,
         });

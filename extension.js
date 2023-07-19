@@ -373,6 +373,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
                     item.stopAllAnimations();
                     this.mainBox.remove_child(item);
                     this.mainBox.insert_child_at_index(item, positionIndex);
+                    item.undoDragFade();
                     if (item.opacity !== 255)
                         item.animateIn();
                 } else if (!parent) {
