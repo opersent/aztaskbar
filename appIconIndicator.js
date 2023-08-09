@@ -34,11 +34,11 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
         this._startIndicatorWidth = 0;
     }
 
-    _setAnimationState(oldWindows, windows) {
+    _setAnimationState(nPreviousWindows, nWindows) {
         const dashesEnabled = this._settings.get_enum('multi-window-indicator-style') ===
                               Enums.MultiWindowIndicatorStyle.MULTI_DASH;
 
-        if (dashesEnabled && (windows > 1 || windows < oldWindows))
+        if (dashesEnabled && nWindows > 1)
             this._animationState = Enums.AnimationState.ANIMATE_DASHES;
         else
             this._animationState = Enums.AnimationState.ANIMATE_SINGLE;
@@ -51,21 +51,21 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
             this._indicatorColor = this._settings.get_string('indicator-color-focused');
     }
 
-    updateIndicator(forceRedraw, oldAppState, appState, oldWindows, windows) {
-        const needsRepaint = oldAppState !== appState ||
-                            (oldAppState === appState && oldWindows !== windows) ||
+    updateIndicator(forceRedraw, previousAppState, appState, nPreviousWindows, nWindows) {
+        const needsRepaint = previousAppState !== appState ||
+                            (previousAppState === appState && nPreviousWindows !== nWindows) ||
                             forceRedraw;
 
         if (!needsRepaint)
             return;
 
-        this._setAnimationState(oldWindows, windows);
+        this._setAnimationState(nPreviousWindows, nWindows);
         this._setIndicatorColor(appState);
 
         this.endAnimation();
 
         if (this._animationState === Enums.AnimationState.ANIMATE_DASHES)
-            this._startDashesAnimation(oldAppState, appState, oldWindows, windows);
+            this._startDashesAnimation(previousAppState, appState, nPreviousWindows, nWindows);
         else if (this._animationState === Enums.AnimationState.ANIMATE_SINGLE)
             this._startSingleAnimation(appState);
 
@@ -75,30 +75,30 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
         });
     }
 
-    _startDashesAnimation(oldAppState, appState, oldWindows, windows) {
+    _startDashesAnimation(previousAppState, appState, nPreviousWindows, nWindows) {
         const scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        const singleWindowRemains = oldWindows === 2 && windows === 1;
-        const singleWindowStart = oldWindows === 1 && windows === 2;
+        const singleWindowRemains = nPreviousWindows === 2 && nWindows === 1;
+        const singleWindowStart = nPreviousWindows === 1 && nWindows === 2;
 
-        if (oldWindows === 0 && windows > 1)
-            oldWindows = 1;
+        if (nPreviousWindows === 0 && nWindows > 1)
+            nPreviousWindows = 1;
 
         let dashWidth = this._appIcon.width / 10;
 
         this._indicatorSpacing = 5 * scaleFactor;
 
-        this._toDrawCount = windows - oldWindows;
+        this._toDrawCount = nWindows - nPreviousWindows;
 
         if (this._toDrawCount < 0)
-            this._indicatorCount = oldWindows + this._toDrawCount;
+            this._indicatorCount = nPreviousWindows + this._toDrawCount;
         else
-            this._indicatorCount = oldWindows;
+            this._indicatorCount = nPreviousWindows;
 
         this._toDrawCount = Math.abs(this._toDrawCount);
 
         if (appState === Enums.AppState.FOCUSED && singleWindowRemains) {
             this._indicatorWidth = this._appIcon.width / 4;
-        } else if (oldAppState === Enums.AppState.RUNNING && singleWindowStart) {
+        } else if (previousAppState === Enums.AppState.RUNNING && singleWindowStart) {
             this._indicatorWidth = dashWidth;
         } else if (appState === Enums.AppState.FOCUSED && singleWindowStart) {
             this._indicatorWidth = dashWidth;
@@ -107,9 +107,9 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
             this._indicatorWidth = dashWidth;
         }
 
-        this._desiredIndicatorWidth = (windows * this._indicatorWidth) +
-                                      ((windows - 1) * this._indicatorSpacing);
-        this._startIndicatorWidth = (oldWindows * dashWidth) + ((oldWindows - 1) *
+        this._desiredIndicatorWidth = (nWindows * this._indicatorWidth) +
+                                      ((nWindows - 1) * this._indicatorSpacing);
+        this._startIndicatorWidth = (nPreviousWindows * dashWidth) + ((nPreviousWindows - 1) *
                                     this._indicatorSpacing);
         this._indicatorTickWidth = (this._desiredIndicatorWidth - this._startIndicatorWidth) /
                                     ANIMATION_TICKS;
