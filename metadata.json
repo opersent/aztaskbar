@@ -5,7 +5,7 @@
   "gettext-domain": "aztaskbar",
   "settings-schema": "org.gnome.shell.extensions.aztaskbar",
   "version": 18,
-  "shell-version": ["42", "43", "44"],
+  "shell-version": ["45"],
   "url": "https://gitlab.com/AndrewZaech/aztaskbar",
   "donations": {
     "paypal": "azaech"

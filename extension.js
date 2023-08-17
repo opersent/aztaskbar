@@ -1,24 +1,26 @@
-/* eslint-disable no-unused-vars */
-const { Clutter, GLib, GObject, Shell, St } = imports.gi;
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const AppFavorites = imports.ui.appFavorites;
-const { AppIcon, ShowAppsIcon } = Me.imports.appIcon;
-const BoxPointer = imports.ui.boxpointer;
-const DND = imports.ui.dnd;
-const Enums = Me.imports.enums;
-const Main = imports.ui.main;
-const { NotificationsMonitor } = Me.imports.notificationsMonitor;
-const { Panel } = Me.imports.panel;
+import * as AppFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';
+import {PopupAnimation} from 'resource:///org/gnome/shell/ui/boxpointer.js';
+import * as DND from 'resource:///org/gnome/shell/ui/dnd.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+import {AppIcon, ShowAppsIcon} from './appIcon.js';
+import * as Enums from './enums.js';
+import {NotificationsMonitor} from './notificationsMonitor.js';
+import {Panel} from './panel.js';
+import * as Utils from './utils.js';
+import * as Theming from './theming.js';
+import * as UnityLauncherAPI from './unityLauncherAPI.js';
+import {WindowPreviewMenuManager} from './windowPreview.js';
+
 const Signals = imports.signals;
-const Theming = Me.imports.theming;
-const UnityLauncherAPI = Me.imports.unityLauncherAPI;
-const Utils = Me.imports.utils;
-const { WindowPreviewMenuManager } = Me.imports.windowPreview;
-
-let settings, primaryAppDisplayBox, extensionConnections, panelBoxes, _workareasChangedId;
 
 function getDropTarget(box, x) {
     const visibleItems = box.get_children();
@@ -28,10 +30,10 @@ function getDropTarget(box, x) {
         if (x < childBox.x1 || x > childBox.x2)
             continue;
 
-        return { item, index: visibleItems.indexOf(item) };
+        return {item, index: visibleItems.indexOf(item)};
     }
 
-    return { item: null, index: -1 };
+    return {item: null, index: -1};
 }
 
 var AppDisplayBox = GObject.registerClass(
@@ -45,7 +47,9 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this.clip_to_allocation = true;
 
-        this._settings = settings;
+        const Me = Extension.lookupByURL(import.meta.url);
+        this._settings = Me.getSettings();
+
         this._monitor = monitor;
         this.showAppsIcon = new ShowAppsIcon(this._settings);
         this._workId = Main.initializeDeferredWork(this, this._redisplay.bind(this));
@@ -121,8 +125,8 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
     }
 
     _createAppItem(newApp, monitorIndex, positionIndex) {
-        const { isFavorite } = newApp;
-        const { app } = newApp;
+        const {isFavorite} = newApp;
+        const {app} = newApp;
         const appID = `${app.get_id()} - ${monitorIndex}`;
 
         const item = this.appIconsCache.get(appID);
@@ -149,7 +153,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
     handleDragOver(source, actor, x, _y, _time) {
         const dropTarget = getDropTarget(this.mainBox, x);
         const dropTargetItem = dropTarget.item;
-        const { index } = dropTarget;
+        const {index} = dropTarget;
 
         if (!dropTargetItem)
             return DND.DragMotionResult.NO_DROP;
@@ -234,7 +238,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
     /**
      * this._appSystem.get_running() is slow to update
      * use this function from Dash to Panel instead,
-    */
+     */
     _getRunningApps() {
         const tracker = Shell.WindowTracker.get_default();
         const windows = global.get_window_actors();
@@ -329,7 +333,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
             // remove any AppIcons already on the taskbar from filteredRunningApps list,
             // and then push to appIconsList.
             appIconsOnTaskbar.forEach(appIcon => {
-                const { app } = appIcon;
+                const {app} = appIcon;
                 const index = filteredRunningApps.indexOf(app);
 
                 // if AppIcon not found in filteredRunningApps apps list,
@@ -482,7 +486,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
             this._settings.get_int('window-previews-hide-timeout'), () => {
                 const activePreview = this.menuManager.activeMenu;
                 if (activePreview)
-                    activePreview.close(BoxPointer.PopupAnimation.FULL);
+                    activePreview.close(PopupAnimation.FULL);
 
                 this._windowPreviewCloseTimeoutId = 0;
                 return GLib.SOURCE_REMOVE;
@@ -511,9 +515,11 @@ class azTaskbarPanelBox extends St.BoxLayout {
             name: 'panelBox',
             vertical: true,
         });
+        const Me = Extension.lookupByURL(import.meta.url);
+        this._settings = Me.getSettings();
 
         this.monitor = monitor;
-        this.panel = new Panel(monitor, this);
+        this.panel = new Panel(monitor);
         this.add_child(this.panel);
         this.appDisplayBox = new AppDisplayBox(monitor);
 
@@ -526,7 +532,7 @@ class azTaskbarPanelBox extends St.BoxLayout {
     }
 
     setSizeAndPosition() {
-        const panelLocation = settings.get_enum('panel-location');
+        const panelLocation = this._settings.get_enum('panel-location');
         if (panelLocation === Enums.PanelLocation.TOP) {
             this.set_position(this.monitor.x, this.monitor.y);
             this.set_size(this.monitor.width, -1);
@@ -544,198 +550,195 @@ class azTaskbarPanelBox extends St.BoxLayout {
     }
 });
 
-function enable() {
-    settings = ExtensionUtils.getSettings();
-
-    Me.remoteModel = new UnityLauncherAPI.LauncherEntryRemoteModel();
-    Me.notificationsMonitor = new NotificationsMonitor();
-
-    global.azTaskbar = {};
-    Signals.addSignalMethods(global.azTaskbar);
-
-    Me.customStylesheet = Theming.getStylesheetFile();
-    Theming.updateStylesheet(settings);
-
-    extensionConnections = new Map();
-    extensionConnections.set(settings.connect('changed::position-in-panel',
-        () => addAppDisplayBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::position-offset',
-        () => addAppDisplayBoxToPanel()), settings);
-    extensionConnections.set(settings.connect('changed::panel-on-all-monitors',
-        () => resetPanels()), settings);
-    extensionConnections.set(settings.connect('changed::panel-location', () => {
-        setPanelsLocation();
-        Theming.updateStylesheet(settings);
-    }), settings);
-    extensionConnections.set(settings.connect('changed::isolate-monitors', () => resetPanels()), settings);
-
-    extensionConnections.set(settings.connect('changed::show-panel-activities-button',
-        () => setPanelMenuButtonsVisibility()), settings);
-    extensionConnections.set(settings.connect('changed::show-panel-appmenu-button',
-        () => setPanelMenuButtonsVisibility()), settings);
-
-    extensionConnections.set(settings.connect('changed::main-panel-height',
-        () => Theming.updateStylesheet(settings)), settings);
-    extensionConnections.set(Main.layoutManager.connect('monitors-changed',
-        () => resetPanels()), Main.layoutManager);
-
-    extensionConnections.set(Main.layoutManager.panelBox.connect('notify::allocation',
-        () => setPanelsLocation(true)), Main.layoutManager.panelBox);
-
-    Main.panel.add_style_class_name('azTaskbar-panel');
-
-    createPanels();
-    setPanelsLocation();
-    setPanelMenuButtonsVisibility();
-}
-
-function setPanelMenuButtonsVisibility() {
-    const showAppMenuButton = settings.get_boolean('show-panel-appmenu-button');
-    const showActivitiesButton = settings.get_boolean('show-panel-activities-button');
-
-    Main.panel.statusArea.appMenu.container.visible = showAppMenuButton;
-    Main.panel.statusArea.activities.container.visible = showActivitiesButton;
-
-    panelBoxes.forEach(panelBox => {
-        panelBox.panel.statusArea.appMenu.container.visible = showAppMenuButton;
-        panelBox.panel.statusArea.activities.container.visible = showActivitiesButton;
-    });
-}
-
-function disable() {
-    if (_workareasChangedId) {
-        global.display.disconnect(_workareasChangedId);
-        _workareasChangedId = null;
-    }
-    const mainMonitor = Main.layoutManager.primaryMonitor;
-    Main.layoutManager.panelBox.set_position(mainMonitor.x, mainMonitor.y);
-    Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
-
-    if (!Main.overview.visible && !Main.sessionMode.isLocked)
-        Main.panel.statusArea.appMenu.container.show();
-
-    if (!Main.sessionMode.isLocked)
-        Main.panel.statusArea.activities.container.show();
-
-    Main.panel.remove_style_class_name('azTaskbar-panel');
-
-    Theming.unloadStylesheet();
-    delete Me.customStylesheet;
-
-    Me.remoteModel.destroy();
-    delete Me.remoteModel;
-
-    Me.notificationsMonitor.destroy();
-    delete Me.notificationsMonitor;
-
-    extensionConnections.forEach((object, id) => {
-        object.disconnect(id);
-        id = null;
-    });
-    extensionConnections = null;
-
-    deletePanels();
-    delete global.azTaskbar;
-
-    settings.run_dispose();
-    settings = null;
-}
-
-function init() {
-    ExtensionUtils.initTranslations(Me.metadata['gettext-domain']);
-    Me.persistentStorage = {};
-}
-
-function resetPanels() {
-    deletePanels();
-    createPanels();
-    setPanelsLocation();
-    setPanelMenuButtonsVisibility();
-}
-
-function createPanels() {
-    panelBoxes = [];
-
-    primaryAppDisplayBox = new AppDisplayBox(Main.layoutManager.primaryMonitor);
-
-    if (settings.get_boolean('panel-on-all-monitors')) {
-        Main.layoutManager.monitors.forEach(monitor => {
-            if (monitor !== Main.layoutManager.primaryMonitor)
-                panelBoxes.push(new PanelBox(monitor));
-        });
-        global.azTaskbar.panels = panelBoxes;
-        global.azTaskbar.emit('panels-created');
+export default class AzTaskbar extends Extension {
+    constructor(metaData) {
+        super(metaData);
+        this.persistentStorage = {};
     }
 
-    addAppDisplayBoxToPanel();
-}
+    enable() {
+        this._settings = this.getSettings();
 
-function deletePanels() {
-    primaryAppDisplayBox.destroy();
-    primaryAppDisplayBox = null;
-    panelBoxes.forEach(panelBox => {
-        panelBox.panel.disable();
-        panelBox.destroy();
-    });
-    panelBoxes = null;
-}
+        this.remoteModel = new UnityLauncherAPI.LauncherEntryRemoteModel();
+        this.notificationsMonitor = new NotificationsMonitor();
 
-// Based on code from Just Perfection extension
-function setPanelsLocation(mainPanelOnly = false) {
-    const panelLocation = settings.get_enum('panel-location');
+        global.azTaskbar = {};
+        Signals.addSignalMethods(global.azTaskbar);
 
-    const mainPanelBox = Main.layoutManager.panelBox;
-    const mainMonitor = Main.layoutManager.primaryMonitor;
+        this.customStylesheet = Theming.getStylesheetFile();
+        Theming.updateStylesheet(this._settings);
 
-    if (!mainPanelOnly)
-        panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
+        this._extensionConnections = new Map();
+        this._extensionConnections.set(this._settings.connect('changed::position-in-panel',
+            () => this._addAppDisplayBoxToPanel()), this._settings);
+        this._extensionConnections.set(this._settings.connect('changed::position-offset',
+            () => this._addAppDisplayBoxToPanel()), this._settings);
+        this._extensionConnections.set(this._settings.connect('changed::panel-on-all-monitors',
+            () => this._resetPanels()), this._settings);
+        this._extensionConnections.set(this._settings.connect('changed::panel-location', () => {
+            this._setPanelsLocation();
+            Theming.updateStylesheet(this._settings);
+        }), this._settings);
+        this._extensionConnections.set(this._settings.connect('changed::isolate-monitors', () => this._resetPanels()), this._settings);
 
-    if (panelLocation === Enums.PanelLocation.TOP) {
-        if (_workareasChangedId) {
-            global.display.disconnect(_workareasChangedId);
-            _workareasChangedId = null;
+        this._extensionConnections.set(this._settings.connect('changed::show-panel-activities-button',
+            () => this._setPanelMenuButtonsVisibility()), this._settings);
+        this._extensionConnections.set(this._settings.connect('changed::show-panel-appmenu-button',
+            () => this._setPanelMenuButtonsVisibility()), this._settings);
+
+        this._extensionConnections.set(this._settings.connect('changed::main-panel-height',
+            () => Theming.updateStylesheet(this._settings)), this._settings);
+        this._extensionConnections.set(Main.layoutManager.connect('monitors-changed',
+            () => this._resetPanels()), Main.layoutManager);
+
+        this._extensionConnections.set(Main.layoutManager.panelBox.connect('notify::allocation',
+            () => this._setPanelsLocation(true)), Main.layoutManager.panelBox);
+
+        Main.panel.add_style_class_name('azTaskbar-panel');
+
+        this._createPanels();
+        this._setPanelsLocation();
+        this._setPanelMenuButtonsVisibility();
+    }
+
+    disable() {
+        if (this._workareasChangedId) {
+            global.display.disconnect(this._workareasChangedId);
+            this._workareasChangedId = null;
         }
-        mainPanelBox.set_position(mainMonitor.x, mainMonitor.y);
+        const mainMonitor = Main.layoutManager.primaryMonitor;
+        Main.layoutManager.panelBox.set_position(mainMonitor.x, mainMonitor.y);
         Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
-        return;
+
+        if (!Main.sessionMode.isLocked)
+            Main.panel.statusArea.activities.container.show();
+
+        Main.panel.remove_style_class_name('azTaskbar-panel');
+
+        Theming.unloadStylesheet();
+        delete this.customStylesheet;
+
+        this.remoteModel.destroy();
+        delete this.remoteModel;
+
+        this.notificationsMonitor.destroy();
+        delete this.notificationsMonitor;
+
+        this._extensionConnections.forEach((object, id) => {
+            object.disconnect(id);
+            id = null;
+        });
+        this._extensionConnections = null;
+
+        this._deletePanels();
+        delete global.azTaskbar;
+
+        this._settings.run_dispose();
+        this._settings = null;
     }
 
-    const bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
-    mainPanelBox.set_position(mainMonitor.x, bottomY);
-    Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+    _setPanelMenuButtonsVisibility() {
+        const showActivitiesButton = this._settings.get_boolean('show-panel-activities-button');
 
-    if (!_workareasChangedId) {
-        _workareasChangedId = global.display.connect('workareas-changed', () => {
-            const newBottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
-            mainPanelBox.set_position(mainMonitor.x, newBottomY);
-            Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+        Main.panel.statusArea.activities.container.visible = showActivitiesButton;
+
+        this._panelBoxes.forEach(panelBox => {
+            if (panelBox.panel.statusArea.activities)
+                panelBox.panel.statusArea.activities.container.visible = showActivitiesButton;
         });
     }
-}
 
-function addAppDisplayBoxToPanel() {
-    panelBoxes.forEach(panelBox => {
-        const { panel } = panelBox;
-        const { appDisplayBox } = panelBox;
-        setAppDisplayBoxPosition(panel, appDisplayBox);
-    });
+    _resetPanels() {
+        this._deletePanels();
+        this._createPanels();
+        this._setPanelsLocation();
+        this._setPanelMenuButtonsVisibility();
+    }
 
-    setAppDisplayBoxPosition(Main.panel, primaryAppDisplayBox);
-}
+    _createPanels() {
+        this._panelBoxes = [];
 
-function setAppDisplayBoxPosition(panel, appDisplayBox) {
-    const offset = settings.get_int('position-offset');
-    const parent = appDisplayBox.get_parent();
-    if (parent)
-        parent.remove_actor(appDisplayBox);
+        this._primaryAppDisplayBox = new AppDisplayBox(Main.layoutManager.primaryMonitor);
 
-    if (settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT) {
-        panel._leftBox.insert_child_at_index(appDisplayBox, offset);
-    } else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER) {
-        panel._centerBox.insert_child_at_index(appDisplayBox, offset);
-    } else if (settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
-        const nChildren = panel._rightBox.get_n_children();
-        const order = Math.clamp(nChildren - offset, 0, nChildren);
-        panel._rightBox.insert_child_at_index(appDisplayBox, order);
+        if (this._settings.get_boolean('panel-on-all-monitors')) {
+            Main.layoutManager.monitors.forEach(monitor => {
+                if (monitor !== Main.layoutManager.primaryMonitor)
+                    this._panelBoxes.push(new PanelBox(monitor));
+            });
+            global.azTaskbar.panels = this._panelBoxes;
+            global.azTaskbar.emit('panels-created');
+        }
+
+        this._addAppDisplayBoxToPanel();
+    }
+
+    _deletePanels() {
+        this._primaryAppDisplayBox.destroy();
+        this._primaryAppDisplayBox = null;
+        this._panelBoxes.forEach(panelBox => {
+            panelBox.panel.disable();
+            panelBox.destroy();
+        });
+        this._panelBoxes = null;
+    }
+
+    // Based on code from Just Perfection extension
+    _setPanelsLocation(mainPanelOnly = false) {
+        const panelLocation = this._settings.get_enum('panel-location');
+
+        const mainPanelBox = Main.layoutManager.panelBox;
+        const mainMonitor = Main.layoutManager.primaryMonitor;
+
+        if (!mainPanelOnly)
+            this._panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
+
+        if (panelLocation === Enums.PanelLocation.TOP) {
+            if (this.__workareasChangedId) {
+                global.display.disconnect(this.__workareasChangedId);
+                this.__workareasChangedId = null;
+            }
+            mainPanelBox.set_position(mainMonitor.x, mainMonitor.y);
+            Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
+            return;
+        }
+
+        const bottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+        mainPanelBox.set_position(mainMonitor.x, bottomY);
+        Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+
+        if (!this.__workareasChangedId) {
+            this.__workareasChangedId = global.display.connect('workareas-changed', () => {
+                const newBottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
+                mainPanelBox.set_position(mainMonitor.x, newBottomY);
+                Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
+            });
+        }
+    }
+
+    _addAppDisplayBoxToPanel() {
+        this._panelBoxes.forEach(panelBox => {
+            const {panel} = panelBox;
+            const {appDisplayBox} = panelBox;
+            this._setAppDisplayBoxPosition(panel, appDisplayBox);
+        });
+
+        this._setAppDisplayBoxPosition(Main.panel, this._primaryAppDisplayBox);
+    }
+
+    _setAppDisplayBoxPosition(panel, appDisplayBox) {
+        const offset = this._settings.get_int('position-offset');
+        const parent = appDisplayBox.get_parent();
+        if (parent)
+            parent.remove_actor(appDisplayBox);
+
+        if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT) {
+            panel._leftBox.insert_child_at_index(appDisplayBox, offset);
+        } else if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER) {
+            panel._centerBox.insert_child_at_index(appDisplayBox, offset);
+        } else if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
+            const nChildren = panel._rightBox.get_n_children();
+            const order = Math.clamp(nChildren - offset, 0, nChildren);
+            panel._rightBox.insert_child_at_index(appDisplayBox, order);
+        }
     }
 }

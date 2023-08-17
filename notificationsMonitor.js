@@ -1,18 +1,17 @@
-/* exported NotificationsMonitor */
-
 /*
 * Code in this file borrowed from Dash to Dock
 * https://github.com/micheleg/dash-to-dock/blob/master/notificationsMonitor.js
 * Modified slightly to suit this extensions needs.
 */
 
-const { signals: Signals } = imports;
+import {EventEmitter} from 'resource:///org/gnome/shell/misc/signals.js';
 
-const { Gio } = imports.gi;
-const { main: Main } = imports.ui;
+import Gio from 'gi://Gio';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-var NotificationsMonitor = class azTaskbarNotificationsManager {
+export const NotificationsMonitor = class AzTaskbarNotificationsMonitor extends EventEmitter {
     constructor() {
+        super();
         this._settings = new Gio.Settings({
             schema_id: 'org.gnome.desktop.notifications',
         });
@@ -115,5 +114,3 @@ var NotificationsMonitor = class azTaskbarNotificationsManager {
         this.emit('changed');
     }
 };
-
-Signals.addSignalMethods(NotificationsMonitor.prototype);

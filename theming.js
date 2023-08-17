@@ -1,10 +1,13 @@
-/* exported getStylesheetFile, updateStylesheet */
+/* eslint-disable jsdoc/require-jsdoc */
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
 
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const { Gio, GLib, St } = imports.gi;
-const Enums = Me.imports.enums;
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-function getStylesheetFile() {
+import * as Enums from './enums.js';
+
+export function getStylesheetFile() {
     try {
         const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), '.local/share/azTaskbar']);
         const stylesheetPath = GLib.build_filenamev([directoryPath, 'stylesheet.css']);
@@ -24,7 +27,8 @@ function getStylesheetFile() {
     }
 }
 
-function unloadStylesheet() {
+export function unloadStylesheet() {
+    const Me = Extension.lookupByURL(import.meta.url);
     if (!Me.customStylesheet)
         return;
 
@@ -32,7 +36,8 @@ function unloadStylesheet() {
     theme.unload_stylesheet(Me.customStylesheet);
 }
 
-function updateStylesheet(settings) {
+export function updateStylesheet(settings) {
+    const Me = Extension.lookupByURL(import.meta.url);
     const stylesheet = Me.customStylesheet;
 
     if (!stylesheet) {

@@ -1,15 +1,13 @@
-/* eslint-disable no-unused-vars */
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Gtk from 'gi://Gtk';
 
-const { Adw, Gdk, Gio, GLib, GObject, Gtk } = imports.gi;
-const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
-const _ = Gettext.gettext;
+import * as Config from 'resource:///org/gnome/Shell/Extensions/js/misc/config.js';
 
-const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${Me.metadata.name}&source=url`;
-const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
-const PROJECT_IMAGE = 'aztaskbar-logo';
-const SCHEMA_PATH = '/org/gnome/shell/extensions/aztaskbar/';
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 var GeneralPage = GObject.registerClass(
 class azTaskbarGeneralPage extends Adw.PreferencesPage {
@@ -576,7 +574,7 @@ class azTaskbarActionsPage extends Adw.PreferencesPage {
             valign: Gtk.Align.CENTER,
         });
         const windowPreviewsOptionsButton = new Gtk.Button({
-            child: new Adw.ButtonContent({ icon_name: 'emblem-system-symbolic' }),
+            child: new Adw.ButtonContent({icon_name: 'emblem-system-symbolic'}),
             valign: Gtk.Align.CENTER,
         });
         windowPreviewsOptionsButton.connect('clicked', () => {
@@ -735,6 +733,13 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
             name: 'AboutPage',
         });
 
+        const Me = ExtensionPreferences.lookupByURL(import.meta.url);
+
+        const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${Me.metadata.name}&source=url`;
+        const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
+        const PROJECT_IMAGE = 'aztaskbar-logo';
+        const SCHEMA_PATH = '/org/gnome/shell/extensions/aztaskbar/';
+
         // Project Logo, title, description-------------------------------------
         const projectHeaderGroup = new Adw.PreferencesGroup();
         const projectHeaderBox = new Gtk.Box({
@@ -796,7 +801,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
             title: _('GNOME Version'),
         });
         gnomeVersionRow.add_suffix(new Gtk.Label({
-            label: imports.misc.config.PACKAGE_VERSION.toString(),
+            label: Config.PACKAGE_VERSION.toString(),
             css_classes: ['dim-label'],
         }));
         infoGroup.add(gnomeVersionRow);
@@ -844,7 +849,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
         loadButton.connect('clicked', () => {
             this._showFileChooser(
                 _('Load Settings'),
-                { action: Gtk.FileChooserAction.OPEN },
+                {action: Gtk.FileChooserAction.OPEN},
                 '_Open',
                 filename => {
                     if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
@@ -858,7 +863,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
                                 null
                             );
 
-                        stdin = new Gio.UnixOutputStream({ fd: stdin, close_fd: true });
+                        stdin = new Gio.UnixOutputStream({fd: stdin, close_fd: true});
                         GLib.close(stdout);
                         GLib.close(stderr);
 
@@ -877,7 +882,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
         saveButton.connect('clicked', () => {
             this._showFileChooser(
                 _('Save Settings'),
-                { action: Gtk.FileChooserAction.SAVE },
+                {action: Gtk.FileChooserAction.SAVE},
                 '_Save',
                 filename => {
                     const file = Gio.file_new_for_path(filename);
@@ -953,27 +958,26 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
     }
 });
 
-function init() {
-    ExtensionUtils.initTranslations();
-}
+export default class AzTaskbarPrefs extends ExtensionPreferences {
+    fillPreferencesWindow(window) {
+        const Me = ExtensionPreferences.lookupByURL(import.meta.url);
+        const iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
+        if (!iconTheme.get_search_path().includes(`${Me.path}/media`))
+            iconTheme.add_search_path(`${Me.path}/media`);
 
-function fillPreferencesWindow(window) {
-    const iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
-    if (!iconTheme.get_search_path().includes(`${Me.path}/media`))
-        iconTheme.add_search_path(`${Me.path}/media`);
+        const settings = this.getSettings();
 
-    const settings = ExtensionUtils.getSettings();
+        window.set_search_enabled(true);
 
-    window.set_search_enabled(true);
+        const generalPage = new GeneralPage(settings);
+        window.add(generalPage);
 
-    const generalPage = new GeneralPage(settings);
-    window.add(generalPage);
+        const actionsPage = new ActionsPage(settings);
+        window.add(actionsPage);
 
-    const actionsPage = new ActionsPage(settings);
-    window.add(actionsPage);
-
-    const aboutPage = new AboutPage();
-    window.add(aboutPage);
+        const aboutPage = new AboutPage();
+        window.add(aboutPage);
+    }
 }
 
 var GNU_SOFTWARE = '<span size="small">' +

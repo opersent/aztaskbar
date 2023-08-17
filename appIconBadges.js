@@ -1,17 +1,17 @@
-/* exported AppIconBadges */
-
 /*
 * Code in this file borrowed from Dash to Dock
 * https://github.com/micheleg/dash-to-dock/blob/master/appIconIndicators.js
 * Modified slightly to suit this extensions needs.
 */
+import Cairo from 'gi://cairo';
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+import Pango from 'gi://Pango';
+import St from 'gi://St';
 
-const { Clutter, GObject, Pango, St } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const Cairo = imports.cairo;
-const Enums = Me.imports.enums;
+import * as Enums from './enums.js';
 
 const INDICATOR_RADIUS = 1.5;
 const DEGREES = Math.PI / 180;
@@ -30,7 +30,7 @@ function drawRoundedLine(cr, x, y, width, height, fill) {
     cr.fill();
 }
 
-var AppIconBadges = GObject.registerClass(
+export const AppIconBadges = GObject.registerClass(
 class azTaskbarAppIconBadges extends St.Bin {
     _init(source) {
         super._init({
@@ -73,7 +73,8 @@ class azTaskbarAppIconBadges extends St.Bin {
 
     _setConnections() {
         this._connections = new Map();
-        const { remoteModel, notificationsMonitor } = Me;
+        const Me = Extension.lookupByURL(import.meta.url);
+        const {remoteModel, notificationsMonitor} = Me;
         const remoteEntry = remoteModel.lookupById(this._source.app.id);
         this._remoteEntry = remoteEntry;
 
@@ -86,11 +87,11 @@ class azTaskbarAppIconBadges extends St.Bin {
 
         if (this._settings.get_boolean('unity-progress-bars')) {
             this._connections.set(remoteEntry.connect('progress-changed',
-                (sender, { progress, progress_visible: progressVisible }) =>
+                (sender, {progress, progress_visible: progressVisible}) =>
                     this.setProgress(progressVisible ? progress : -1)),
             remoteEntry);
             this._connections.set(remoteEntry.connect('progress-visible-changed',
-                (sender, { progress, progress_visible: progressVisible }) =>
+                (sender, {progress, progress_visible: progressVisible}) =>
                     this.setProgress(progressVisible ? progress : -1)),
             remoteEntry);
         }
@@ -101,7 +102,7 @@ class azTaskbarAppIconBadges extends St.Bin {
         }
 
         this._connections.set(remoteEntry.connect('urgent-changed',
-            (sender, { urgent }) => this.setUrgent(urgent)),
+            (sender, {urgent}) => this.setUrgent(urgent)),
         remoteEntry);
 
         const stage = St.ThemeContext.get_for_stage(global.stage);
@@ -178,7 +179,8 @@ class azTaskbarAppIconBadges extends St.Bin {
 
         let notificationsCount = 0;
         if (this._settings.get_boolean('notification-badges')) {
-            const { notificationsMonitor } = Me;
+            const Me = Extension.lookupByURL(import.meta.url);
+            const {notificationsMonitor} = Me;
             notificationsCount = notificationsMonitor.getAppNotificationsCount(
                 this._source.app.id);
         }
@@ -218,7 +220,7 @@ class azTaskbarAppIconBadges extends St.Bin {
             return;
         }
 
-        this._progressOverlayArea = new St.DrawingArea({ x_expand: true, y_expand: true });
+        this._progressOverlayArea = new St.DrawingArea({x_expand: true, y_expand: true});
         this._progressOverlayArea.add_style_class_name('azTaskbar-progress-bar');
         this._progressOverlayArea.connect('repaint', () => {
             this._drawProgressOverlay(this._progressOverlayArea);
@@ -231,7 +233,7 @@ class azTaskbarAppIconBadges extends St.Bin {
         if (hasColor)
             this._progressbar_background = color;
         else
-            this._progressbar_background = new Clutter.Color({ red: 204, green: 204, blue: 204, alpha: 255 });
+            this._progressbar_background = new Clutter.Color({red: 204, green: 204, blue: 204, alpha: 255});
 
         this._updateProgressOverlay();
     }
