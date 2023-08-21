@@ -61,11 +61,6 @@
             <summary>Change the height of GNOME top panel</summary>
             <description>Change the height of GNOME top panel.</description>
         </key>
-        <key type="b" name="show-panel-appmenu-button">
-            <default>false</default>
-            <summary>Show/Hide the app menu button in panel</summary>
-            <description>Show/Hide  the app menu button in panel.</description>
-        </key>
         <key type="b" name="show-panel-activities-button">
             <default>true</default>
             <summary>Show/Hide the activities button in panel</summary>

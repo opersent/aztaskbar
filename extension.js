@@ -582,9 +582,7 @@ export default class AzTaskbar extends Extension {
         this._extensionConnections.set(this._settings.connect('changed::isolate-monitors', () => this._resetPanels()), this._settings);
 
         this._extensionConnections.set(this._settings.connect('changed::show-panel-activities-button',
-            () => this._setPanelMenuButtonsVisibility()), this._settings);
-        this._extensionConnections.set(this._settings.connect('changed::show-panel-appmenu-button',
-            () => this._setPanelMenuButtonsVisibility()), this._settings);
+            () => this._setActivitiesVisibility()), this._settings);
 
         this._extensionConnections.set(this._settings.connect('changed::main-panel-height',
             () => Theming.updateStylesheet(this._settings)), this._settings);
@@ -598,7 +596,7 @@ export default class AzTaskbar extends Extension {
 
         this._createPanels();
         this._setPanelsLocation();
-        this._setPanelMenuButtonsVisibility();
+        this._setActivitiesVisibility();
     }
 
     disable() {
@@ -637,7 +635,7 @@ export default class AzTaskbar extends Extension {
         this._settings = null;
     }
 
-    _setPanelMenuButtonsVisibility() {
+    _setActivitiesVisibility() {
         const showActivitiesButton = this._settings.get_boolean('show-panel-activities-button');
 
         Main.panel.statusArea.activities.container.visible = showActivitiesButton;
@@ -652,7 +650,7 @@ export default class AzTaskbar extends Extension {
         this._deletePanels();
         this._createPanels();
         this._setPanelsLocation();
-        this._setPanelMenuButtonsVisibility();
+        this._setActivitiesVisibility();
     }
 
     _createPanels() {

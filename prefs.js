@@ -250,21 +250,6 @@ class azTaskbarGeneralPage extends Adw.PreferencesPage {
         activitiesRow.add_suffix(activitiesSwitch);
         panelGroup.add(activitiesRow);
 
-        const appMenuSwitch = new Gtk.Switch({
-            valign: Gtk.Align.CENTER,
-        });
-        const appMenuRow = new Adw.ActionRow({
-            title: _('Show App Menu Button'),
-            subtitle: _('Panel menu button that shows focused app'),
-            activatable_widget: appMenuSwitch,
-        });
-        appMenuSwitch.set_active(this._settings.get_boolean('show-panel-appmenu-button'));
-        appMenuSwitch.connect('notify::active', widget => {
-            this._settings.set_boolean('show-panel-appmenu-button', widget.get_active());
-        });
-        appMenuRow.add_suffix(appMenuSwitch);
-        panelGroup.add(appMenuRow);
-
         const iconGroup = new Adw.PreferencesGroup({
             title: _('App Icons'),
         });
@@ -960,10 +945,10 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
 
 export default class AzTaskbarPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const Me = ExtensionPreferences.lookupByURL(import.meta.url);
+        const iconPath = `${this.path}/media`;
         const iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
-        if (!iconTheme.get_search_path().includes(`${Me.path}/media`))
-            iconTheme.add_search_path(`${Me.path}/media`);
+        if (!iconTheme.get_search_path().includes(iconPath))
+            iconTheme.add_search_path(iconPath);
 
         const settings = this.getSettings();
 
