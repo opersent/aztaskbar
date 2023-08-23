@@ -69,27 +69,26 @@ class azTaskbarPanel extends St.Widget {
     vfunc_allocate(box) {
         this.set_allocation(box);
 
-        let allocWidth = box.x2 - box.x1;
-        let allocHeight = box.y2 - box.y1;
+        const allocWidth = box.x2 - box.x1;
+        const allocHeight = box.y2 - box.y1;
 
-        let [, leftNaturalWidth] = this._leftBox.get_preferred_width(-1);
-        let [, centerNaturalWidth] = this._centerBox.get_preferred_width(-1);
-        let [, rightNaturalWidth] = this._rightBox.get_preferred_width(-1);
+        const [, leftNaturalWidth] = this._leftBox.get_preferred_width(-1);
+        const [, centerNaturalWidth] = this._centerBox.get_preferred_width(-1);
+        const [, rightNaturalWidth] = this._rightBox.get_preferred_width(-1);
 
-        let sideWidth, centerWidth;
-        centerWidth = centerNaturalWidth;
+        const centerWidth = centerNaturalWidth;
 
         // get workspace area and center date entry relative to it
-        let monitor = Main.layoutManager.findMonitorForActor(this);
+        const monitor = Main.layoutManager.findMonitorForActor(this);
         let centerOffset = 0;
         if (monitor) {
-            let workArea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+            const workArea = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
             centerOffset = 2 * (workArea.x - monitor.x) + workArea.width - monitor.width;
         }
 
-        sideWidth = Math.max(0, (allocWidth - centerWidth + centerOffset) / 2);
+        const sideWidth = Math.max(0, (allocWidth - centerWidth + centerOffset) / 2);
 
-        let childBox = new Clutter.ActorBox();
+        const childBox = new Clutter.ActorBox();
 
         childBox.y1 = 0;
         childBox.y2 = allocHeight;
@@ -132,8 +131,8 @@ class azTaskbarPanel extends St.Widget {
         if (targetActor !== this)
             return Clutter.EVENT_PROPAGATE;
 
-        const [x, y] = event.get_coords();
-        let dragWindow = this._getDraggableWindowForPosition(x);
+        const [x, y_] = event.get_coords();
+        const dragWindow = this._getDraggableWindowForPosition(x);
 
         if (!dragWindow)
             return Clutter.EVENT_PROPAGATE;
@@ -160,7 +159,7 @@ class azTaskbarPanel extends St.Widget {
     }
 
     vfunc_key_press_event(keyEvent) {
-        let symbol = keyEvent.keyval;
+        const symbol = keyEvent.keyval;
         if (symbol === Clutter.KEY_Escape) {
             global.display.focus_default_window(keyEvent.time);
             return Clutter.EVENT_STOP;
@@ -170,9 +169,9 @@ class azTaskbarPanel extends St.Widget {
     }
 
     _addToPanelBox(role, indicator, position, box) {
-        let container = indicator.container;
+        const container = indicator.container;
 
-        let parent = container.get_parent();
+        const parent = container.get_parent();
         if (parent)
             parent.remove_actor(container);
 
@@ -180,7 +179,7 @@ class azTaskbarPanel extends St.Widget {
         if (indicator.menu)
             this.menuManager.addMenu(indicator.menu);
         this.statusArea[role] = indicator;
-        let destroyId = indicator.connect('destroy', emitter => {
+        const destroyId = indicator.connect('destroy', emitter => {
             delete this.statusArea[role];
             emitter.disconnect(destroyId);
         });
@@ -194,25 +193,25 @@ class azTaskbarPanel extends St.Widget {
             throw new TypeError('Status indicator must be an instance of PanelMenu.Button');
 
         position ??= 0;
-        let boxes = {
+        const boxes = {
             left: this._leftBox,
             center: this._centerBox,
             right: this._rightBox,
         };
-        let boxContainer = boxes[box] || this._rightBox;
+        const boxContainer = boxes[box] || this._rightBox;
         this.statusArea[role] = indicator;
         this._addToPanelBox(role, indicator, position, boxContainer);
         return indicator;
     }
 
     _getDraggableWindowForPosition(stageX) {
-        let workspaceManager = global.workspace_manager;
+        const workspaceManager = global.workspace_manager;
         const windows = workspaceManager.get_active_workspace().list_windows();
         const allWindowsByStacking =
             global.display.sort_windows_by_stacking(windows).reverse();
 
         return allWindowsByStacking.find(metaWindow => {
-            let rect = metaWindow.get_frame_rect();
+            const rect = metaWindow.get_frame_rect();
             return metaWindow.get_monitor() === this.monitor.index &&
                 metaWindow.showing_on_its_workspace() &&
                 metaWindow.get_window_type() !== Meta.WindowType.DESKTOP &&
@@ -234,17 +233,16 @@ class azTaskbarPanel extends St.Widget {
     _removePanelMenu(propName) {
         const Me = Extension.lookupByURL(import.meta.url);
         if (this.statusArea[propName]) {
-            let parent = this.statusArea[propName].container.get_parent();
+            const parent = this.statusArea[propName].container.get_parent();
             if (parent)
                 parent.remove_actor(this.statusArea[propName].container);
-
 
             // calling this.statusArea[propName].destroy(); is buggy for now, gnome-shell never
             // destroys those panel menus...
             // since we can't destroy the menu (hence properly disconnect its signals), let's
             // store it so the next time a panel needs one of its kind, we can reuse it instead
             // of creating a new one
-            let panelMenu = this.statusArea[propName];
+            const panelMenu = this.statusArea[propName];
 
             this.menuManager.removeMenu(panelMenu.menu);
             Me.persistentStorage[propName].push(panelMenu);

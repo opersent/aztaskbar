@@ -994,8 +994,7 @@ export const AppIcon = GObject.registerClass({
                 this._cycleWindowList = windows;
 
             const cycled = this._cycleWindowList.filter(window => {
-                if (window.cycled)
-                    return window;
+                return window.cycled;
             });
             if (cycled.length === this._cycleWindowList.length) {
                 this._cycleWindowList.forEach(window => {

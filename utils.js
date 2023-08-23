@@ -22,10 +22,13 @@ export function getInterestingWindows(settings, windows, monitorIndex) {
 
 /**
  * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
+ *
+ * @param {St.Scrollview} scrollView
+ * @param {Clutter.Actor} actor the actor in the scroll view
  */
 export function ensureActorVisibleInScrollView(scrollView, actor) {
     const {adjustment} = scrollView.hscroll;
-    let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
+    const [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 
     let offset = 0;
     const hfade = scrollView.get_effect('fade');
@@ -46,14 +49,15 @@ export function ensureActorVisibleInScrollView(scrollView, actor) {
         parent = parent.get_parent();
     }
 
+    let newValue;
     if (x1 < value + offset)
-        value = Math.max(0, x1 - offset);
+        newValue = Math.max(0, x1 - offset);
     else if (x2 > value + pageSize - offset)
-        value = Math.min(upper, x2 + offset - pageSize);
+        newValue = Math.min(upper, x2 + offset - pageSize);
     else
         return;
 
-    adjustment.ease(value, {
+    adjustment.ease(newValue, {
         mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         duration: 100,
     });

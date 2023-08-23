@@ -206,7 +206,6 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
 
         cr.fill();
         cr.$dispose();
-        return false;
     }
 
     _onDestroy() {

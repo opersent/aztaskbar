@@ -839,7 +839,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
                 filename => {
                     if (filename && GLib.file_test(filename, GLib.FileTest.EXISTS)) {
                         const settingsFile = Gio.File.new_for_path(filename);
-                        let [success_, pid_, stdin, stdout, stderr] =
+                        const [success_, pid_, stdin, stdout, stderr] =
                             GLib.spawn_async_with_pipes(
                                 null,
                                 ['dconf', 'load', SCHEMA_PATH],
@@ -848,11 +848,11 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
                                 null
                             );
 
-                        stdin = new Gio.UnixOutputStream({fd: stdin, close_fd: true});
+                        const outputStream = new Gio.UnixOutputStream({fd: stdin, close_fd: true});
                         GLib.close(stdout);
                         GLib.close(stderr);
 
-                        stdin.splice(settingsFile.read(null),
+                        outputStream.splice(settingsFile.read(null),
                             Gio.OutputStreamSpliceFlags.CLOSE_SOURCE |
                             Gio.OutputStreamSpliceFlags.CLOSE_TARGET,
                             null);
