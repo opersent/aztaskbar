@@ -1,4 +1,3 @@
-/* eslint-disable jsdoc/require-jsdoc */
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
@@ -7,43 +6,71 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as Enums from './enums.js';
 
-export function getStylesheetFile() {
+Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
+Gio._promisify(Gio.File.prototype, 'delete_async');
+
+const FileName = 'XXXXXX-aztaskbar-stylesheet.css';
+
+/**
+ * Create and load a custom stylesheet file into global.stage St.Theme
+ */
+export function createStylesheet() {
+    const extension = Extension.lookupByURL(import.meta.url);
     try {
-        const directoryPath = GLib.build_filenamev([GLib.get_home_dir(), '.local/share/azTaskbar']);
-        const stylesheetPath = GLib.build_filenamev([directoryPath, 'stylesheet.css']);
-
-        const dir = Gio.File.new_for_path(directoryPath);
-        if (!dir.query_exists(null))
-            dir.make_directory(null);
-
-        const stylesheet = Gio.File.new_for_path(stylesheetPath);
-        if (!stylesheet.query_exists(null))
-            stylesheet.create(Gio.FileCreateFlags.NONE, null);
-
-        return stylesheet;
+        const [file] = Gio.File.new_tmp(FileName);
+        extension.customStylesheet = file;
+        updateStylesheet();
     } catch (e) {
-        log(`AppIcons Taskbar - Custom stylesheet error: ${e.message}`);
-        return null;
+        log(`AppIcons Taskbar - Error creating custom stylesheet: ${e}`);
     }
 }
 
-export function unloadStylesheet() {
-    const Me = Extension.lookupByURL(import.meta.url);
-    if (!Me.customStylesheet)
+/**
+ * Unload the custom stylesheet from global.stage St.Theme
+ */
+function unloadStylesheet() {
+    const extension = Extension.lookupByURL(import.meta.url);
+    if (!extension.customStylesheet)
         return;
 
     const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-    theme.unload_stylesheet(Me.customStylesheet);
+    theme.unload_stylesheet(extension.customStylesheet);
 }
 
-export function updateStylesheet(settings) {
-    const Me = Extension.lookupByURL(import.meta.url);
-    const stylesheet = Me.customStylesheet;
+/**
+ * Delete and unload the custom stylesheet file from global.stage St.Theme
+ */
+export async function deleteStylesheet() {
+    unloadStylesheet();
+
+    const extension = Extension.lookupByURL(import.meta.url);
+    const stylesheet = extension.customStylesheet;
+
+    try {
+        if (stylesheet.query_exists(null))
+            await stylesheet.delete_async(GLib.PRIORITY_DEFAULT, null);
+    } catch (e) {
+        if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+            log(`AppIcons Taskbar - Error deleting custom stylesheet: ${e}`);
+    } finally {
+        delete extension.customStylesheet;
+    }
+}
+
+/**
+ * Write theme data to custom stylesheet and reload into global.stage St.Theme
+ */
+export async function updateStylesheet() {
+    const extension = Extension.lookupByURL(import.meta.url);
+    const settings = extension.getSettings();
+    const stylesheet = extension.customStylesheet;
 
     if (!stylesheet) {
         log('AppIcons Taskbar - Custom stylesheet error!');
         return;
     }
+
+    unloadStylesheet();
 
     const [overridePanelHeight, panelHeight] = settings.get_value('main-panel-height').deep_unpack();
     const panelLocation = settings.get_enum('panel-location');
@@ -68,18 +95,17 @@ export function updateStylesheet(settings) {
 
     try {
         const bytes = new GLib.Bytes(customStylesheetCSS);
+        const [success, etag_] = await stylesheet.replace_contents_bytes_async(bytes, null, false,
+            Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-        stylesheet.replace_contents_bytes_async(bytes, null, false,
-            Gio.FileCreateFlags.REPLACE_DESTINATION, null, (stylesheetFile, res) => {
-                if (!stylesheetFile.replace_contents_finish(res))
-                    throw new Error('AppIcons Taskbar - Error replacing contents of custom stylesheet file.');
+        if (!success) {
+            log('AppIcons Taskbar - Failed to replace contents of custom stylesheet.');
+            return;
+        }
 
-                const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
-
-                unloadStylesheet();
-                Me.customStylesheet = stylesheetFile;
-                theme.load_stylesheet(Me.customStylesheet);
-            });
+        extension.customStylesheet = stylesheet;
+        const theme = St.ThemeContext.get_for_stage(global.stage).get_theme();
+        theme.load_stylesheet(extension.customStylesheet);
     } catch (e) {
         log(`AppIcons Taskbar - Error updating custom stylesheet. ${e.message}`);
     }

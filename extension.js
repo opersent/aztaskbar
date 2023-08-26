@@ -565,8 +565,7 @@ export default class AzTaskbar extends Extension {
         global.azTaskbar = {};
         Signals.addSignalMethods(global.azTaskbar);
 
-        this.customStylesheet = Theming.getStylesheetFile();
-        Theming.updateStylesheet(this._settings);
+        Theming.createStylesheet();
 
         this._extensionConnections = new Map();
         this._extensionConnections.set(this._settings.connect('changed::position-in-panel',
@@ -577,7 +576,7 @@ export default class AzTaskbar extends Extension {
             () => this._resetPanels()), this._settings);
         this._extensionConnections.set(this._settings.connect('changed::panel-location', () => {
             this._setPanelsLocation();
-            Theming.updateStylesheet(this._settings);
+            Theming.updateStylesheet();
         }), this._settings);
         this._extensionConnections.set(this._settings.connect('changed::isolate-monitors', () => this._resetPanels()), this._settings);
 
@@ -585,7 +584,7 @@ export default class AzTaskbar extends Extension {
             () => this._setActivitiesVisibility()), this._settings);
 
         this._extensionConnections.set(this._settings.connect('changed::main-panel-height',
-            () => Theming.updateStylesheet(this._settings)), this._settings);
+            () => Theming.updateStylesheet()), this._settings);
         this._extensionConnections.set(Main.layoutManager.connect('monitors-changed',
             () => this._resetPanels()), Main.layoutManager);
 
@@ -613,8 +612,7 @@ export default class AzTaskbar extends Extension {
 
         Main.panel.remove_style_class_name('azTaskbar-panel');
 
-        Theming.unloadStylesheet();
-        delete this.customStylesheet;
+        Theming.deleteStylesheet();
 
         this.remoteModel.destroy();
         delete this.remoteModel;

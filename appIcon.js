@@ -41,7 +41,7 @@ class azTaskbarBaseButton extends St.Button {
             reactive: true,
             can_focus: true,
             track_hover: true,
-            style_class: 'azTaskbar-BaseIcon',
+            style_class: 'panel-button azTaskbar-BaseIcon',
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
