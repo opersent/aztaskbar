@@ -38,7 +38,7 @@ function getDropTarget(box, x) {
 
 var AppDisplayBox = GObject.registerClass(
 class azTaskbarAppDisplayBox extends St.ScrollView {
-    _init(monitor) {
+    _init(extension, monitor) {
         super._init({
             style_class: 'hfade',
             enable_mouse_scrolling: false,
@@ -47,8 +47,8 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this.clip_to_allocation = true;
 
-        const Me = Extension.lookupByURL(import.meta.url);
-        this._settings = Me.getSettings();
+        this._settings = extension.getSettings();
+        this.extension = extension;
 
         this._monitor = monitor;
         this.showAppsIcon = new ShowAppsIcon(this._settings);
@@ -510,18 +510,17 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
 
 var PanelBox = GObject.registerClass(
 class azTaskbarPanelBox extends St.BoxLayout {
-    _init(monitor) {
+    _init(extension, monitor) {
         super._init({
             name: 'panelBox',
             vertical: true,
         });
-        const Me = Extension.lookupByURL(import.meta.url);
-        this._settings = Me.getSettings();
+        this._settings = extension.getSettings();
 
         this.monitor = monitor;
         this.panel = new Panel(monitor);
         this.add_child(this.panel);
-        this.appDisplayBox = new AppDisplayBox(monitor);
+        this.appDisplayBox = new AppDisplayBox(extension, monitor);
 
         Main.layoutManager.addChrome(this, {
             affectsStruts: true,
@@ -565,7 +564,7 @@ export default class AzTaskbar extends Extension {
         global.azTaskbar = {};
         Signals.addSignalMethods(global.azTaskbar);
 
-        Theming.createStylesheet();
+        Theming.createStylesheet(this);
 
         this._extensionConnections = new Map();
         this._extensionConnections.set(this._settings.connect('changed::position-in-panel',
@@ -576,7 +575,7 @@ export default class AzTaskbar extends Extension {
             () => this._resetPanels()), this._settings);
         this._extensionConnections.set(this._settings.connect('changed::panel-location', () => {
             this._setPanelsLocation();
-            Theming.updateStylesheet();
+            Theming.updateStylesheet(this);
         }), this._settings);
         this._extensionConnections.set(this._settings.connect('changed::isolate-monitors', () => this._resetPanels()), this._settings);
 
@@ -584,7 +583,7 @@ export default class AzTaskbar extends Extension {
             () => this._setActivitiesVisibility()), this._settings);
 
         this._extensionConnections.set(this._settings.connect('changed::main-panel-height',
-            () => Theming.updateStylesheet()), this._settings);
+            () => Theming.updateStylesheet(this)), this._settings);
         this._extensionConnections.set(Main.layoutManager.connect('monitors-changed',
             () => this._resetPanels()), Main.layoutManager);
 
@@ -612,7 +611,7 @@ export default class AzTaskbar extends Extension {
 
         Main.panel.remove_style_class_name('azTaskbar-panel');
 
-        Theming.deleteStylesheet();
+        Theming.deleteStylesheet(this);
 
         this.remoteModel.destroy();
         delete this.remoteModel;
@@ -654,12 +653,12 @@ export default class AzTaskbar extends Extension {
     _createPanels() {
         this._panelBoxes = [];
 
-        this._primaryAppDisplayBox = new AppDisplayBox(Main.layoutManager.primaryMonitor);
+        this._primaryAppDisplayBox = new AppDisplayBox(this, Main.layoutManager.primaryMonitor);
 
         if (this._settings.get_boolean('panel-on-all-monitors')) {
             Main.layoutManager.monitors.forEach(monitor => {
                 if (monitor !== Main.layoutManager.primaryMonitor)
-                    this._panelBoxes.push(new PanelBox(monitor));
+                    this._panelBoxes.push(new PanelBox(this, monitor));
             });
             global.azTaskbar.panels = this._panelBoxes;
             global.azTaskbar.emit('panels-created');

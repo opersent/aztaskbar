@@ -711,16 +711,14 @@ class azTaskbarWindowPreviewOptions extends Gtk.Window {
 
 var AboutPage = GObject.registerClass(
 class AzTaskbarAboutPage extends Adw.PreferencesPage {
-    _init() {
+    _init(metadata) {
         super._init({
             title: _('About'),
             icon_name: 'help-about-symbolic',
             name: 'AboutPage',
         });
 
-        const Me = ExtensionPreferences.lookupByURL(import.meta.url);
-
-        const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${Me.metadata.name}&source=url`;
+        const PAYPAL_LINK = `https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CWA7NR743WC&item_name=Support+${metadata.name}&source=url`;
         const PROJECT_DESCRIPTION = _('Show running apps and favorites on the main panel');
         const PROJECT_IMAGE = 'aztaskbar-logo';
         const SCHEMA_PATH = '/org/gnome/shell/extensions/aztaskbar/';
@@ -766,17 +764,17 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
             title: _('App Icons Taskbar Version'),
         });
         projectVersionRow.add_suffix(new Gtk.Label({
-            label: Me.metadata.version.toString(),
+            label: metadata.version.toString(),
             css_classes: ['dim-label'],
         }));
         infoGroup.add(projectVersionRow);
 
-        if (Me.metadata.commit) {
+        if (metadata.commit) {
             const commitRow = new Adw.ActionRow({
                 title: _('Git Commit'),
             });
             commitRow.add_suffix(new Gtk.Label({
-                label: Me.metadata.commit.toString(),
+                label: metadata.commit.toString(),
                 css_classes: ['dim-label'],
             }));
             infoGroup.add(commitRow);
@@ -813,7 +811,7 @@ class AzTaskbarAboutPage extends Adw.PreferencesPage {
         }));
         infoGroup.add(sessionTypeRow);
 
-        const gitlabRow = this._createLinkRow(_('App Icons Taskbar GitLab'), Me.metadata.url);
+        const gitlabRow = this._createLinkRow(_('App Icons Taskbar GitLab'), metadata.url);
         infoGroup.add(gitlabRow);
 
         const donateRow = this._createLinkRow(_('Donate via PayPal'), PAYPAL_LINK);
@@ -960,7 +958,7 @@ export default class AzTaskbarPrefs extends ExtensionPreferences {
         const actionsPage = new ActionsPage(settings);
         window.add(actionsPage);
 
-        const aboutPage = new AboutPage();
+        const aboutPage = new AboutPage(this.metadata);
         window.add(aboutPage);
     }
 }

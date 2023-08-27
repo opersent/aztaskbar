@@ -9,8 +9,6 @@ import GObject from 'gi://GObject';
 import Pango from 'gi://Pango';
 import St from 'gi://St';
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
 import * as Enums from './enums.js';
 
 const INDICATOR_RADIUS = 1.5;
@@ -41,7 +39,8 @@ class azTaskbarAppIconBadges extends St.Bin {
         });
 
         this._source = source;
-        this._settings = this._source._settings;
+        this._settings = source._settings;
+        this._extension = source.extension;
 
         this._notificationBadgeLabel = new St.Label();
         this.set_child(this._notificationBadgeLabel);
@@ -73,8 +72,8 @@ class azTaskbarAppIconBadges extends St.Bin {
 
     _setConnections() {
         this._connections = new Map();
-        const Me = Extension.lookupByURL(import.meta.url);
-        const {remoteModel, notificationsMonitor} = Me;
+
+        const {remoteModel, notificationsMonitor} = this._extension;
         const remoteEntry = remoteModel.lookupById(this._source.app.id);
         this._remoteEntry = remoteEntry;
 
@@ -179,8 +178,7 @@ class azTaskbarAppIconBadges extends St.Bin {
 
         let notificationsCount = 0;
         if (this._settings.get_boolean('notification-badges')) {
-            const Me = Extension.lookupByURL(import.meta.url);
-            const {notificationsMonitor} = Me;
+            const {notificationsMonitor} = this._extension;
             notificationsCount = notificationsMonitor.getAppNotificationsCount(
                 this._source.app.id);
         }

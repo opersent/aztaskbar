@@ -2,8 +2,6 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
 import * as Enums from './enums.js';
 
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
@@ -13,13 +11,13 @@ const FileName = 'XXXXXX-aztaskbar-stylesheet.css';
 
 /**
  * Create and load a custom stylesheet file into global.stage St.Theme
+ * @param {Extension} extension
  */
-export function createStylesheet() {
-    const extension = Extension.lookupByURL(import.meta.url);
+export function createStylesheet(extension) {
     try {
         const [file] = Gio.File.new_tmp(FileName);
         extension.customStylesheet = file;
-        updateStylesheet();
+        updateStylesheet(extension);
     } catch (e) {
         log(`AppIcons Taskbar - Error creating custom stylesheet: ${e}`);
     }
@@ -27,9 +25,9 @@ export function createStylesheet() {
 
 /**
  * Unload the custom stylesheet from global.stage St.Theme
+ * @param {Extension} extension
  */
-function unloadStylesheet() {
-    const extension = Extension.lookupByURL(import.meta.url);
+function unloadStylesheet(extension) {
     if (!extension.customStylesheet)
         return;
 
@@ -39,11 +37,11 @@ function unloadStylesheet() {
 
 /**
  * Delete and unload the custom stylesheet file from global.stage St.Theme
+ * @param {Extension} extension
  */
-export async function deleteStylesheet() {
-    unloadStylesheet();
+export async function deleteStylesheet(extension) {
+    unloadStylesheet(extension);
 
-    const extension = Extension.lookupByURL(import.meta.url);
     const stylesheet = extension.customStylesheet;
 
     try {
@@ -59,9 +57,9 @@ export async function deleteStylesheet() {
 
 /**
  * Write theme data to custom stylesheet and reload into global.stage St.Theme
+ * @param {Extension} extension
  */
-export async function updateStylesheet() {
-    const extension = Extension.lookupByURL(import.meta.url);
+export async function updateStylesheet(extension) {
     const settings = extension.getSettings();
     const stylesheet = extension.customStylesheet;
 
@@ -70,7 +68,7 @@ export async function updateStylesheet() {
         return;
     }
 
-    unloadStylesheet();
+    unloadStylesheet(extension);
 
     const [overridePanelHeight, panelHeight] = settings.get_value('main-panel-height').deep_unpack();
     const panelLocation = settings.get_enum('panel-location');

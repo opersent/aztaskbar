@@ -280,6 +280,7 @@ export const AppIcon = GObject.registerClass({
         this.monitorIndex = monitorIndex;
         this.positionIndex = positionIndex;
         this.isFavorite = isFavorite;
+        this.extension = appDisplayBox.extension;
 
         this._contextMenuManager = new PopupMenu.PopupMenuManager(this);
         this._indicatorColor = 'transparent';

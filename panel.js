@@ -3,8 +3,6 @@ import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
 import {DateMenuButton} from 'resource:///org/gnome/shell/ui/dateMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -12,7 +10,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 export const Panel = GObject.registerClass(
 class azTaskbarPanel extends St.Widget {
-    _init(monitor) {
+    _init(extension, monitor) {
         super._init({
             name: 'panel',
             style_class: 'panel azTaskbar-panel',
@@ -25,6 +23,7 @@ class azTaskbarPanel extends St.Widget {
         this.statusArea = {};
 
         this.monitor = monitor;
+        this._extension = extension;
 
         this._leftBox = new St.BoxLayout({name: 'panelLeft'});
         this.add_child(this._leftBox);
@@ -231,7 +230,6 @@ class azTaskbarPanel extends St.Widget {
 
     // Credit: Dash to Panel https://github.com/home-sweet-gnome/dash-to-panel
     _removePanelMenu(propName) {
-        const Me = Extension.lookupByURL(import.meta.url);
         if (this.statusArea[propName]) {
             const parent = this.statusArea[propName].container.get_parent();
             if (parent)
@@ -245,21 +243,19 @@ class azTaskbarPanel extends St.Widget {
             const panelMenu = this.statusArea[propName];
 
             this.menuManager.removeMenu(panelMenu.menu);
-            Me.persistentStorage[propName].push(panelMenu);
+            this._extension.persistentStorage[propName].push(panelMenu);
             this.statusArea[propName] = null;
         }
     }
 
     // Credit: Dash to Panel https://github.com/home-sweet-gnome/dash-to-panel
     _getPanelMenu(propName, constr) {
-        const Me = Extension.lookupByURL(import.meta.url);
-        Me.persistentStorage[propName] = Me.persistentStorage[propName] || [];
+        this._extension.persistentStorage[propName] = this._extension.persistentStorage[propName] || [];
 
-        if (!Me.persistentStorage[propName].length)
-            Me.persistentStorage[propName].push(new constr(this));
+        if (!this._extension.persistentStorage[propName].length)
+            this._extension.persistentStorage[propName].push(new constr(this));
 
-
-        return Me.persistentStorage[propName].pop();
+        return this._extension.persistentStorage[propName].pop();
     }
 
     disable() {
