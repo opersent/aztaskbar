@@ -1,14 +1,12 @@
-/* exported LauncherEntryRemoteModel */
-
 /*
 * Code in this file borrowed from Dash to Dock
 * https://github.com/micheleg/dash-to-dock/blob/master/launcherAPI.js
 * Modified slightly to suit this extensions needs.
 */
 
-const { Gio } = imports.gi;
+import Gio from 'gi://Gio';
 
-var LauncherEntryRemoteModel = class azTaskbarLauncherEntryRemoteModel {
+export const LauncherEntryRemoteModel = class azTaskbarLauncherEntryRemoteModel {
     constructor() {
         this._entrySourceStacks = new Map();
         this._remoteMaps = new Map();
@@ -144,7 +142,7 @@ const LauncherEntry = class azTaskbarLauncherEntry {
 
         callback(this, this);
         const id = this._nextId++;
-        const handler = { id, callback };
+        const handler = {id, callback};
         eventNames.forEach(name => {
             let handlerList = this._handlers.get(name);
             if (!handlerList)

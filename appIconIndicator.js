@@ -1,10 +1,9 @@
-/* exported AppIconIndicator */
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
 
-const { Clutter, GLib, GObject, St } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const Enums = Me.imports.enums;
+import * as Enums from './enums.js';
 
 // Time between animation ticks (ms)
 const ANIMATION_INTERVAL = 10;
@@ -14,7 +13,7 @@ const ANIMATION_TICKS = 15;
 const INDICATOR_RADIUS = 1.5;
 const DEGREES = Math.PI / 180;
 
-var AppIconIndicator = GObject.registerClass(
+export const AppIconIndicator = GObject.registerClass(
 class azTaskbarAppIconIndicator extends St.DrawingArea {
     _init(appIcon) {
         super._init({
@@ -207,7 +206,6 @@ class azTaskbarAppIconIndicator extends St.DrawingArea {
 
         cr.fill();
         cr.$dispose();
-        return false;
     }
 
     _onDestroy() {

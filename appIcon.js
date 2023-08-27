@@ -1,18 +1,21 @@
-/* exported ShowAppsIcon, AppIcon */
-const { Clutter, GLib, GObject, Graphene, Meta, Shell, St } = imports.gi;
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import Graphene from 'gi://Graphene';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import {AppIconBadges} from './appIconBadges.js';
+import {AppIconIndicator} from './appIconIndicator.js';
+import * as Enums from './enums.js';
+import * as Utils from './utils.js';
+import {WindowPreviewMenu} from './windowPreview.js';
 
-const { AppIconBadges } = Me.imports.appIconBadges;
-const { AppIconIndicator } = Me.imports.appIconIndicator;
-const { AppMenu } = imports.ui.appMenu;
-const DND = imports.ui.dnd;
-const Enums = Me.imports.enums;
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const Utils = Me.imports.utils;
-const { WindowPreviewMenu } = Me.imports.windowPreview;
+import {AppMenu} from 'resource:///org/gnome/shell/ui/appMenu.js';
+import * as DND from 'resource:///org/gnome/shell/ui/dnd.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 const MAX_MULTI_WINDOW_DASHES = 3;
 const TRANSLATION_UP = 3;
@@ -22,7 +25,7 @@ function isWindowUrgent(w) {
     return w.urgent || w.demandsAttention || w._manualUrgency;
 }
 
-var BaseButton = GObject.registerClass(
+export const BaseButton = GObject.registerClass(
 class azTaskbarBaseButton extends St.Button {
     _init(settings) {
         super._init({
@@ -38,7 +41,7 @@ class azTaskbarBaseButton extends St.Button {
             reactive: true,
             can_focus: true,
             track_hover: true,
-            style_class: 'azTaskbar-BaseIcon',
+            style_class: 'panel-button azTaskbar-BaseIcon',
             x_align: Clutter.ActorAlign.CENTER,
             y_expand: true,
             y_align: Clutter.ActorAlign.FILL,
@@ -209,7 +212,7 @@ class azTaskbarBaseButton extends St.Button {
     }
 });
 
-var ShowAppsIcon = GObject.registerClass(
+export const ShowAppsIcon = GObject.registerClass(
 class azTaskbarShowAppsIcon extends BaseButton {
     _init(settings) {
         super._init(settings);
@@ -246,7 +249,7 @@ class azTaskbarShowAppsIcon extends BaseButton {
         const icon = new St.Icon({
             icon_name: 'view-app-grid-symbolic',
             icon_size: iconSize,
-            pivot_point: new Graphene.Point({ x: 0.5, y: 0.5 }),
+            pivot_point: new Graphene.Point({x: 0.5, y: 0.5}),
         });
         this._iconBin.set_child(icon);
     }
@@ -259,7 +262,7 @@ class azTaskbarShowAppsIcon extends BaseButton {
     }
 });
 
-var AppIcon = GObject.registerClass({
+export const AppIcon = GObject.registerClass({
     Properties: {
         'urgent': GObject.ParamSpec.boolean(
             'urgent', 'urgent', 'urgent',
@@ -284,7 +287,7 @@ var AppIcon = GObject.registerClass({
         this._startIndicatorWidth = 0;
         this._animateIndicatorsComplete = true;
 
-        this._draggable = DND.makeDraggable(this, { timeoutThreshold: 200 });
+        this._draggable = DND.makeDraggable(this, {timeoutThreshold: 200});
         this._dragBeginId = this._draggable.connect('drag-begin', this._onDragBegin.bind(this));
         this._dragCancelledId = this._draggable.connect('drag-cancelled', this._onDragCancelled.bind(this));
         this._dragEndId = this._draggable.connect('drag-end', this._onDragEnd.bind(this));
@@ -641,7 +644,7 @@ var AppIcon = GObject.registerClass({
             this._iconBin.add_style_class_name('azTaskbar-symbolic-icon');
 
         const icon = this.app.create_icon_texture(iconSize);
-        icon.pivot_point = new Graphene.Point({ x: 0.5, y: 0.5 });
+        icon.pivot_point = new Graphene.Point({x: 0.5, y: 0.5});
         this._iconBin.set_child(icon);
 
         let indicatorSize = Math.max(5, Math.round(iconSize / 4));
@@ -659,10 +662,10 @@ var AppIcon = GObject.registerClass({
     }
 
     /**
-    * Update target for minimization animation
-    * Credit: Dash to Dock
-    * https://github.com/micheleg/dash-to-dock/blob/master/appIcons.js
-    */
+     * Update target for minimization animation
+     * Credit: Dash to Dock
+     * https://github.com/micheleg/dash-to-dock/blob/master/appIcons.js
+     */
     updateIconGeometry() {
         if (this.get_stage() === null)
             return;
@@ -846,9 +849,10 @@ var AppIcon = GObject.registerClass({
         if (this._previewMenu?.isOpen)
             this._previewMenu.close();
 
-        if (buttonEvent.button === 1) {
+        const button = buttonEvent.get_button();
+        if (button === 1) {
             this._setPopupTimeout();
-        } else if (buttonEvent.button === 3) {
+        } else if (button === 3) {
             this.hideLabel();
             this.popupMenu();
             return Clutter.EVENT_STOP;
@@ -990,8 +994,7 @@ var AppIcon = GObject.registerClass({
                 this._cycleWindowList = windows;
 
             const cycled = this._cycleWindowList.filter(window => {
-                if (window.cycled)
-                    return window;
+                return window.cycled;
             });
             if (cycled.length === this._cycleWindowList.length) {
                 this._cycleWindowList.forEach(window => {

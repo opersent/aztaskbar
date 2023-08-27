@@ -1,7 +1,8 @@
-/* eslint-disable no-unused-vars */
-const { Clutter, Meta } = imports.gi;
+/* eslint-disable jsdoc/require-jsdoc */
+import Clutter from 'gi://Clutter';
+import Meta from 'gi://Meta';
 
-function getInterestingWindows(settings, windows, monitorIndex) {
+export function getInterestingWindows(settings, windows, monitorIndex) {
     if (settings.get_boolean('isolate-workspaces')) {
         const activeWorkspace = global.workspace_manager.get_active_workspace();
         windows = windows.filter(w => {
@@ -21,10 +22,13 @@ function getInterestingWindows(settings, windows, monitorIndex) {
 
 /**
  * Adapted from GNOME Shell. Modified to work with a horizontal scrollView
+ *
+ * @param {St.Scrollview} scrollView
+ * @param {Clutter.Actor} actor the actor in the scroll view
  */
-function ensureActorVisibleInScrollView(scrollView, actor) {
-    const { adjustment } = scrollView.hscroll;
-    let [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
+export function ensureActorVisibleInScrollView(scrollView, actor) {
+    const {adjustment} = scrollView.hscroll;
+    const [value, lower_, upper, stepIncrement_, pageIncrement_, pageSize] = adjustment.get_values();
 
     let offset = 0;
     const hfade = scrollView.get_effect('fade');
@@ -32,7 +36,7 @@ function ensureActorVisibleInScrollView(scrollView, actor) {
         offset = hfade.fade_margins.left;
 
     let box = actor.get_allocation_box();
-    let { x1 } = box, { x2 } = box;
+    let {x1} = box, {x2} = box;
 
     let parent = actor.get_parent();
     while (parent !== scrollView) {
@@ -45,25 +49,26 @@ function ensureActorVisibleInScrollView(scrollView, actor) {
         parent = parent.get_parent();
     }
 
+    let newValue;
     if (x1 < value + offset)
-        value = Math.max(0, x1 - offset);
+        newValue = Math.max(0, x1 - offset);
     else if (x2 > value + pageSize - offset)
-        value = Math.min(upper, x2 + offset - pageSize);
+        newValue = Math.min(upper, x2 + offset - pageSize);
     else
         return;
 
-    adjustment.ease(value, {
+    adjustment.ease(newValue, {
         mode: Clutter.AnimationMode.EASE_OUT_QUAD,
         duration: 100,
     });
 }
 
-function laterAdd(laterType, callback) {
+export function laterAdd(laterType, callback) {
     return global.compositor?.get_laters?.().add(laterType, callback) ??
         Meta.later_add(laterType, callback);
 }
 
-function laterRemove(id) {
+export function laterRemove(id) {
     if (global.compositor?.get_laters)
         global.compositor?.get_laters().remove(id);
     else

@@ -1,5 +1,3 @@
-/* exported WindowPreviewMenuManager, WindowPreviewMenu */
-
 /**
  * Credits:
  *
@@ -14,17 +12,23 @@
  *
  * New code and modifications implemented to better suit this extensions needs.
  */
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Pango from 'gi://Pango';
+import St from 'gi://St';
 
-const { Clutter, GLib, GObject, Meta, St } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const AppIcon = Me.imports.appIcon;
-const BoxPointer = imports.ui.boxpointer;
-const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const Workspace = imports.ui.workspace;
-const Utils = Me.imports.utils;
+import * as AppIcon from './appIcon.js';
+import * as Utils from './utils.js';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+
+import {PopupAnimation} from 'resource:///org/gnome/shell/ui/boxpointer.js';
+import {Workspace} from 'resource:///org/gnome/shell/ui/workspace.js';
 
 const PREVIEW_MAX_WIDTH = 250;
 const PREVIEW_MAX_HEIGHT = 150;
@@ -37,7 +41,7 @@ const MAX_PREVIEW_GENERATION_ATTEMPTS = 15;
 
 const PREVIEW_ICON_SIZE = 23;
 
-var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends PopupMenu.PopupMenuManager {
+export const WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends PopupMenu.PopupMenuManager {
     constructor(owner, grabParams) {
         super(owner, grabParams);
         this._owner = owner;
@@ -59,7 +63,7 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
                 actor.navigate_focus(null, St.DirectionType.TAB_FORWARD, false);
                 return Clutter.EVENT_STOP;
             } else if (symbol === Clutter.KEY_Escape && menu.isOpen) {
-                menu.close(BoxPointer.PopupAnimation.FULL);
+                menu.close(PopupAnimation.FULL);
                 return Clutter.EVENT_STOP;
             }
         } else if (event.type() === Clutter.EventType.ENTER &&
@@ -81,7 +85,7 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
         } else if ((event.type() === Clutter.EventType.BUTTON_PRESS ||
             event.type() === Clutter.EventType.TOUCH_BEGIN) &&
             !actor.contains(targetActor)) {
-            menu.close(BoxPointer.PopupAnimation.FULL);
+            menu.close(PopupAnimation.FULL);
         }
 
         return Clutter.EVENT_PROPAGATE;
@@ -105,14 +109,14 @@ var WindowPreviewMenuManager = class azTaskbarWindowPreviewMenuManager extends P
     }
 };
 
-var WindowPreviewMenu = class azTaskbarWindowPreviewMenu extends PopupMenu.PopupMenu {
+export const WindowPreviewMenu = class azTaskbarWindowPreviewMenu extends PopupMenu.PopupMenu {
     constructor(source, menuManager) {
         super(source, 0.5, St.Side.TOP);
         this.actor.track_hover = true;
         this.actor.reactive = true;
         this._source = source;
         this._app = this._source.app;
-        const { monitorIndex } = this._source;
+        const {monitorIndex} = this._source;
         this.appDisplayBox = source.appDisplayBox;
         this.menuManager = menuManager;
         this.actor.set_style(`max-width: ${Main.layoutManager.monitors[monitorIndex].width - 22}px;` +
@@ -141,7 +145,7 @@ var WindowPreviewMenu = class azTaskbarWindowPreviewMenu extends PopupMenu.Popup
     }
 
     popup() {
-        this.open(BoxPointer.PopupAnimation.FULL);
+        this.open(PopupAnimation.FULL);
     }
 
     open(animate) {
@@ -163,6 +167,7 @@ var WindowPreviewMenu = class azTaskbarWindowPreviewMenu extends PopupMenu.Popup
         const targetActor = global.stage.get_event_actor(event);
         const hasPointer = this._source.has_pointer || this.actor.has_pointer || this.box.has_pointer ||
             this._previewBox.box.get_children().some(a => a._hasPointer || a.has_pointer);
+        const baseButton = this._findBaseButton(targetActor);
 
         // Cancel any ongoing menu close event timeouts when we enter an AppIcon or Window Preview Menu.
         // If an AppIcon or Window Preview Menu doesn't have pointer on leave event,
@@ -180,7 +185,7 @@ var WindowPreviewMenu = class azTaskbarWindowPreviewMenu extends PopupMenu.Popup
 
             if ((!hoveredMenu || !hoveredMenu.shouldOpen) && !hasPointer)
                 this.appDisplayBox.setWindowPreviewCloseTimeout();
-        } else if (this._findBaseButton(targetActor) &&
+        } else if (baseButton && baseButton === this._source &&
             (event.type() === Clutter.EventType.BUTTON_PRESS || event.type() === Clutter.EventType.SCROLL)) {
             this._source.event(event, false);
         }
@@ -305,14 +310,15 @@ class azTaskbarWindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
-        this._settings = ExtensionUtils.getSettings();
+        const extension = Extension.lookupByURL(import.meta.url);
+        this._settings = extension.getSettings();
         this._source = source.appDisplayBox;
 
         // hard set the width and height for consistancy across all window previews
         this.style = `width: ${PREVIEW_ITEM_WIDTH}px; height: ${PREVIEW_ITEM_HEIGHT}px;`;
 
         // We don't want this: it adds spacing on the left of the item.
-        this.remove_child(this._ornamentLabel);
+        this.remove_child(this._ornamentIcon);
 
         this._cloneBin = new St.Bin({
             style_class: 'azTaskbar-window-preview',
@@ -362,8 +368,8 @@ class azTaskbarWindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         });
         label.clutter_text.set({
             line_wrap: true,
-            ellipsize: imports.gi.Pango.EllipsizeMode.END,
-            line_wrap_mode: imports.gi.Pango.WrapMode.WORD_CHAR,
+            ellipsize: Pango.EllipsizeMode.END,
+            line_wrap_mode: Pango.WrapMode.WORD_CHAR,
         });
         const labelBin = new St.Bin({
             child: label,
