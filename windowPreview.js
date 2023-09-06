@@ -19,14 +19,12 @@ import Meta from 'gi://Meta';
 import Pango from 'gi://Pango';
 import St from 'gi://St';
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
 import * as AppIcon from './appIcon.js';
 import * as Utils from './utils.js';
+import {TaskbarManager} from './taskbarManager.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-
 import {PopupAnimation} from 'resource:///org/gnome/shell/ui/boxpointer.js';
 import {Workspace} from 'resource:///org/gnome/shell/ui/workspace.js';
 
@@ -310,8 +308,8 @@ class azTaskbarWindowPreviewMenuItem extends PopupMenu.PopupBaseMenuItem {
         this._app = app;
         this._destroyId = 0;
         this._windowAddedId = 0;
-        const extension = Extension.lookupByURL(import.meta.url);
-        this._settings = extension.getSettings();
+
+        this._settings = TaskbarManager.settings;
         this._source = source.appDisplayBox;
 
         // hard set the width and height for consistancy across all window previews

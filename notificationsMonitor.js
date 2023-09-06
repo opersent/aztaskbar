@@ -101,9 +101,14 @@ export const NotificationsMonitor = class AzTaskbarNotificationsMonitor extends 
                     const app = notification.source?.app ?? notification.source?._app;
 
                     if (app?.id) {
+                        if (notification.resident) {
+                            if (notification.acknowledged)
+                                return;
+                            this._signalsHandler.set(notification.connect('notify::acknowledged',
+                                () => this._checkNotifications()), notification);
+                        }
                         this._signalsHandler.set(notification.connect('destroy',
                             () => this._checkNotifications()), notification);
-
                         this._appNotifications[app.id] =
                             (this._appNotifications[app.id] ?? 0) + 1;
                     }

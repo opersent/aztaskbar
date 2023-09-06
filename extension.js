@@ -16,6 +16,7 @@ import * as Enums from './enums.js';
 import {NotificationsMonitor} from './notificationsMonitor.js';
 import {Panel} from './panel.js';
 import * as Utils from './utils.js';
+import {TaskbarManager} from './taskbarManager.js';
 import * as Theming from './theming.js';
 import * as UnityLauncherAPI from './unityLauncherAPI.js';
 import {WindowPreviewMenuManager} from './windowPreview.js';
@@ -38,7 +39,7 @@ function getDropTarget(box, x) {
 
 var AppDisplayBox = GObject.registerClass(
 class azTaskbarAppDisplayBox extends St.ScrollView {
-    _init(extension, monitor) {
+    _init(monitor) {
         super._init({
             style_class: 'hfade',
             enable_mouse_scrolling: false,
@@ -47,8 +48,7 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
         this.set_offscreen_redirect(Clutter.OffscreenRedirect.ALWAYS);
         this.clip_to_allocation = true;
 
-        this._settings = extension.getSettings();
-        this.extension = extension;
+        this._settings = TaskbarManager.settings;
 
         this._monitor = monitor;
         this.showAppsIcon = new ShowAppsIcon(this._settings);
@@ -510,17 +510,18 @@ class azTaskbarAppDisplayBox extends St.ScrollView {
 
 var PanelBox = GObject.registerClass(
 class azTaskbarPanelBox extends St.BoxLayout {
-    _init(extension, monitor) {
+    _init(monitor) {
         super._init({
             name: 'panelBox',
             vertical: true,
         });
-        this._settings = extension.getSettings();
+
+        this._settings = TaskbarManager.settings;
 
         this.monitor = monitor;
         this.panel = new Panel(monitor);
         this.add_child(this.panel);
-        this.appDisplayBox = new AppDisplayBox(extension, monitor);
+        this.appDisplayBox = new AppDisplayBox(monitor);
 
         Main.layoutManager.addChrome(this, {
             affectsStruts: true,
@@ -556,7 +557,8 @@ export default class AzTaskbar extends Extension {
     }
 
     enable() {
-        this._settings = this.getSettings();
+        this._taskbarManager = new TaskbarManager(this);
+        this.settings = this.getSettings();
 
         this.remoteModel = new UnityLauncherAPI.LauncherEntryRemoteModel();
         this.notificationsMonitor = new NotificationsMonitor();
@@ -564,26 +566,26 @@ export default class AzTaskbar extends Extension {
         global.azTaskbar = {};
         Signals.addSignalMethods(global.azTaskbar);
 
-        Theming.createStylesheet(this);
+        Theming.createStylesheet();
 
         this._extensionConnections = new Map();
-        this._extensionConnections.set(this._settings.connect('changed::position-in-panel',
-            () => this._addAppDisplayBoxToPanel()), this._settings);
-        this._extensionConnections.set(this._settings.connect('changed::position-offset',
-            () => this._addAppDisplayBoxToPanel()), this._settings);
-        this._extensionConnections.set(this._settings.connect('changed::panel-on-all-monitors',
-            () => this._resetPanels()), this._settings);
-        this._extensionConnections.set(this._settings.connect('changed::panel-location', () => {
+        this._extensionConnections.set(this.settings.connect('changed::position-in-panel',
+            () => this._addAppDisplayBoxToPanel()), this.settings);
+        this._extensionConnections.set(this.settings.connect('changed::position-offset',
+            () => this._addAppDisplayBoxToPanel()), this.settings);
+        this._extensionConnections.set(this.settings.connect('changed::panel-on-all-monitors',
+            () => this._resetPanels()), this.settings);
+        this._extensionConnections.set(this.settings.connect('changed::panel-location', () => {
             this._setPanelsLocation();
-            Theming.updateStylesheet(this);
-        }), this._settings);
-        this._extensionConnections.set(this._settings.connect('changed::isolate-monitors', () => this._resetPanels()), this._settings);
+            Theming.updateStylesheet();
+        }), this.settings);
+        this._extensionConnections.set(this.settings.connect('changed::isolate-monitors', () => this._resetPanels()), this.settings);
 
-        this._extensionConnections.set(this._settings.connect('changed::show-panel-activities-button',
-            () => this._setActivitiesVisibility()), this._settings);
+        this._extensionConnections.set(this.settings.connect('changed::show-panel-activities-button',
+            () => this._setActivitiesVisibility()), this.settings);
 
-        this._extensionConnections.set(this._settings.connect('changed::main-panel-height',
-            () => Theming.updateStylesheet(this)), this._settings);
+        this._extensionConnections.set(this.settings.connect('changed::main-panel-height',
+            () => Theming.updateStylesheet()), this.settings);
         this._extensionConnections.set(Main.layoutManager.connect('monitors-changed',
             () => this._resetPanels()), Main.layoutManager);
 
@@ -611,7 +613,7 @@ export default class AzTaskbar extends Extension {
 
         Main.panel.remove_style_class_name('azTaskbar-panel');
 
-        Theming.deleteStylesheet(this);
+        Theming.deleteStylesheet();
 
         this.remoteModel.destroy();
         delete this.remoteModel;
@@ -628,12 +630,15 @@ export default class AzTaskbar extends Extension {
         this._deletePanels();
         delete global.azTaskbar;
 
-        this._settings.run_dispose();
-        this._settings = null;
+        this._taskbarManager.destroy();
+        this._taskbarManager = null;
+
+        this.settings.run_dispose();
+        this.settings = null;
     }
 
     _setActivitiesVisibility() {
-        const showActivitiesButton = this._settings.get_boolean('show-panel-activities-button');
+        const showActivitiesButton = this.settings.get_boolean('show-panel-activities-button');
 
         Main.panel.statusArea.activities.container.visible = showActivitiesButton;
 
@@ -653,12 +658,12 @@ export default class AzTaskbar extends Extension {
     _createPanels() {
         this._panelBoxes = [];
 
-        this._primaryAppDisplayBox = new AppDisplayBox(this, Main.layoutManager.primaryMonitor);
+        this._primaryAppDisplayBox = new AppDisplayBox(Main.layoutManager.primaryMonitor);
 
-        if (this._settings.get_boolean('panel-on-all-monitors')) {
+        if (this.settings.get_boolean('panel-on-all-monitors')) {
             Main.layoutManager.monitors.forEach(monitor => {
                 if (monitor !== Main.layoutManager.primaryMonitor)
-                    this._panelBoxes.push(new PanelBox(this, monitor));
+                    this._panelBoxes.push(new PanelBox(monitor));
             });
             global.azTaskbar.panels = this._panelBoxes;
             global.azTaskbar.emit('panels-created');
@@ -679,7 +684,7 @@ export default class AzTaskbar extends Extension {
 
     // Based on code from Just Perfection extension
     _setPanelsLocation(mainPanelOnly = false) {
-        const panelLocation = this._settings.get_enum('panel-location');
+        const panelLocation = this.settings.get_enum('panel-location');
 
         const mainPanelBox = Main.layoutManager.panelBox;
         const mainMonitor = Main.layoutManager.primaryMonitor;
@@ -721,16 +726,16 @@ export default class AzTaskbar extends Extension {
     }
 
     _setAppDisplayBoxPosition(panel, appDisplayBox) {
-        const offset = this._settings.get_int('position-offset');
+        const offset = this.settings.get_int('position-offset');
         const parent = appDisplayBox.get_parent();
         if (parent)
             parent.remove_actor(appDisplayBox);
 
-        if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT) {
+        if (this.settings.get_enum('position-in-panel') === Enums.PanelPosition.LEFT) {
             panel._leftBox.insert_child_at_index(appDisplayBox, offset);
-        } else if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER) {
+        } else if (this.settings.get_enum('position-in-panel') === Enums.PanelPosition.CENTER) {
             panel._centerBox.insert_child_at_index(appDisplayBox, offset);
-        } else if (this._settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
+        } else if (this.settings.get_enum('position-in-panel') === Enums.PanelPosition.RIGHT) {
             const nChildren = panel._rightBox.get_n_children();
             const order = Math.clamp(nChildren - offset, 0, nChildren);
             panel._rightBox.insert_child_at_index(appDisplayBox, order);

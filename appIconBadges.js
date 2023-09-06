@@ -10,6 +10,7 @@ import Pango from 'gi://Pango';
 import St from 'gi://St';
 
 import * as Enums from './enums.js';
+import {TaskbarManager} from './taskbarManager.js';
 
 const INDICATOR_RADIUS = 1.5;
 const DEGREES = Math.PI / 180;
@@ -39,8 +40,7 @@ class azTaskbarAppIconBadges extends St.Bin {
         });
 
         this._source = source;
-        this._settings = source._settings;
-        this._extension = source.extension;
+        this._settings = this._source._settings;
 
         this._notificationBadgeLabel = new St.Label();
         this.set_child(this._notificationBadgeLabel);
@@ -72,8 +72,7 @@ class azTaskbarAppIconBadges extends St.Bin {
 
     _setConnections() {
         this._connections = new Map();
-
-        const {remoteModel, notificationsMonitor} = this._extension;
+        const {remoteModel, notificationsMonitor} = TaskbarManager;
         const remoteEntry = remoteModel.lookupById(this._source.app.id);
         this._remoteEntry = remoteEntry;
 
@@ -178,7 +177,7 @@ class azTaskbarAppIconBadges extends St.Bin {
 
         let notificationsCount = 0;
         if (this._settings.get_boolean('notification-badges')) {
-            const {notificationsMonitor} = this._extension;
+            const {notificationsMonitor} = TaskbarManager;
             notificationsCount = notificationsMonitor.getAppNotificationsCount(
                 this._source.app.id);
         }

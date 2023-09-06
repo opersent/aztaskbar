@@ -1,6 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import Clutter from 'gi://Clutter';
-import Meta from 'gi://Meta';
 
 export function getInterestingWindows(settings, windows, monitorIndex) {
     if (settings.get_boolean('isolate-workspaces')) {
@@ -64,13 +63,9 @@ export function ensureActorVisibleInScrollView(scrollView, actor) {
 }
 
 export function laterAdd(laterType, callback) {
-    return global.compositor?.get_laters?.().add(laterType, callback) ??
-        Meta.later_add(laterType, callback);
+    return global.compositor.get_laters().add(laterType, callback);
 }
 
 export function laterRemove(id) {
-    if (global.compositor?.get_laters)
-        global.compositor?.get_laters().remove(id);
-    else
-        Meta.later_remove(id);
+    global.compositor.get_laters().remove(id);
 }
