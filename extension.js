@@ -568,29 +568,19 @@ export default class AzTaskbar extends Extension {
 
         Theming.createStylesheet();
 
-        this._extensionConnections = new Map();
-        this._extensionConnections.set(this.settings.connect('changed::position-in-panel',
-            () => this._addAppDisplayBoxToPanel()), this.settings);
-        this._extensionConnections.set(this.settings.connect('changed::position-offset',
-            () => this._addAppDisplayBoxToPanel()), this.settings);
-        this._extensionConnections.set(this.settings.connect('changed::panel-on-all-monitors',
-            () => this._resetPanels()), this.settings);
-        this._extensionConnections.set(this.settings.connect('changed::panel-location', () => {
+        this.settings.connectObject('changed::position-in-panel', () => this._addAppDisplayBoxToPanel(), this);
+        this.settings.connectObject('changed::position-offset', () => this._addAppDisplayBoxToPanel(), this);
+        this.settings.connectObject('changed::panel-on-all-monitors', () => this._resetPanels(), this);
+        this.settings.connectObject('changed::panel-location', () => {
             this._setPanelsLocation();
             Theming.updateStylesheet();
-        }), this.settings);
-        this._extensionConnections.set(this.settings.connect('changed::isolate-monitors', () => this._resetPanels()), this.settings);
+        }, this);
+        this.settings.connectObject('changed::isolate-monitors', () => this._resetPanels(), this);
+        this.settings.connectObject('changed::show-panel-activities-button', () => this._setActivitiesVisibility(), this);
+        this.settings.connectObject('changed::main-panel-height', () => Theming.updateStylesheet(), this);
 
-        this._extensionConnections.set(this.settings.connect('changed::show-panel-activities-button',
-            () => this._setActivitiesVisibility()), this.settings);
-
-        this._extensionConnections.set(this.settings.connect('changed::main-panel-height',
-            () => Theming.updateStylesheet()), this.settings);
-        this._extensionConnections.set(Main.layoutManager.connect('monitors-changed',
-            () => this._resetPanels()), Main.layoutManager);
-
-        this._extensionConnections.set(Main.layoutManager.panelBox.connect('notify::allocation',
-            () => this._setPanelsLocation(true)), Main.layoutManager.panelBox);
+        Main.layoutManager.connectObject('monitors-changed', () => this._resetPanels(), this);
+        Main.layoutManager.panelBox.connectObject('notify::allocation', () => this._setPanelsLocation(true), this);
 
         Main.panel.add_style_class_name('azTaskbar-panel');
 
@@ -621,19 +611,15 @@ export default class AzTaskbar extends Extension {
         this.notificationsMonitor.destroy();
         delete this.notificationsMonitor;
 
-        this._extensionConnections.forEach((object, id) => {
-            object.disconnect(id);
-            id = null;
-        });
-        this._extensionConnections = null;
-
         this._deletePanels();
         delete global.azTaskbar;
 
         this._taskbarManager.destroy();
         this._taskbarManager = null;
 
-        this.settings.run_dispose();
+        Main.layoutManager.disconnectObject(this);
+        Main.layoutManager.panelBox.disconnectObject(this);
+        this.settings.disconnectObject(this);
         this.settings = null;
     }
 
@@ -693,9 +679,9 @@ export default class AzTaskbar extends Extension {
             this._panelBoxes.forEach(panelBox => panelBox.setSizeAndPosition());
 
         if (panelLocation === Enums.PanelLocation.TOP) {
-            if (this.__workareasChangedId) {
-                global.display.disconnect(this.__workareasChangedId);
-                this.__workareasChangedId = null;
+            if (this._workareasChangedId) {
+                global.display.disconnect(this._workareasChangedId);
+                this._workareasChangedId = null;
             }
             mainPanelBox.set_position(mainMonitor.x, mainMonitor.y);
             Main.layoutManager.uiGroup.remove_style_class_name('azTaskbar-bottom-panel');
@@ -706,8 +692,8 @@ export default class AzTaskbar extends Extension {
         mainPanelBox.set_position(mainMonitor.x, bottomY);
         Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
 
-        if (!this.__workareasChangedId) {
-            this.__workareasChangedId = global.display.connect('workareas-changed', () => {
+        if (!this._workareasChangedId) {
+            this._workareasChangedId = global.display.connect('workareas-changed', () => {
                 const newBottomY = mainMonitor.y + mainMonitor.height - mainPanelBox.height;
                 mainPanelBox.set_position(mainMonitor.x, newBottomY);
                 Main.layoutManager.uiGroup.add_style_class_name('azTaskbar-bottom-panel');
