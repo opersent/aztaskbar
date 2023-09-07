@@ -2,7 +2,7 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import Graphene from 'gi://Graphene';
 import GObject from 'gi://GObject';
-import Meta from 'gi://Meta';
+import Mtk from 'gi://Mtk';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
@@ -132,7 +132,7 @@ class azTaskbarBaseButton extends St.Button {
 
         // Check if should place tool-tip above or below app icon
         // Needed in case user has moved the panel to bottom of screen
-        const labelBelowIconRect = new Meta.Rectangle({
+        const labelBelowIconRect = new Mtk.Rectangle({
             x,
             y: stageY + itemHeight + offset,
             width: labelWidth,
@@ -671,7 +671,7 @@ export const AppIcon = GObject.registerClass({
             return;
 
         this.get_allocation_box();
-        const rect = new Meta.Rectangle();
+        const rect = new Mtk.Rectangle();
 
         [rect.x, rect.y] = this.get_transformed_position();
         [rect.width, rect.height] = this.get_transformed_size();
